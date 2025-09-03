@@ -3,6 +3,9 @@
 /.pnp
 .pnp.js
 
+# Python virtual environment
+/venv
+
 # Lago example dependencies
 /lago-example/node_modules
 /lago-example/functions/node_modules
@@ -35,3 +38,9 @@ yarn-error.log*
 *.njsproj
 *.sln
 *.sw?
+
+
+functions/.env
+functions/.runtimeconfig.json
+
+.env

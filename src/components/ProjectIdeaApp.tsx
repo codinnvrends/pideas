@@ -3,8 +3,6 @@
 import React, { useState, useEffect } from "react"
 import LoginWithParticles from "./LoginWithParticles"
 import { UserProfileIcon, default as UserProfileCard } from "./UserProfileCard"
-import ApiKeyValidator from "./ApiKeyValidator"
-import ApiKeyManager from "./ApiKeyManager"
 
 // Firebase imports
 declare global {
@@ -35,9 +33,6 @@ export default function ProjectIdeaApp() {
   const [lastQuery, setLastQuery] = useState("")
   const [showWelcome, setShowWelcome] = useState(true)
   const [showProfileCard, setShowProfileCard] = useState(false)
-  const [hasValidApiKey, setHasValidApiKey] = useState(false)
-  const [apiKeyChecked, setApiKeyChecked] = useState(false)
-  const [showApiKeyManager, setShowApiKeyManager] = useState(false)
 
   // Welcome message fade out effect
   useEffect(() => {
@@ -52,19 +47,7 @@ export default function ProjectIdeaApp() {
   
   // Toggle profile card
   const toggleProfileCard = () => {
-    setShowProfileCard((prev: boolean) => !prev);
-  };
-
-  // API key validation handlers
-  const handleApiKeyValidation = (isValid: boolean) => {
-    setHasValidApiKey(isValid);
-    setApiKeyChecked(true);
-  };
-
-  const handleApiKeyChange = () => {
-    // Re-validate API key when changed
-    setApiKeyChecked(false);
-    setHasValidApiKey(false);
+    setShowProfileCard(prev => !prev);
   };
 
   // Initialize Firebase Auth listener
@@ -139,7 +122,7 @@ export default function ProjectIdeaApp() {
   }
 
   const generateProjectIdea = async () => {
-    if (!query.trim() || !user || !hasValidApiKey) return
+    if (!query.trim() || !user) return
 
     setGenerating(true)
     try {
@@ -152,27 +135,15 @@ export default function ProjectIdeaApp() {
         lastUpdated: new Date().toISOString()
       }, { merge: true })
 
-      // Call Firebase function to generate idea with userId for BYOK
+      // Call Firebase function to generate idea
       const functions = window.firebase.functions()
-      const generateIdea = functions.httpsCallable('generateIdea')
+      const generateIdea = functions.httpsCallable('generateProjectIdea')
       
-      const result = await generateIdea({ 
-        query, 
-        userId: user.uid 
-      })
+      const result = await generateIdea({ query })
       setProjectIdea(result.data)
       setLastQuery(query)
     } catch (error) {
       console.error('Error generating project idea:', error)
-      // Check if error is related to API key
-      if (error && typeof error === 'object' && 'message' in error) {
-        const errorMessage = (error as any).message
-        if (errorMessage.includes('API key') || errorMessage.includes('BYOK')) {
-          // API key issue - trigger re-validation
-          handleApiKeyChange()
-          return
-        }
-      }
       // Fallback mock data for development
       setProjectIdea({
         title: `${query} Project`,
@@ -251,62 +222,6 @@ export default function ProjectIdeaApp() {
 
       {/* Main Content */}
       <main className="max-w-4xl mx-auto px-4 py-8">
-        {/* API Key Validation */}
-        {user && !apiKeyChecked && (
-          <div className="mb-6">
-            <ApiKeyValidator 
-              userId={user.uid}
-              onValidationComplete={handleApiKeyValidation}
-              showSetupIfNeeded={true}
-            />
-          </div>
-        )}
-
-        {/* API Key Status/Manager */}
-        {user && apiKeyChecked && !hasValidApiKey && (
-          <div className="mb-6">
-            <div className="bg-yellow-900/20 border border-yellow-600/30 rounded-lg p-4">
-              <div className="flex items-center gap-3 mb-3">
-                <span className="text-yellow-500 text-lg">⚠️</span>
-                <h3 className="text-yellow-400 font-medium">API Key Required</h3>
-              </div>
-              <p className="text-gray-300 mb-4">
-                You need to add your Gemini API key to generate project ideas.
-              </p>
-              <button 
-                onClick={() => setShowApiKeyManager(true)}
-                className="bg-yellow-600/20 hover:bg-yellow-600/30 border border-yellow-600/40 text-yellow-300 px-4 py-2 rounded-lg transition-colors"
-              >
-                Add API Key
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* API Key Manager Modal */}
-        {showApiKeyManager && user && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-            <div className="bg-gray-900 border border-gray-700 rounded-xl p-6 w-full max-w-md mx-4">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-white text-lg font-medium">Manage API Key</h3>
-                <button 
-                  onClick={() => setShowApiKeyManager(false)}
-                  className="text-gray-400 hover:text-white text-xl"
-                >
-                  ×
-                </button>
-              </div>
-              <ApiKeyManager 
-                userId={user.uid}
-                onApiKeyChange={() => {
-                  handleApiKeyChange();
-                  setShowApiKeyManager(false);
-                }}
-              />
-            </div>
-          </div>
-        )}
-
         {lastQuery && (
           <div className="mb-6 p-4 bg-gray-800/50 rounded-lg border border-gray-700">
             <p className="text-gray-300">
@@ -332,9 +247,8 @@ export default function ProjectIdeaApp() {
             />
             <button
               onClick={generateProjectIdea}
-              disabled={generating || !query.trim() || !hasValidApiKey}
+              disabled={generating || !query.trim()}
               className="bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-600 text-white px-8 py-4 rounded-lg font-medium transition-colors disabled:cursor-not-allowed flex items-center gap-2"
-              title={!hasValidApiKey ? "Add your API key to generate ideas" : ""}
             >
               {generating ? (
                 <>

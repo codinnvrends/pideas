@@ -15,6 +15,8 @@ import * as admin from "firebase-admin";
 // Import genkit and googleAI plugin
 import { genkit } from 'genkit';
 import { googleAI } from '@genkit-ai/googleai';
+// Import crypto for API key encryption
+import * as crypto from 'crypto';
 
 // Initialize Firebase admin
 admin.initializeApp();
@@ -96,6 +98,19 @@ interface IdeaGenerationRequest {
   studentProfile?: StudentProfile;
   gameResponses?: any[];
   discoveryMode?: boolean;
+  userId?: string; // Add userId for BYOK
+}
+
+// New interfaces for BYOK functionality
+interface UserApiKey {
+  userId: string;
+  encryptedApiKey: string;
+  keyStatus: 'valid' | 'invalid' | 'pending';
+  lastValidated: admin.firestore.Timestamp;
+  createdAt: admin.firestore.Timestamp;
+  updatedAt: admin.firestore.Timestamp;
+  usageCount: number;
+  keyProvider: 'gemini';
 }
 
 interface HistorySaveRequest {
@@ -140,6 +155,77 @@ interface BulkUserRequest {
   action: 'changeRole' | 'changeStatus' | 'export';
   newRole?: 'admin' | 'user';
   newStatus?: 'active' | 'inactive';
+}
+
+// BYOK Encryption utilities
+function encryptApiKey(apiKey: string, userId: string): string {
+  const algorithm = 'aes-256-cbc';
+  const secretKey = crypto.createHash('sha256').update(userId + (process.env.FIREBASE_CONFIG || 'default')).digest();
+  const iv = crypto.randomBytes(16);
+  const cipher = crypto.createCipheriv(algorithm, secretKey, iv);
+  
+  let encrypted = cipher.update(apiKey, 'utf8', 'hex');
+  encrypted += cipher.final('hex');
+  
+  return iv.toString('hex') + ':' + encrypted;
+}
+
+function decryptApiKey(encryptedApiKey: string, userId: string): string {
+  const algorithm = 'aes-256-cbc';
+  const secretKey = crypto.createHash('sha256').update(userId + (process.env.FIREBASE_CONFIG || 'default')).digest();
+  
+  const parts = encryptedApiKey.split(':');
+  const iv = Buffer.from(parts[0], 'hex');
+  const encrypted = parts[1];
+  
+  const decipher = crypto.createDecipheriv(algorithm, secretKey, iv);
+  let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+  decrypted += decipher.final('utf8');
+  
+  return decrypted;
+}
+
+// Test API key validity with Gemini
+async function testGeminiApiKey(apiKey: string): Promise<boolean> {
+  try {
+    const ai = genkit({
+      plugins: [googleAI({ apiKey })],
+    });
+    
+    // Test with simple generation
+    const result = await ai.generate({
+      model: 'googleai/gemini-2.5-pro',
+      prompt: 'Say "test" if you can read this.',
+      config: { maxOutputTokens: 10 }
+    });
+    
+    return !!(result && result.text && result.text.toLowerCase().includes('test'));
+  } catch (error) {
+    logger.error('API key validation failed:', error);
+    return false;
+  }
+}
+
+// Get user's decrypted API key
+async function getUserDecryptedApiKey(userId: string): Promise<string | null> {
+  try {
+    const db = admin.firestore();
+    const apiKeyDoc = await db.collection('userApiKeys').doc(userId).get();
+    
+    if (!apiKeyDoc.exists) {
+      return null;
+    }
+    
+    const data = apiKeyDoc.data() as UserApiKey;
+    if (data.keyStatus !== 'valid') {
+      return null;
+    }
+    
+    return decryptApiKey(data.encryptedApiKey, userId);
+  } catch (error) {
+    logger.error('Error getting user API key:', error);
+    return null;
+  }
 }
 
 // Helper functions for admin operations
@@ -412,7 +498,7 @@ export const gameStepsGet = onCall({maxInstances: 5}, async (request: any) => {
  */
 export const generateIdea = onCall({maxInstances: 5, timeoutSeconds: 300}, async (request: any) => {
   try {
-    const { query, prompt, studentProfile, gameResponses, discoveryMode }: IdeaGenerationRequest = request.data;
+    const { query, prompt, studentProfile, gameResponses, discoveryMode, userId }: IdeaGenerationRequest = request.data;
     
     // Accept either query or prompt parameter for compatibility
     const inputQuery = query || prompt;
@@ -451,19 +537,24 @@ export const generateIdea = onCall({maxInstances: 5, timeoutSeconds: 300}, async
     
     logger.info("Using prompt type:", isDiscoveryRequest ? 'Discovery (Multiple Ideas)' : 'Comprehensive (Single Plan)');
     
-    // Using the gemini model with genkit
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      logger.error("Missing Gemini API key in environment variables");
-      throw new Error("Missing API key configuration. Please set GEMINI_API_KEY in environment variables.");
+    // BYOK: Get user's API key instead of global key
+    if (!userId) {
+      throw new Error("User ID is required for BYOK feature. Please provide userId in request.");
     }
     
-    logger.info("Using Gemini API with configured key");
+    logger.info(`Getting API key for user: ${userId}`);
+    const userApiKey = await getUserDecryptedApiKey(userId);
+    
+    if (!userApiKey) {
+      throw new Error("No API key found for user. Please set up your Gemini API key in the app settings before generating ideas.");
+    }
+    
+    logger.info("Using user's Gemini API key");
     
     try {
       const ai = genkit({
         plugins: [googleAI({
-          apiKey: apiKey
+          apiKey: userApiKey
         })],
       model: googleAI.model('gemini-2.5-pro'),
       });
@@ -947,26 +1038,219 @@ Return the complete modified project idea:`;
       
       // Replace the section in the original idea
       const sectionRegex = new RegExp(`## ${sectionTitle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[\s\S]*?(?=## |$)`, 'i');
-      const modifiedIdea = originalIdea.replace(sectionRegex, fallbackModification);
-      
       return {
-        success: true,
-        modifiedIdea: modifiedIdea,
-        originalSection: sectionContent,
-        modificationPrompt: modificationPrompt,
-        fallback: true
+        success: false,
+        error: 'Failed to modify idea section',
+        fallbackModification: `The section "${sectionTitle}" has been updated based on your request: ${modificationPrompt}`
       };
     }
-
   } catch (error) {
-    logger.error('Error modifying idea section:', error);
-    return { success: false, error: 'Failed to modify section. Please try again.' };
+    logger.error('Error in section modification:', error);
+    return {
+      success: false,
+      error: 'Failed to modify idea section'
+    };
   }
 });
 
 /**
- * Bulk user operations (admin only)
+ * BYOK Functions - Set user's API key
  */
+export const setUserApiKey = onCall({maxInstances: 3}, async (request: any) => {
+  try {
+    const { userId, apiKey } = request.data;
+    
+    if (!userId || !apiKey) {
+      throw new Error("User ID and API key are required");
+    }
+    
+    // Validate the API key by testing it
+    logger.info(`Validating API key for user: ${userId}`);
+    const isValid = await testGeminiApiKey(apiKey);
+    
+    if (!isValid) {
+      return {
+        success: false,
+        error: "Invalid API key. Please check your Gemini API key and try again."
+      };
+    }
+    
+    // Encrypt and store the API key
+    const encryptedKey = encryptApiKey(apiKey, userId);
+    const timestamp = admin.firestore.Timestamp.now();
+    
+    const apiKeyData: UserApiKey = {
+      userId,
+      encryptedApiKey: encryptedKey,
+      keyStatus: 'valid',
+      lastValidated: timestamp,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      usageCount: 0,
+      keyProvider: 'gemini'
+    };
+    
+    const db = admin.firestore();
+    await db.collection('userApiKeys').doc(userId).set(apiKeyData);
+    
+    // Update user profile to indicate API key is set
+    await db.collection('users').doc(userId).set({
+      hasApiKey: true,
+      apiKeyProvider: 'gemini',
+      keySetupCompleted: true,
+      lastUpdated: timestamp.toDate().toISOString()
+    }, { merge: true });
+    
+    logger.info(`API key successfully stored for user: ${userId}`);
+    
+    return {
+      success: true,
+      message: "API key saved successfully",
+      keyStatus: 'valid'
+    };
+  } catch (error) {
+    logger.error("Error setting user API key:", error);
+    return {
+      success: false,
+      error: `Failed to save API key: ${error instanceof Error ? error.message : 'Unknown error'}`
+    };
+  }
+});
+
+/**
+ * Validate user's API key
+ */
+export const validateUserApiKey = onCall({maxInstances: 3}, async (request: any) => {
+  try {
+    const { userId, apiKey } = request.data;
+    
+    if (!userId) {
+      throw new Error("User ID is required");
+    }
+    
+    let keyToTest = apiKey;
+    
+    // If no API key provided, get from storage
+    if (!keyToTest) {
+      keyToTest = await getUserDecryptedApiKey(userId);
+      if (!keyToTest) {
+        return {
+          success: false,
+          hasApiKey: false,
+          error: "No API key found. Please add your Gemini API key."
+        };
+      }
+    }
+    
+    // Test the API key
+    const isValid = await testGeminiApiKey(keyToTest);
+    
+    if (isValid) {
+      // Update validation timestamp if key is from storage
+      if (!apiKey) {
+        const db = admin.firestore();
+        await db.collection('userApiKeys').doc(userId).update({
+          keyStatus: 'valid',
+          lastValidated: admin.firestore.Timestamp.now()
+        });
+      }
+    }
+    
+    return {
+      success: true,
+      hasApiKey: true,
+      isValid,
+      message: isValid ? "API key is valid" : "API key is invalid"
+    };
+  } catch (error) {
+    logger.error("Error validating API key:", error);
+    return {
+      success: false,
+      error: `Failed to validate API key: ${error instanceof Error ? error.message : 'Unknown error'}`
+    };
+  }
+});
+
+/**
+ * Get user's API key status
+ */
+export const getUserApiKeyStatus = onCall({maxInstances: 5}, async (request: any) => {
+  try {
+    const { userId } = request.data;
+    
+    if (!userId) {
+      throw new Error("User ID is required");
+    }
+    
+    const db = admin.firestore();
+    const apiKeyDoc = await db.collection('userApiKeys').doc(userId).get();
+    
+    if (!apiKeyDoc.exists) {
+      return {
+        success: true,
+        hasApiKey: false,
+        keyStatus: null,
+        setupRequired: true
+      };
+    }
+    
+    const data = apiKeyDoc.data() as UserApiKey;
+    
+    return {
+      success: true,
+      hasApiKey: true,
+      keyStatus: data.keyStatus,
+      lastValidated: data.lastValidated,
+      usageCount: data.usageCount,
+      keyProvider: data.keyProvider,
+      setupRequired: false
+    };
+  } catch (error) {
+    logger.error("Error getting API key status:", error);
+    return {
+      success: false,
+      error: `Failed to get API key status: ${error instanceof Error ? error.message : 'Unknown error'}`
+    };
+  }
+});
+
+/**
+ * Remove user's API key
+ */
+export const removeUserApiKey = onCall({maxInstances: 3}, async (request: any) => {
+  try {
+    const { userId } = request.data;
+    
+    if (!userId) {
+      throw new Error("User ID is required");
+    }
+    
+    const db = admin.firestore();
+    
+    // Remove from userApiKeys collection
+    await db.collection('userApiKeys').doc(userId).delete();
+    
+    // Update user profile
+    await db.collection('users').doc(userId).set({
+      hasApiKey: false,
+      apiKeyProvider: null,
+      keySetupCompleted: false,
+      lastUpdated: new Date().toISOString()
+    }, { merge: true });
+    
+    return {
+      success: true,
+      message: "API key removed successfully"
+    };
+  } catch (error) {
+    logger.error("Error removing API key:", error);
+    return {
+      success: false,
+      error: `Failed to remove API key: ${error instanceof Error ? error.message : 'Unknown error'}`
+    };
+  }
+});
+
 export const bulkUserOperations = onCall({maxInstances: 3}, async (request: any) => {
   try {
     const { adminUserId, userIds, action, newRole, newStatus }: BulkUserRequest = request.data;

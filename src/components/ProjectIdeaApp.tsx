@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from "react"
 import LoginWithParticles from "./LoginWithParticles"
 import { UserProfileIcon, default as UserProfileCard } from "./UserProfileCard"
+import ApiKeySetup from "./ApiKeySetup"
+import ApiKeyManager from "./ApiKeyManager"
 
 // Firebase imports
 declare global {
@@ -33,6 +35,9 @@ export default function ProjectIdeaApp() {
   const [lastQuery, setLastQuery] = useState("")
   const [showWelcome, setShowWelcome] = useState(true)
   const [showProfileCard, setShowProfileCard] = useState(false)
+  const [apiKeyStatus, setApiKeyStatus] = useState<{hasApiKey: boolean; setupRequired: boolean} | null>(null)
+  const [checkingApiKey, setCheckingApiKey] = useState(false)
+  const [showApiKeyManager, setShowApiKeyManager] = useState(false)
 
   // Welcome message fade out effect
   useEffect(() => {
@@ -44,10 +49,41 @@ export default function ProjectIdeaApp() {
       return () => clearTimeout(timer);
     }
   }, [user]);
+
+  // Check API key status when user logs in
+  useEffect(() => {
+    if (user && !checkingApiKey) {
+      checkApiKeyStatus();
+    }
+  }, [user]);
   
   // Toggle profile card
   const toggleProfileCard = () => {
-    setShowProfileCard(prev => !prev);
+    setShowProfileCard((prev: boolean) => !prev);
+  }
+
+  // Check user's API key status
+  const checkApiKeyStatus = async () => {
+    if (!user) return;
+    
+    setCheckingApiKey(true);
+    try {
+      const functions = window.firebase.functions();
+      const getUserApiKeyStatus = functions.httpsCallable('getUserApiKeyStatus');
+      
+      const result = await getUserApiKeyStatus({ userId: user.uid });
+      setApiKeyStatus(result.data);
+    } catch (error) {
+      console.error('Error checking API key status:', error);
+      setApiKeyStatus({ hasApiKey: false, setupRequired: true });
+    } finally {
+      setCheckingApiKey(false);
+    }
+  }
+
+  // Handle API key setup completion
+  const handleApiKeySetupComplete = () => {
+    checkApiKeyStatus();
   };
 
   // Initialize Firebase Auth listener
@@ -124,6 +160,12 @@ export default function ProjectIdeaApp() {
   const generateProjectIdea = async () => {
     if (!query.trim() || !user) return
 
+    // Check API key status before generation
+    if (!apiKeyStatus?.hasApiKey) {
+      alert("Please set up your Gemini API key before generating ideas.");
+      return;
+    }
+
     setGenerating(true)
     try {
       // Save query to user profile
@@ -135,22 +177,44 @@ export default function ProjectIdeaApp() {
         lastUpdated: new Date().toISOString()
       }, { merge: true })
 
-      // Call Firebase function to generate idea
+      // Call Firebase function to generate idea with userId for BYOK
       const functions = window.firebase.functions()
-      const generateIdea = functions.httpsCallable('generateProjectIdea')
+      const generateIdea = functions.httpsCallable('generateIdea')
       
-      const result = await generateIdea({ query })
-      setProjectIdea(result.data)
+      const result = await generateIdea({ 
+        query,
+        userId: user.uid // Include userId for BYOK
+      })
+      
+      if (result.data.success) {
+        setProjectIdea({
+          title: "Generated Project Idea",
+          description: result.data.idea,
+          technologies: ["Based on your request"],
+          difficulty: "Customized"
+        })
+      } else {
+        throw new Error(result.data.error || "Failed to generate idea")
+      }
+      
       setLastQuery(query)
     } catch (error) {
       console.error('Error generating project idea:', error)
-      // Fallback mock data for development
-      setProjectIdea({
-        title: `${query} Project`,
-        description: `A comprehensive project based on your query: "${query}". This project would involve modern technologies and best practices.`,
-        technologies: ["React", "Node.js", "Firebase", "TypeScript"],
-        difficulty: "Intermediate"
-      })
+      
+      // Check if it's an API key related error
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      if (errorMessage.includes('API key') || errorMessage.includes('set up')) {
+        alert("API key issue: " + errorMessage + "\n\nPlease check your API key in settings.")
+        setApiKeyStatus({ hasApiKey: false, setupRequired: true })
+      } else {
+        // Fallback mock data for development
+        setProjectIdea({
+          title: `${query} Project`,
+          description: `A comprehensive project based on your query: "${query}". This project would involve modern technologies and best practices.`,
+          technologies: ["React", "Node.js", "Firebase", "TypeScript"],
+          difficulty: "Intermediate"
+        })
+      }
     } finally {
       setGenerating(false)
     }
@@ -173,6 +237,31 @@ export default function ProjectIdeaApp() {
 
   if (!user) {
     return <LoginWithParticles onLoginSuccess={handleLogin} />
+  }
+
+  // Show API key setup if user needs to configure their key
+  if (apiKeyStatus?.setupRequired && !checkingApiKey) {
+    return <ApiKeySetup user={user} onSetupComplete={handleApiKeySetupComplete} />
+  }
+
+  // Show API key manager modal
+  if (showApiKeyManager) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800">
+        <div className="container mx-auto py-8">
+          <div className="flex justify-between items-center mb-6 px-6">
+            <h1 className="text-2xl font-bold text-white">API Key Settings</h1>
+            <button
+              onClick={() => setShowApiKeyManager(false)}
+              className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
+            >
+              Back to App
+            </button>
+          </div>
+          <ApiKeyManager user={user} />
+        </div>
+      </div>
+    )
   }
 
   return (

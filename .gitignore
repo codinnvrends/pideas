@@ -44,3 +44,6 @@ functions/.env
 functions/.runtimeconfig.json
 
 .env
+
+.venv
+/.venv

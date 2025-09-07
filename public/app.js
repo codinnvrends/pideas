@@ -2661,210 +2661,6 @@ const UserProfileDropdown = ({ user, userRole, onClose, onLogout }) => {
     );
 };
 
-// Complete Project Generator Component
-const CompleteProjectGenerator = ({ query, user, onBack, onComplete }) => {
-    const [isGenerating, setIsGenerating] = useState(false);
-    const [generationStep, setGenerationStep] = useState('');
-    const [projectFiles, setProjectFiles] = useState(null);
-    const [error, setError] = useState(null);
-    const [downloadUrl, setDownloadUrl] = useState(null);
-
-    const functions = typeof firebase !== 'undefined' ? firebase.functions() : null;
-
-    const generateCompleteProject = async () => {
-        if (!functions) {
-            setError('Firebase functions not available. Please run from Firebase hosting.');
-            return;
-        }
-
-        setIsGenerating(true);
-        setError(null);
-        setGenerationStep('Initializing project generation...');
-
-        try {
-            // Call the CrewAI complete project generation function
-            setGenerationStep('Creating project structure and files...');
-            const generateCompleteProject = functions.httpsCallable('generateCompleteProject');
-            
-            const result = await generateCompleteProject({
-                query: query,
-                userId: user.uid,
-                userEmail: user.email
-            });
-
-            if (result.data.success) {
-                setProjectFiles(result.data.projectData);
-                setDownloadUrl(result.data.downloadUrl);
-                setGenerationStep('Project generated successfully!');
-                
-                // Call onComplete with the project data
-                onComplete(result.data.projectData);
-            } else {
-                throw new Error(result.data.error || 'Failed to generate complete project');
-            }
-        } catch (error) {
-            console.error('Error generating complete project:', error);
-            setError(error.message || 'Failed to generate complete project. Please try again.');
-            setGenerationStep('');
-        } finally {
-            setIsGenerating(false);
-        }
-    };
-
-    const downloadProject = () => {
-        if (downloadUrl) {
-            // Create a temporary link and click it to start download
-            const link = document.createElement('a');
-            link.href = downloadUrl;
-            link.download = `project-${Date.now()}.zip`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-    };
-
-    return (
-        <div className="w-full max-w-4xl mx-auto">
-            <div className="flex items-center justify-between mb-8">
-                <button
-                    onClick={onBack}
-                    className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
-                >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                    </svg>
-                    Back to Home
-                </button>
-                <h2 className="text-3xl font-bold text-white">Complete Project Generator</h2>
-                <div></div>
-            </div>
-
-            <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-8">
-                <div className="text-center mb-8">
-                    <h3 className="text-2xl font-semibold text-white mb-4">Generate Complete Project</h3>
-                    <p className="text-gray-400 mb-6">
-                        Create a full project with source code, documentation, and setup instructions based on your query.
-                    </p>
-                    
-                    <div className="bg-gray-900/50 border border-gray-600 rounded-lg p-4 mb-6">
-                        <p className="text-gray-300"><strong>Project Query:</strong></p>
-                        <p className="text-blue-400 mt-2">{query}</p>
-                    </div>
-                </div>
-
-                {!isGenerating && !projectFiles && !error && (
-                    <div className="text-center">
-                        <div className="mb-6">
-                            <h4 className="text-xl font-medium text-white mb-4">What you'll get:</h4>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
-                                <div className="bg-gray-900/30 border border-gray-600 rounded-lg p-4">
-                                    <h5 className="font-medium text-green-400 mb-2">📁 Complete Source Code</h5>
-                                    <p className="text-gray-400 text-sm">Fully functional code with proper structure and best practices</p>
-                                </div>
-                                <div className="bg-gray-900/30 border border-gray-600 rounded-lg p-4">
-                                    <h5 className="font-medium text-blue-400 mb-2">📝 Documentation</h5>
-                                    <p className="text-gray-400 text-sm">README, API docs, and setup instructions</p>
-                                </div>
-                                <div className="bg-gray-900/30 border border-gray-600 rounded-lg p-4">
-                                    <h5 className="font-medium text-purple-400 mb-2">🔧 Configuration Files</h5>
-                                    <p className="text-gray-400 text-sm">Package files, environment configs, and dependencies</p>
-                                </div>
-                                <div className="bg-gray-900/30 border border-gray-600 rounded-lg p-4">
-                                    <h5 className="font-medium text-yellow-400 mb-2">💾 Downloadable ZIP</h5>
-                                    <p className="text-gray-400 text-sm">Ready-to-run project package</p>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <button
-                            onClick={generateCompleteProject}
-                            className="bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white px-8 py-4 rounded-lg font-medium transition-all duration-200 transform hover:scale-105"
-                        >
-                            🚀 Generate Complete Project
-                        </button>
-                    </div>
-                )}
-
-                {isGenerating && (
-                    <div className="text-center">
-                        <div className="mb-8">
-                            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-green-500 mx-auto mb-4"></div>
-                            <h3 className="text-2xl font-semibold text-white mb-2">Generating Your Complete Project</h3>
-                            <p className="text-gray-400">{generationStep}</p>
-                        </div>
-                        
-                        <div className="bg-gray-900/50 border border-gray-600 rounded-lg p-6 max-w-md mx-auto">
-                            <p className="text-yellow-400 font-medium mb-2">⏳ This may take 2-5 minutes</p>
-                            <p className="text-gray-300 text-sm">Our AI agents are creating your complete project with all necessary files and documentation.</p>
-                        </div>
-                    </div>
-                )}
-
-                {error && (
-                    <div className="text-center">
-                        <div className="bg-red-900/20 border border-red-600 rounded-lg p-6 mb-6">
-                            <h3 className="text-xl font-semibold text-red-400 mb-2">Generation Failed</h3>
-                            <p className="text-red-300">{error}</p>
-                        </div>
-                        
-                        <div className="space-x-4">
-                            <button
-                                onClick={generateCompleteProject}
-                                className="bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200"
-                            >
-                                Try Again
-                            </button>
-                            <button
-                                onClick={onBack}
-                                className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200"
-                            >
-                                Go Back
-                            </button>
-                        </div>
-                    </div>
-                )}
-
-                {projectFiles && downloadUrl && (
-                    <div className="text-center">
-                        <div className="mb-8">
-                            <div className="text-green-500 text-6xl mb-4">✅</div>
-                            <h3 className="text-2xl font-semibold text-white mb-2">Project Generated Successfully!</h3>
-                            <p className="text-gray-400 mb-6">Your complete project is ready for download.</p>
-                        </div>
-                        
-                        <div className="space-y-4">
-                            <button
-                                onClick={downloadProject}
-                                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 mr-4"
-                            >
-                                💾 Download Project ZIP
-                            </button>
-                            
-                            <button
-                                onClick={onBack}
-                                className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200"
-                            >
-                                Generate Another Project
-                            </button>
-                        </div>
-                        
-                        <div className="mt-8 bg-gray-900/50 border border-gray-600 rounded-lg p-6 text-left max-w-2xl mx-auto">
-                            <h4 className="font-medium text-white mb-4">📋 Project Contents Preview:</h4>
-                            <div className="text-sm text-gray-400 space-y-2">
-                                <p>• Complete source code files</p>
-                                <p>• README.md with setup instructions</p>
-                                <p>• Package configuration files</p>
-                                <p>• Documentation and examples</p>
-                                <p>• Ready-to-run project structure</p>
-                            </div>
-                        </div>
-                    </div>
-                )}
-            </div>
-        </div>
-    );
-};
-
 // Main App Screen Component
 const AppScreen = ({ user, onLogout }) => {
     const [currentView, setCurrentView] = useState('welcome');
@@ -3197,27 +2993,16 @@ const AppScreen = ({ user, onLogout }) => {
                                 />
                             </div>
                             
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <button
-                                    onClick={startGameFlow}
-                                    disabled={!query.trim()}
-                                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed text-white py-4 rounded-lg font-medium transition-all duration-200 transform hover:scale-105"
-                                >
-                                    🎮 Start Gamified Project Generation
-                                </button>
-                                
-                                <button
-                                    onClick={() => setCurrentView('completeProject')}
-                                    disabled={!query.trim()}
-                                    className="bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed text-white py-4 rounded-lg font-medium transition-all duration-200 transform hover:scale-105"
-                                >
-                                    🚀 Generate Complete Project
-                                </button>
-                            </div>
+                            <button
+                                onClick={startGameFlow}
+                                disabled={!query.trim()}
+                                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed text-white py-4 rounded-lg font-medium transition-all duration-200 transform hover:scale-105"
+                            >
+                                🎮 Start Gamified Project Generation
+                            </button>
                             
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-center text-gray-400 text-sm">
+                            <div className="text-center text-gray-400 text-sm">
                                 <p>Answer 7 fun questions to get a perfectly tailored project idea!</p>
-                                <p>Get a full project with code, documentation, and downloadable files!</p>
                             </div>
                         </div>
                         
@@ -3325,18 +3110,6 @@ const AppScreen = ({ user, onLogout }) => {
                     <AdminConsole
                         user={user}
                         onBack={() => setCurrentView('welcome')}
-                    />
-                )}
-
-                {currentView === 'completeProject' && (
-                    <CompleteProjectGenerator
-                        query={query}
-                        user={user}
-                        onBack={() => setCurrentView('welcome')}
-                        onComplete={(projectData) => {
-                            setGeneratedIdea(projectData);
-                            setCurrentView('result');
-                        }}
                     />
                 )}
             </main>

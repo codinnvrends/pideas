@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react"
 import LoginWithParticles from "./LoginWithParticles"
+import { UserProfileIcon, default as UserProfileCard } from "./UserProfileCard"
 
 // Firebase imports
 declare global {
@@ -30,6 +31,24 @@ export default function ProjectIdeaApp() {
   const [projectIdea, setProjectIdea] = useState<ProjectIdea | null>(null)
   const [generating, setGenerating] = useState(false)
   const [lastQuery, setLastQuery] = useState("")
+  const [showWelcome, setShowWelcome] = useState(true)
+  const [showProfileCard, setShowProfileCard] = useState(false)
+
+  // Welcome message fade out effect
+  useEffect(() => {
+    if (user) {
+      const timer = setTimeout(() => {
+        setShowWelcome(false);
+      }, 4000); // 4 seconds before fading out
+      
+      return () => clearTimeout(timer);
+    }
+  }, [user]);
+  
+  // Toggle profile card
+  const toggleProfileCard = () => {
+    setShowProfileCard(prev => !prev);
+  };
 
   // Initialize Firebase Auth listener
   useEffect(() => {
@@ -48,7 +67,13 @@ export default function ProjectIdeaApp() {
         })
         loadUserProfile(user.uid)
       } else {
+        // When user is null (logged out), reset all relevant state
         setUser(null)
+        setShowProfileCard(false)
+        setProjectIdea(null)
+        setQuery("")
+        setLastQuery("")
+        setShowWelcome(true) // Reset welcome message for next login
       }
       setLoading(false)
     })
@@ -75,14 +100,24 @@ export default function ProjectIdeaApp() {
 
   const handleLogout = async () => {
     try {
-      const auth = window.firebase.auth()
-      await auth.signOut()
-      setUser(null)
+      // First update state to prepare for logout
+      setShowProfileCard(false)
       setProjectIdea(null)
       setQuery("")
       setLastQuery("")
+      
+      // Add a small delay before actual logout to ensure UI updates complete
+      setTimeout(async () => {
+        try {
+          const auth = window.firebase.auth()
+          await auth.signOut()
+          // User will be set to null by the auth listener
+        } catch (error) {
+          console.error('Logout error:', error)
+        }
+      }, 100)
     } catch (error) {
-      console.error('Logout error:', error)
+      console.error('Logout preparation error:', error)
     }
   }
 
@@ -146,14 +181,41 @@ export default function ProjectIdeaApp() {
       <header className="bg-black/50 backdrop-blur-sm border-b border-gray-800">
         <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-white">Project Idea Generator</h1>
-          <div className="flex items-center gap-4">
-            <span className="text-gray-300">Welcome, {user.displayName}!</span>
-            <button
-              onClick={handleLogout}
-              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md transition-colors"
+          <div className="flex items-center gap-4 relative">
+            {/* Welcome message with fade out animation */}
+            <div 
+              className={`transition-all duration-1000 ease-in-out ${
+                showWelcome 
+                  ? 'opacity-100 translate-x-0' 
+                  : 'opacity-0 translate-x-5 absolute'
+              }`}
             >
-              Logout
-            </button>
+              <span className="text-gray-300">Welcome, {user.displayName}!</span>
+            </div>
+            
+            {/* User profile icon that appears after welcome message fades */}
+            <div 
+              className={`transition-all duration-500 ease-in-out ${
+                !showWelcome 
+                  ? 'opacity-100 translate-x-0' 
+                  : 'opacity-0 -translate-x-5 absolute'
+              }`}
+            >
+              <UserProfileIcon 
+                onClick={toggleProfileCard} 
+                isActive={showProfileCard} 
+              />
+            </div>
+            
+            {/* User profile card */}
+            {user && (
+              <UserProfileCard 
+                user={user} 
+                onLogout={handleLogout} 
+                isVisible={showProfileCard}
+                onClose={() => setShowProfileCard(false)}
+              />
+            )}
           </div>
         </div>
       </header>

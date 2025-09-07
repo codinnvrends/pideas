@@ -465,7 +465,7 @@ export const generateIdea = onCall({maxInstances: 5, timeoutSeconds: 300}, async
         plugins: [googleAI({
           apiKey: apiKey
         })],
-      model: googleAI.model('gemini-2.5-flash'),
+      model: googleAI.model('gemini-2.5-pro'),
       });
       
       const { text } = await ai.generate(contextPrompt);
@@ -914,7 +914,7 @@ Return the complete modified project idea:`;
     try {
       // Generate modified idea using Genkit
       const llmResponse = await ai.generate({
-        model: 'googleai/gemini-2.5-flash',
+        model: 'googleai/gemini-2.5-pro',
         prompt: modificationSystemPrompt,
         config: {
           temperature: 0.7,

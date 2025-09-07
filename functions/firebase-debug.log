@@ -1,0 +1,85 @@
+[debug] [2025-09-07T11:15:05.688Z] ----------------------------------------------------------------------
+[debug] [2025-09-07T11:15:05.691Z] Command:       /home/atharva/.nvm/versions/node/v20.19.4/bin/node /home/atharva/.nvm/versions/node/v20.19.4/bin/firebase functions:shell
+[debug] [2025-09-07T11:15:05.691Z] CLI Version:   14.15.1
+[debug] [2025-09-07T11:15:05.691Z] Platform:      linux
+[debug] [2025-09-07T11:15:05.691Z] Node Version:  v20.19.4
+[debug] [2025-09-07T11:15:05.691Z] Time:          Sun Sep 07 2025 11:15:05 GMT+0000 (Coordinated Universal Time)
+[debug] [2025-09-07T11:15:05.692Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-09-07T11:15:05.693Z] >>> [apiv2][query] GET https://firebase-public.firebaseio.com/cli.json [none]
+[debug] [2025-09-07T11:15:05.971Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-09-07T11:15:05.971Z] > authorizing via signed-in user (atharvaa099@gmail.com)
+[debug] [2025-09-07T11:15:05.972Z] [iam] checking project pideas-76f25 for permissions ["firebase.projects.get"]
+[debug] [2025-09-07T11:15:05.972Z] Checked if tokens are valid: false, expires at: 1756898727190
+[debug] [2025-09-07T11:15:05.973Z] Checked if tokens are valid: false, expires at: 1756898727190
+[debug] [2025-09-07T11:15:05.973Z] > refreshing access token with scopes: []
+[debug] [2025-09-07T11:15:05.977Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-09-07T11:15:05.978Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-09-07T11:15:06.189Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-09-07T11:15:06.190Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-09-07T11:15:06.199Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/pideas-76f25:testIamPermissions [none]
+[debug] [2025-09-07T11:15:06.199Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/pideas-76f25:testIamPermissions x-goog-quota-user=projects/pideas-76f25
+[debug] [2025-09-07T11:15:06.199Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/pideas-76f25:testIamPermissions {"permissions":["firebase.projects.get"]}
+[debug] [2025-09-07T11:15:06.608Z] <<< [apiv2][status] GET https://firebase-public.firebaseio.com/cli.json 200
+[debug] [2025-09-07T11:15:06.608Z] <<< [apiv2][body] GET https://firebase-public.firebaseio.com/cli.json {"cloudBuildErrorAfter":1594252800000,"cloudBuildWarnAfter":1590019200000,"defaultNode10After":1594252800000,"minVersion":"3.0.5","node8DeploysDisabledAfter":1613390400000,"node8RuntimeDisabledAfter":1615809600000,"node8WarnAfter":1600128000000}
+[debug] [2025-09-07T11:15:07.943Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/pideas-76f25:testIamPermissions 200
+[debug] [2025-09-07T11:15:07.944Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/pideas-76f25:testIamPermissions {"permissions":["firebase.projects.get"]}
+[debug] [2025-09-07T11:15:07.948Z] [functions] Functions Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2025-09-07T11:15:07.986Z] defaultcredentials: writing to file /home/atharva/.config/firebase/atharvaa099_gmail_com_application_default_credentials.json
+[debug] [2025-09-07T11:15:07.988Z] DEBUG: Setting GAC to /home/atharva/.config/firebase/atharvaa099_gmail_com_application_default_credentials.json
+[debug] [2025-09-07T11:15:07.989Z] Checked if tokens are valid: true, expires at: 1757247305190
+[debug] [2025-09-07T11:15:07.989Z] Checked if tokens are valid: true, expires at: 1757247305190
+[debug] [2025-09-07T11:15:07.989Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/pideas-76f25/adminSdkConfig [none]
+[debug] [2025-09-07T11:15:09.158Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/pideas-76f25/adminSdkConfig 200
+[debug] [2025-09-07T11:15:09.159Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/pideas-76f25/adminSdkConfig {"projectId":"pideas-76f25","databaseURL":"https://pideas-76f25-default-rtdb.firebaseio.com","storageBucket":"pideas-76f25.firebasestorage.app"}
+[debug] [2025-09-07T11:15:09.169Z] [functions] Watching "/mnt/c/Users/athar/OneDrive/Documents/GitHub/pideas/functions" for Cloud Functions...
+[debug] [2025-09-07T11:15:09.189Z] Validating nodejs source
+[debug] [2025-09-07T11:15:10.102Z] > [functions] package.json contents: {
+  "main": "lib/index.js",
+  "scripts": {
+    "genkit:start": "genkit start -- tsx --watch src/genkit-sample.ts",
+    "lint": "eslint --ext .js,.ts .",
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "serve": "npm run build && firebase emulators:start --only functions",
+    "shell": "npm run build && firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "name": "functions",
+  "engines": {
+    "node": "20"
+  },
+  "dependencies": {
+    "@genkit-ai/firebase": "^1.14.1",
+    "@genkit-ai/googleai": "^1.14.1",
+    "express": "^5.1.0",
+    "firebase-admin": "^12.6.0",
+    "firebase-functions": "^6.0.1",
+    "genkit": "^1.14.1"
+  },
+  "devDependencies": {
+    "@types/firebase": "^2.4.32",
+    "@types/node": "^24.0.13",
+    "@types/react": "^19.1.9",
+    "@types/react-dom": "^19.1.7",
+    "@typescript-eslint/eslint-plugin": "^5.12.0",
+    "@typescript-eslint/parser": "^5.12.0",
+    "eslint": "^8.9.0",
+    "eslint-config-google": "^0.14.0",
+    "eslint-plugin-import": "^2.25.4",
+    "firebase-functions-test": "^3.1.0",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3"
+  },
+  "private": true
+}
+[debug] [2025-09-07T11:15:10.104Z] Building nodejs source
+[debug] [2025-09-07T11:15:10.105Z] Failed to find version of module node: reached end of search path /mnt/c/Users/athar/OneDrive/Documents/GitHub/pideas/functions/node_modules
+[info] ✔  functions: Using node@20 from host. 
+[info] i  functions: Loaded environment variables from .env. 
+[debug] [2025-09-07T11:15:10.120Z] Could not find functions.yaml. Must use http discovery
+[debug] [2025-09-07T11:15:10.134Z] Found firebase-functions binary at '/mnt/c/Users/athar/OneDrive/Documents/GitHub/pideas/functions/node_modules/.bin/firebase-functions'
+[info] Serving at port 8661
+

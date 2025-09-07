@@ -16,6 +16,10 @@ import * as admin from "firebase-admin";
 import { genkit } from 'genkit';
 import { googleAI } from '@genkit-ai/googleai';
 
+// Import BYOK functions
+import { getUserApiKey } from './byok/apiKeyManager';
+import * as byokFunctions from './byok/functions';
+
 // Initialize Firebase admin
 admin.initializeApp();
 
@@ -96,6 +100,7 @@ interface IdeaGenerationRequest {
   studentProfile?: StudentProfile;
   gameResponses?: any[];
   discoveryMode?: boolean;
+  userId?: string;
 }
 
 interface HistorySaveRequest {
@@ -412,7 +417,7 @@ export const gameStepsGet = onCall({maxInstances: 5}, async (request: any) => {
  */
 export const generateIdea = onCall({maxInstances: 5, timeoutSeconds: 300}, async (request: any) => {
   try {
-    const { query, prompt, studentProfile, gameResponses, discoveryMode }: IdeaGenerationRequest = request.data;
+    const { query, prompt, studentProfile, gameResponses, discoveryMode, userId }: IdeaGenerationRequest = request.data;
     
     // Accept either query or prompt parameter for compatibility
     const inputQuery = query || prompt;
@@ -420,8 +425,12 @@ export const generateIdea = onCall({maxInstances: 5, timeoutSeconds: 300}, async
     if (!inputQuery || typeof inputQuery !== "string") {
       throw new Error("Invalid query/prompt parameter");
     }
+
+    if (!userId) {
+      throw new Error("User ID is required for BYOK implementation");
+    }
     
-    logger.info("Received request with:", { query, prompt, hasStudentProfile: !!studentProfile, discoveryMode });
+    logger.info("Received request with:", { query, prompt, hasStudentProfile: !!studentProfile, discoveryMode, userId });
 
     // Validate student profile structure
     const profile: StudentProfile = studentProfile || {
@@ -434,7 +443,7 @@ export const generateIdea = onCall({maxInstances: 5, timeoutSeconds: 300}, async
       projectDuration: '1-2 months'
     };
 
-    logger.info("Generating idea for:", { inputQuery, studentProfile: profile, discoveryMode });
+    logger.info("Generating idea for:", { inputQuery, studentProfile: profile, discoveryMode, userId });
 
     // Check if this is a discovery mode request (multiple brief ideas)
     const isDiscoveryRequest = discoveryMode || inputQuery.includes('Generate 6-8') || inputQuery.includes('diverse project ideas');
@@ -451,19 +460,18 @@ export const generateIdea = onCall({maxInstances: 5, timeoutSeconds: 300}, async
     
     logger.info("Using prompt type:", isDiscoveryRequest ? 'Discovery (Multiple Ideas)' : 'Comprehensive (Single Plan)');
     
-    // Using the gemini model with genkit
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      logger.error("Missing Gemini API key in environment variables");
-      throw new Error("Missing API key configuration. Please set GEMINI_API_KEY in environment variables.");
+    // BYOK: Get user's API key instead of system key
+    const userApiKey = await getUserApiKey(userId);
+    if (!userApiKey) {
+      throw new Error("No API key found. Please add your Gemini API key in settings to generate project ideas.");
     }
     
-    logger.info("Using Gemini API with configured key");
+    logger.info("Using user's Gemini API key for generation");
     
     try {
       const ai = genkit({
         plugins: [googleAI({
-          apiKey: apiKey
+          apiKey: userApiKey
         })],
       model: googleAI.model('gemini-2.5-pro'),
       });
@@ -1017,3 +1025,10 @@ export const bulkUserOperations = onCall({maxInstances: 3}, async (request: any)
     throw new Error(`Failed to perform bulk operations: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 });
+
+// Export BYOK functions
+export const setUserApiKey = byokFunctions.setUserApiKey;
+export const validateApiKey = byokFunctions.validateApiKey;
+export const getUserApiKeyStatus = byokFunctions.getUserApiKeyStatus;
+export const removeUserApiKey = byokFunctions.removeUserApiKey;
+export const revalidateUserApiKey = byokFunctions.revalidateUserApiKey;

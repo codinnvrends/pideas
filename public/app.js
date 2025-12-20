@@ -1,4 +1,5 @@
-const { useState, useEffect, useRef, useCallback, createPortal } = React;
+const { useState, useEffect, useRef, useCallback } = React;
+const { createPortal } = ReactDOM;
 
 // Add CSS animations and tooltip styles
 const styleSheet = document.createElement("style");
@@ -92,82 +93,82 @@ document.head.appendChild(styleSheet);
 // SVG Icon Components
 const HistoryIcon = ({ size = 20, className = "" }) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-        <circle cx="12" cy="12" r="10"/>
-        <polyline points="12,6 12,12 16,14"/>
+        <circle cx="12" cy="12" r="10" />
+        <polyline points="12,6 12,12 16,14" />
     </svg>
 );
 
 const AdminIcon = ({ size = 20, className = "" }) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-        <circle cx="12" cy="12" r="3"/>
-        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        <circle cx="12" cy="12" r="3" />
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
     </svg>
 );
 
 const LogoutIcon = ({ size = 20, className = "" }) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-        <polyline points="16,17 21,12 16,7"/>
-        <line x1="21" y1="12" x2="9" y2="12"/>
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+        <polyline points="16,17 21,12 16,7" />
+        <line x1="21" y1="12" x2="9" y2="12" />
     </svg>
 );
 
 const IdeaIcon = ({ size = 20, className = "" }) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-        <path d="M9 12l2 2 4-4"/>
-        <path d="M21 12c.552 0 1-.448 1-1s-.448-1-1-1-1 .448-1 1 .448 1 1 1z"/>
-        <path d="M3 12c.552 0 1-.448 1-1s-.448-1-1-1-1 .448-1 1 .448 1 1 1z"/>
-        <path d="M12 21c.552 0 1-.448 1-1s-.448-1-1-1-1 .448-1 1 .448 1 1 1z"/>
-        <path d="M12 3c.552 0 1-.448 1-1s-.448-1-1-1-1 .448-1 1 .448 1 1 1z"/>
-        <circle cx="12" cy="12" r="7"/>
-        <path d="M12 8v8"/>
-        <path d="M8 12h8"/>
+        <path d="M9 12l2 2 4-4" />
+        <path d="M21 12c.552 0 1-.448 1-1s-.448-1-1-1-1 .448-1 1 .448 1 1 1z" />
+        <path d="M3 12c.552 0 1-.448 1-1s-.448-1-1-1-1 .448-1 1 .448 1 1 1z" />
+        <path d="M12 21c.552 0 1-.448 1-1s-.448-1-1-1-1 .448-1 1 .448 1 1 1z" />
+        <path d="M12 3c.552 0 1-.448 1-1s-.448-1-1-1-1 .448-1 1 .448 1 1 1z" />
+        <circle cx="12" cy="12" r="7" />
+        <path d="M12 8v8" />
+        <path d="M8 12h8" />
     </svg>
 );
 
 const EditIcon = ({ size = 20, className = "" }) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
     </svg>
 );
 
 const ResetIcon = ({ size = 20, className = "" }) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-        <polyline points="23,4 23,10 17,10"/>
-        <polyline points="1,20 1,14 7,14"/>
-        <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+        <polyline points="23,4 23,10 17,10" />
+        <polyline points="1,20 1,14 7,14" />
+        <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15" />
     </svg>
 );
 
 const CloseIcon = ({ size = 20, className = "" }) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-        <line x1="18" y1="6" x2="6" y2="18"/>
-        <line x1="6" y1="6" x2="18" y2="18"/>
+        <line x1="18" y1="6" x2="6" y2="18" />
+        <line x1="6" y1="6" x2="18" y2="18" />
     </svg>
 );
 
 // IconButton Component - Reusable button with icon and tooltip
-const IconButton = ({ 
+const IconButton = ({
     iconType,
-    tooltip, 
-    onClick, 
-    className = "", 
+    tooltip,
+    onClick,
+    className = "",
     disabled = false,
     variant = "default" // "default", "primary", "admin"
 }) => {
     const baseClasses = "relative inline-flex items-center justify-center p-2 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 tooltip";
-    
+
     const variantClasses = {
         default: "text-gray-400 hover:text-white hover:bg-gray-800/50",
         primary: "bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white",
         admin: "bg-purple-600 hover:bg-purple-700 text-white"
     };
-    
+
     const disabledClasses = disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer";
-    
+
     const getIcon = () => {
-        switch(iconType) {
+        switch (iconType) {
             case 'history': return <HistoryIcon size={20} />;
             case 'admin': return <AdminIcon size={20} />;
             case 'logout': return <LogoutIcon size={20} />;
@@ -178,7 +179,7 @@ const IconButton = ({
             default: return <div className="w-5 h-5" />;
         }
     };
-    
+
     return (
         <button
             onClick={disabled ? undefined : onClick}
@@ -204,12 +205,12 @@ const ParticleSystem = () => {
     useEffect(() => {
         const canvas = canvasRef.current;
         const ctx = canvas.getContext('2d');
-        
+
         const resizeCanvas = () => {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
         };
-        
+
         resizeCanvas();
         window.addEventListener('resize', resizeCanvas);
 
@@ -217,7 +218,7 @@ const ParticleSystem = () => {
         const initParticles = () => {
             particlesRef.current = [];
             const particleCount = Math.min(100, Math.floor((canvas.width * canvas.height) / 10000));
-            
+
             for (let i = 0; i < particleCount; i++) {
                 particlesRef.current.push({
                     x: Math.random() * canvas.width,
@@ -243,44 +244,44 @@ const ParticleSystem = () => {
         // Animation loop
         const animate = () => {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
+
             // Draw particles
             particlesRef.current.forEach((particle, index) => {
                 // Update position
                 particle.x += particle.vx;
                 particle.y += particle.vy;
-                
+
                 // Mouse interaction
                 const dx = mouseRef.current.x - particle.x;
                 const dy = mouseRef.current.y - particle.y;
                 const distance = Math.sqrt(dx * dx + dy * dy);
-                
+
                 if (distance < 100) {
                     const force = (100 - distance) / 100;
                     particle.vx += dx * force * 0.001;
                     particle.vy += dy * force * 0.001;
                 }
-                
+
                 // Boundary check
                 if (particle.x < 0 || particle.x > canvas.width) particle.vx *= -1;
                 if (particle.y < 0 || particle.y > canvas.height) particle.vy *= -1;
-                
+
                 // Keep particles in bounds
                 particle.x = Math.max(0, Math.min(canvas.width, particle.x));
                 particle.y = Math.max(0, Math.min(canvas.height, particle.y));
-                
+
                 // Draw particle
                 ctx.beginPath();
                 ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
                 ctx.fillStyle = `rgba(255, 255, 255, ${particle.opacity})`;
                 ctx.fill();
-                
+
                 // Draw connections
                 particlesRef.current.slice(index + 1).forEach(otherParticle => {
                     const dx = particle.x - otherParticle.x;
                     const dy = particle.y - otherParticle.y;
                     const distance = Math.sqrt(dx * dx + dy * dy);
-                    
+
                     if (distance < 100) {
                         ctx.beginPath();
                         ctx.moveTo(particle.x, particle.y);
@@ -290,7 +291,7 @@ const ParticleSystem = () => {
                     }
                 });
             });
-            
+
             animationRef.current = requestAnimationFrame(animate);
         };
 
@@ -316,7 +317,7 @@ const LoginScreen = ({ onLogin, onDiscoveryPath, isLoading }) => {
             <div className="fixed inset-0 z-0">
                 <ParticleSystem />
             </div>
-            
+
             {/* Main content container with clear vertical separation */}
             <div className="relative z-10 min-h-screen flex flex-col">
                 {/* Top header with proper height for logo */}
@@ -326,81 +327,81 @@ const LoginScreen = ({ onLogin, onDiscoveryPath, isLoading }) => {
                         <InteractiveLogo />
                     </div>
                 </header>
-                
+
                 {/* Content area with cards - adjusted padding for better spacing */}
                 <main className="flex-1 flex items-center justify-center px-4 pb-10 pt-0">
                     <div className="max-w-4xl mx-auto w-full">
                         <h2 className="text-2xl font-bold text-white text-center mb-8">
                             Choose Your Path to Project Success
                         </h2>
-                        
+
                         <div className="grid md:grid-cols-2 gap-6">
-                        {/* Existing Users Card */}
-                        <div className="bg-gray-900/80 border border-gray-700/50 rounded-xl p-6 hover:border-gray-600/70 transition-all duration-300 hover:bg-gray-900/90">
-                            <div className="text-center">
-                                <div className="w-16 h-16 bg-gray-800/60 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <span className="text-2xl">🚀</span>
+                            {/* Existing Users Card */}
+                            <div className="bg-gray-900/80 border border-gray-700/50 rounded-xl p-6 hover:border-gray-600/70 transition-all duration-300 hover:bg-gray-900/90">
+                                <div className="text-center">
+                                    <div className="w-16 h-16 bg-gray-800/60 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <span className="text-2xl">🚀</span>
+                                    </div>
+                                    <h3 className="text-xl font-semibold text-white mb-3">
+                                        I Know What I Want
+                                    </h3>
+                                    <p className="text-gray-300 text-sm mb-6 leading-relaxed">
+                                        Perfect for students who already have project ideas or know their field of interest.
+                                        Jump straight into generating detailed project plans.
+                                    </p>
+                                    <button
+                                        onClick={onLogin}
+                                        disabled={isLoading}
+                                        className="w-full bg-white text-gray-800 px-6 py-3 rounded-lg font-medium hover:bg-gray-100 transition-colors duration-200 flex items-center justify-center gap-3 disabled:opacity-50"
+                                    >
+                                        <svg className="w-5 h-5" viewBox="0 0 24 24">
+                                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                                        </svg>
+                                        {isLoading ? 'Signing in...' : 'Quick Start'}
+                                    </button>
                                 </div>
-                                <h3 className="text-xl font-semibold text-white mb-3">
-                                    I Know What I Want
-                                </h3>
-                                <p className="text-gray-300 text-sm mb-6 leading-relaxed">
-                                    Perfect for students who already have project ideas or know their field of interest. 
-                                    Jump straight into generating detailed project plans.
-                                </p>
-                                <button
-                                    onClick={onLogin}
-                                    disabled={isLoading}
-                                    className="w-full bg-white text-gray-800 px-6 py-3 rounded-lg font-medium hover:bg-gray-100 transition-colors duration-200 flex items-center justify-center gap-3 disabled:opacity-50"
-                                >
-                                    <svg className="w-5 h-5" viewBox="0 0 24 24">
-                                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                                    </svg>
-                                    {isLoading ? 'Signing in...' : 'Quick Start'}
-                                </button>
+                            </div>
+
+                            {/* Discovery Path Card */}
+                            <div className="bg-gray-900/80 border border-gray-700/50 rounded-xl p-6 hover:border-gray-600/70 transition-all duration-300 hover:bg-gray-900/90">
+                                <div className="text-center">
+                                    <div className="w-16 h-16 bg-gray-800/60 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <span className="text-2xl">🎯</span>
+                                    </div>
+                                    <h3 className="text-xl font-semibold text-white mb-3">
+                                        Help Me Discover
+                                    </h3>
+                                    <p className="text-gray-300 text-sm mb-6 leading-relaxed">
+                                        Not sure what to build? Take our interactive quiz to discover personalized
+                                        project ideas based on your skills, interests, and goals.
+                                    </p>
+                                    <button
+                                        onClick={() => {
+                                            // Set discovery mode flag and then login
+                                            sessionStorage.setItem('startDiscoveryAfterLogin', 'true');
+                                            onLogin();
+                                        }}
+                                        disabled={isLoading}
+                                        className="w-full bg-gray-800 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center gap-3 border border-gray-700/50 disabled:opacity-50"
+                                    >
+                                        <svg className="w-5 h-5" viewBox="0 0 24 24">
+                                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                                        </svg>
+                                        {isLoading ? 'Signing in...' : 'Start Discovery'}
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                        
-                        {/* Discovery Path Card */}
-                        <div className="bg-gray-900/80 border border-gray-700/50 rounded-xl p-6 hover:border-gray-600/70 transition-all duration-300 hover:bg-gray-900/90">
-                            <div className="text-center">
-                                <div className="w-16 h-16 bg-gray-800/60 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <span className="text-2xl">🎯</span>
-                                </div>
-                                <h3 className="text-xl font-semibold text-white mb-3">
-                                    Help Me Discover
-                                </h3>
-                                <p className="text-gray-300 text-sm mb-6 leading-relaxed">
-                                    Not sure what to build? Take our interactive quiz to discover personalized 
-                                    project ideas based on your skills, interests, and goals.
-                                </p>
-                                <button
-                                    onClick={() => {
-                                        // Set discovery mode flag and then login
-                                        sessionStorage.setItem('startDiscoveryAfterLogin', 'true');
-                                        onLogin();
-                                    }}
-                                    disabled={isLoading}
-                                    className="w-full bg-gray-800 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center gap-3 border border-gray-700/50 disabled:opacity-50"
-                                >
-                                    <svg className="w-5 h-5" viewBox="0 0 24 24">
-                                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                                    </svg>
-                                    {isLoading ? 'Signing in...' : 'Start Discovery'}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <p className="text-center text-gray-400 text-sm mt-6">
-                        Both paths lead to the same powerful project generation system
-                    </p>
+
+                        <p className="text-center text-gray-400 text-sm mt-6">
+                            Both paths lead to the same powerful project generation system
+                        </p>
                     </div>
                 </main>
             </div>
@@ -428,7 +429,7 @@ const DiscoveryOnboarding = ({ onComplete, user }) => {
     const [badges, setBadges] = useState([]);
     const [isTransitioning, setIsTransitioning] = useState(false);
     const [stepKey, setStepKey] = useState(0); // Force re-render of DiscoveryStep
-    
+
     const discoverySteps = [
         {
             id: 'stream',
@@ -612,24 +613,24 @@ const DiscoveryOnboarding = ({ onComplete, user }) => {
             ]
         }
     ];
-    
+
     const handleStepComplete = (stepData) => {
         console.log('handleStepComplete called with:', stepData, 'currentStep:', currentStep);
-        
+
         // Prevent multiple rapid calls
         if (isTransitioning) {
             console.log('Already transitioning, ignoring duplicate call');
             return;
         }
-        
+
         setIsTransitioning(true);
-        
+
         const newProfile = { ...userProfile };
         const step = discoverySteps[currentStep];
-        
+
         if (step.type === 'single-choice') {
             // Map each single-choice field to the correct profile property
-            switch(step.id) {
+            switch (step.id) {
                 case 'stream':
                     newProfile.stream = stepData.value;
                     break;
@@ -666,7 +667,7 @@ const DiscoveryOnboarding = ({ onComplete, user }) => {
             }
         } else if (step.type === 'multi-choice') {
             // Map each multi-choice field to the correct profile property
-            switch(step.id) {
+            switch (step.id) {
                 case 'interests':
                     newProfile.interests = stepData.values;
                     break;
@@ -683,9 +684,9 @@ const DiscoveryOnboarding = ({ onComplete, user }) => {
         } else if (step.type === 'resource-form') {
             newProfile.resources = { ...newProfile.resources, ...stepData };
         }
-        
+
         setUserProfile(newProfile);
-        
+
         // Award badges
         const newBadges = [...badges];
         if (currentStep === 0) newBadges.push('🎓 Academic Explorer');
@@ -694,12 +695,12 @@ const DiscoveryOnboarding = ({ onComplete, user }) => {
         if (currentStep === 3) newBadges.push('⏰ Resource Planner');
         if (currentStep === 4) newBadges.push('🎯 Goal Setter');
         setBadges(newBadges);
-        
+
         const newProgress = ((currentStep + 1) / discoverySteps.length) * 100;
         setProgress(newProgress);
-        
+
         console.log('Step completed:', currentStep, 'Moving to next step');
-        
+
         if (currentStep < discoverySteps.length - 1) {
             // Move to next step after a short delay
             setTimeout(() => {
@@ -721,7 +722,7 @@ const DiscoveryOnboarding = ({ onComplete, user }) => {
             }, 1500);
         }
     };
-    
+
     return (
         <div className="min-h-screen bg-black flex flex-col">
             {/* Progress Header */}
@@ -733,15 +734,15 @@ const DiscoveryOnboarding = ({ onComplete, user }) => {
                             Step {currentStep + 1} of {discoverySteps.length}
                         </div>
                     </div>
-                    
+
                     {/* Progress Bar */}
                     <div className="w-full bg-gray-800 rounded-full h-2">
-                        <div 
+                        <div
                             className="bg-gray-600 h-2 rounded-full transition-all duration-500 ease-out"
                             style={{ width: `${progress}%` }}
                         ></div>
                     </div>
-                    
+
                     {/* Badges */}
                     {badges.length > 0 && (
                         <div className="flex gap-2 mt-3">
@@ -754,10 +755,10 @@ const DiscoveryOnboarding = ({ onComplete, user }) => {
                     )}
                 </div>
             </div>
-            
+
             {/* Main Content */}
             <div className="flex-1 flex items-center justify-center p-4">
-                <DiscoveryStep 
+                <DiscoveryStep
                     key={`step-${currentStep}-${stepKey}`} // Force re-render when step changes
                     step={discoverySteps[currentStep]}
                     onComplete={handleStepComplete}
@@ -777,7 +778,7 @@ const DiscoveryStep = ({ step, onComplete, stepNumber, totalSteps, isTransitioni
     const [formData, setFormData] = useState({});
     const [showEncouragement, setShowEncouragement] = useState(false);
     const [hasCompleted, setHasCompleted] = useState(false);
-    
+
     // Reset state when step changes
     useEffect(() => {
         setSelectedValue('');
@@ -787,68 +788,68 @@ const DiscoveryStep = ({ step, onComplete, stepNumber, totalSteps, isTransitioni
         setHasCompleted(false);
         console.log('DiscoveryStep mounted/updated for step:', stepNumber, 'step data:', step);
     }, [step.id, stepNumber]);
-    
+
     const handleSingleChoice = (value) => {
         if (hasCompleted || isTransitioning) {
             console.log('Choice already made or transitioning, ignoring click');
             return;
         }
-        
+
         console.log('Single choice selected:', value);
         setSelectedValue(value);
         setShowEncouragement(true);
         setHasCompleted(true);
-        
+
         // Show encouragement message then complete
         setTimeout(() => {
             console.log('Completing step with value:', value);
             onComplete({ value });
         }, 1200);
     };
-    
+
     const handleMultiChoice = (value) => {
         const newValues = selectedValues.includes(value)
             ? selectedValues.filter(v => v !== value)
             : [...selectedValues, value];
         setSelectedValues(newValues);
     };
-    
+
     const handleMultiChoiceSubmit = () => {
         if (hasCompleted || isTransitioning) {
             console.log('Already completed or transitioning, ignoring submit');
             return;
         }
-        
+
         if (selectedValues.length > 0) {
             console.log('Multi choice submitted:', selectedValues);
             setShowEncouragement(true);
             setHasCompleted(true);
-            
+
             setTimeout(() => {
                 console.log('Completing step with values:', selectedValues);
                 onComplete({ values: selectedValues });
             }, 1200);
         }
     };
-    
+
     const handleFormSubmit = () => {
         if (hasCompleted || isTransitioning) {
             console.log('Already completed or transitioning, ignoring form submit');
             return;
         }
-        
+
         if (Object.keys(formData).length === step.fields.length) {
             console.log('Form submitted:', formData);
             setShowEncouragement(true);
             setHasCompleted(true);
-            
+
             setTimeout(() => {
                 console.log('Completing step with form data:', formData);
                 onComplete(formData);
             }, 1200);
         }
     };
-    
+
     const encouragementMessages = [
         "Great choice! 🌟",
         "Excellent! 🎉",
@@ -856,7 +857,7 @@ const DiscoveryStep = ({ step, onComplete, stepNumber, totalSteps, isTransitioni
         "Awesome! 🚀",
         "Fantastic! 💫"
     ];
-    
+
     return (
         <div className="max-w-2xl mx-auto">
             {showEncouragement ? (
@@ -875,7 +876,7 @@ const DiscoveryStep = ({ step, onComplete, stepNumber, totalSteps, isTransitioni
                             <span className="text-blue-400 font-medium">Step {stepNumber} of {totalSteps}</span>
                         </div>
                         <div className="w-full bg-gray-700 rounded-full h-2">
-                            <div 
+                            <div
                                 className="bg-blue-500 h-2 rounded-full transition-all duration-300"
                                 style={{ width: `${(stepNumber / totalSteps) * 100}%` }}
                             ></div>
@@ -886,7 +887,7 @@ const DiscoveryStep = ({ step, onComplete, stepNumber, totalSteps, isTransitioni
                     <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6">
                         <h3 className="text-xl font-semibold text-white mb-6">{step.title}</h3>
                         <p className="text-gray-300 mb-6">{step.subtitle}</p>
-                        
+
                         {/* Single Choice Options */}
                         {step.type === 'single-choice' && (
                             <div className="space-y-3">
@@ -894,11 +895,10 @@ const DiscoveryStep = ({ step, onComplete, stepNumber, totalSteps, isTransitioni
                                     <button
                                         key={option.value}
                                         onClick={() => handleSingleChoice(option.value)}
-                                        className={`w-full text-left p-4 rounded-lg border transition-all duration-200 ${
-                                            selectedValue === option.value
-                                                ? 'border-blue-500 bg-blue-500/20 text-blue-300'
-                                                : 'border-gray-600 bg-gray-700/50 text-gray-300 hover:border-gray-500 hover:bg-gray-700'
-                                        }`}
+                                        className={`w-full text-left p-4 rounded-lg border transition-all duration-200 ${selectedValue === option.value
+                                            ? 'border-blue-500 bg-blue-500/20 text-blue-300'
+                                            : 'border-gray-600 bg-gray-700/50 text-gray-300 hover:border-gray-500 hover:bg-gray-700'
+                                            }`}
                                         disabled={showEncouragement}
                                     >
                                         <div className="flex items-center gap-3">
@@ -914,7 +914,7 @@ const DiscoveryStep = ({ step, onComplete, stepNumber, totalSteps, isTransitioni
                                 ))}
                             </div>
                         )}
-                        
+
                         {/* Multi Choice Options */}
                         {step.type === 'multi-choice' && (
                             <>
@@ -923,11 +923,10 @@ const DiscoveryStep = ({ step, onComplete, stepNumber, totalSteps, isTransitioni
                                         <button
                                             key={option.value}
                                             onClick={() => handleMultiChoice(option.value)}
-                                            className={`w-full text-left p-4 rounded-lg border transition-all duration-200 ${
-                                                selectedValues.includes(option.value)
-                                                    ? 'border-blue-500 bg-blue-500/20 text-blue-300'
-                                                    : 'border-gray-600 bg-gray-700/50 text-gray-300 hover:border-gray-500 hover:bg-gray-700'
-                                            }`}
+                                            className={`w-full text-left p-4 rounded-lg border transition-all duration-200 ${selectedValues.includes(option.value)
+                                                ? 'border-blue-500 bg-blue-500/20 text-blue-300'
+                                                : 'border-gray-600 bg-gray-700/50 text-gray-300 hover:border-gray-500 hover:bg-gray-700'
+                                                }`}
                                             disabled={showEncouragement}
                                         >
                                             <div className="flex items-center gap-3">
@@ -946,7 +945,7 @@ const DiscoveryStep = ({ step, onComplete, stepNumber, totalSteps, isTransitioni
                                 </button>
                             </>
                         )}
-                        
+
                         {/* Resource Form */}
                         {step.type === 'resource-form' && (
                             <>
@@ -979,7 +978,7 @@ const DiscoveryStep = ({ step, onComplete, stepNumber, totalSteps, isTransitioni
                                 </button>
                             </>
                         )}
-                        
+
                         {/* Debug info */}
                         <div className="mt-2 text-xs text-gray-500 text-center">
                             Debug: Selected="{selectedValue || selectedValues.join(', ')}", ShowEncouragement={showEncouragement.toString()}, HasCompleted={hasCompleted.toString()}
@@ -996,37 +995,37 @@ const PersonalizedIdeaSelection = ({ userProfile, onIdeaSelect, onBackToDiscover
     const [ideas, setIdeas] = useState([]);
     const [isGenerating, setIsGenerating] = useState(true);
     const [selectedIdea, setSelectedIdea] = useState(null);
-    
+
     useEffect(() => {
         generatePersonalizedIdeas();
     }, []);
-    
+
     const generatePersonalizedIdeas = async (regenerate = false) => {
         setIsGenerating(true);
         console.log('Generating personalized ideas for profile:', userProfile, 'regenerate:', regenerate);
-        
+
         try {
             // Create a detailed prompt based on user profile
             const prompt = createPersonalizedPrompt(userProfile, regenerate);
             console.log('Generated prompt:', prompt);
-            
+
             // Use existing idea generation system
             const generateIdea = firebase.functions().httpsCallable('generateIdea');
             console.log('Calling Firebase function generateIdea...');
-            
+
             // Pass discoveryMode flag to ensure backend uses discovery prompt
-            const result = await generateIdea({ 
-                prompt, 
-                discoveryMode: true 
+            const result = await generateIdea({
+                prompt,
+                discoveryMode: true
             });
             console.log('Firebase function result:', result);
-            
+
             if (result.data && result.data.success) {
                 console.log('Successfully generated ideas, parsing content...');
                 // Parse the generated content into multiple ideas
                 const parsedIdeas = parseMultipleIdeas(result.data.idea);
                 console.log('Parsed ideas:', parsedIdeas);
-                
+
                 if (parsedIdeas && parsedIdeas.length > 0) {
                     setIdeas(parsedIdeas);
                 } else {
@@ -1046,7 +1045,7 @@ const PersonalizedIdeaSelection = ({ userProfile, onIdeaSelect, onBackToDiscover
             setIsGenerating(false);
         }
     };
-    
+
     const createPersonalizedPrompt = (profile, regenerate = false) => {
         // Extract all profile data with fallbacks
         const stream = profile.stream || 'Computer Science';
@@ -1062,7 +1061,7 @@ const PersonalizedIdeaSelection = ({ userProfile, onIdeaSelect, onBackToDiscover
         const projectComplexity = profile.projectComplexity || 'intermediate';
         const priorExperience = profile.priorExperience || 'classroom';
         const industryFocus = profile.industryFocus || 'education';
-        
+
         // Add variety for regeneration
         const varietyPrompts = [
             'Generate 6-8 diverse and creative project ideas',
@@ -1072,7 +1071,7 @@ const PersonalizedIdeaSelection = ({ userProfile, onIdeaSelect, onBackToDiscover
             'Craft 6-8 personalized project recommendations',
             'Build 6-8 tailored project blueprints'
         ];
-        
+
         const focusAreas = [
             'cutting-edge technologies',
             'practical real-world applications',
@@ -1083,15 +1082,15 @@ const PersonalizedIdeaSelection = ({ userProfile, onIdeaSelect, onBackToDiscover
             'social impact initiatives',
             'entrepreneurial ventures'
         ];
-        
-        const basePrompt = regenerate ? 
+
+        const basePrompt = regenerate ?
             varietyPrompts[Math.floor(Math.random() * varietyPrompts.length)] :
             'Generate 6-8 diverse project ideas';
-            
+
         const focusArea = regenerate ?
             focusAreas[Math.floor(Math.random() * focusAreas.length)] :
             'practical applications';
-        
+
         return `${basePrompt} for a ${skillLevel} level student in ${stream}, focusing on ${focusArea}. 
         
         Comprehensive User Profile:
@@ -1127,19 +1126,19 @@ const PersonalizedIdeaSelection = ({ userProfile, onIdeaSelect, onBackToDiscover
         
         Make sure projects are realistic for the user's skill level and time constraints. Focus on projects that align with their interests and learning goals.${regenerate ? ' Avoid common or typical project suggestions - be creative and innovative!' : ''}`;
     };
-    
+
     const parseMultipleIdeas = (generatedContent) => {
         const sections = generatedContent.split('## ').filter(section => section.trim());
         return sections.map((section, index) => {
             const lines = section.split('\n').filter(line => line.trim());
             const title = lines[0]?.trim() || `Project Idea ${index + 1}`;
-            
+
             const description = extractField(lines, 'Description:') || 'Exciting project opportunity';
             const difficulty = extractField(lines, 'Difficulty:') || 'Intermediate';
             const time = extractField(lines, 'Time:') || '4-6 weeks';
             const technologies = extractField(lines, 'Technologies:') || 'Various technologies';
             const learning = extractField(lines, 'You\'ll Learn:') || 'Valuable skills';
-            
+
             return {
                 id: `idea-${index}`,
                 title,
@@ -1152,22 +1151,22 @@ const PersonalizedIdeaSelection = ({ userProfile, onIdeaSelect, onBackToDiscover
             };
         });
     };
-    
+
     const extractField = (lines, fieldName) => {
         const line = lines.find(l => l.includes(fieldName));
         return line ? line.replace(`**${fieldName}**`, '').replace(fieldName, '').trim() : null;
     };
-    
+
     const generatePersonalizedFallbackIdeas = (profile, regenerate = false) => {
         console.log('Generating personalized fallback ideas for:', profile, 'regenerate:', regenerate);
-        
+
         const fieldOfStudy = profile.fieldOfStudy || 'computer-science';
         const skillLevel = profile.skillLevel || 'intermediate';
         const interests = Array.isArray(profile.interests) ? profile.interests : [];
         const timeAvailable = profile.resources?.timeAvailable || '1month';
-        
+
         let fallbackIdeas = [];
-        
+
         // Generate ideas based on field of study
         if (fieldOfStudy === 'computer-science' || fieldOfStudy === 'web-development') {
             fallbackIdeas.push({
@@ -1180,7 +1179,7 @@ const PersonalizedIdeaSelection = ({ userProfile, onIdeaSelect, onBackToDiscover
                 learning: 'Web development fundamentals, responsive design, modern frameworks'
             });
         }
-        
+
         if (fieldOfStudy === 'data-science' || interests.includes('data-analysis')) {
             fallbackIdeas.push({
                 id: 'ds-1',
@@ -1192,7 +1191,7 @@ const PersonalizedIdeaSelection = ({ userProfile, onIdeaSelect, onBackToDiscover
                 learning: 'Data analysis, visualization, statistical insights, dashboard creation'
             });
         }
-        
+
         if (interests.includes('mobile-apps') || fieldOfStudy === 'mobile-development') {
             fallbackIdeas.push({
                 id: 'mobile-1',
@@ -1204,7 +1203,7 @@ const PersonalizedIdeaSelection = ({ userProfile, onIdeaSelect, onBackToDiscover
                 learning: 'Mobile development, cross-platform frameworks, backend integration'
             });
         }
-        
+
         if (interests.includes('ai-projects') || fieldOfStudy === 'ai-ml') {
             fallbackIdeas.push({
                 id: 'ai-1',
@@ -1216,7 +1215,7 @@ const PersonalizedIdeaSelection = ({ userProfile, onIdeaSelect, onBackToDiscover
                 learning: 'Machine learning, NLP, AI model training, conversational AI'
             });
         }
-        
+
         if (interests.includes('games') || interests.includes('web-apps')) {
             fallbackIdeas.push({
                 id: 'game-1',
@@ -1228,7 +1227,7 @@ const PersonalizedIdeaSelection = ({ userProfile, onIdeaSelect, onBackToDiscover
                 learning: 'Game development, interactive programming, user engagement'
             });
         }
-        
+
         // Add more generic ideas if we don't have enough
         if (fallbackIdeas.length < 3) {
             fallbackIdeas.push({
@@ -1241,17 +1240,17 @@ const PersonalizedIdeaSelection = ({ userProfile, onIdeaSelect, onBackToDiscover
                 learning: 'Advanced skills in your chosen field'
             });
         }
-        
+
         return fallbackIdeas.slice(0, 6);
     };
-    
+
     const handleIdeaSelect = (idea) => {
         console.log('Idea selected:', idea);
         setSelectedIdea(idea);
         // Pass the selected idea and user profile to the parent component
         onIdeaSelect(idea, userProfile);
     };
-    
+
     const getDifficultyColor = (difficulty) => {
         switch (difficulty.toLowerCase()) {
             case 'beginner': return 'text-green-400';
@@ -1260,7 +1259,7 @@ const PersonalizedIdeaSelection = ({ userProfile, onIdeaSelect, onBackToDiscover
             default: return 'text-gray-400';
         }
     };
-    
+
     const getDifficultyIcon = (difficulty) => {
         switch (difficulty.toLowerCase()) {
             case 'beginner': return '🌱';
@@ -1269,7 +1268,7 @@ const PersonalizedIdeaSelection = ({ userProfile, onIdeaSelect, onBackToDiscover
             default: return '📋';
         }
     };
-    
+
     if (isGenerating) {
         return (
             <div className="min-h-screen bg-black flex items-center justify-center">
@@ -1281,7 +1280,7 @@ const PersonalizedIdeaSelection = ({ userProfile, onIdeaSelect, onBackToDiscover
             </div>
         );
     }
-    
+
     return (
         <div className="min-h-screen bg-black">
             {/* Header */}
@@ -1301,7 +1300,7 @@ const PersonalizedIdeaSelection = ({ userProfile, onIdeaSelect, onBackToDiscover
                     </div>
                 </div>
             </div>
-            
+
             {/* Ideas Grid */}
             <div className="max-w-6xl mx-auto p-6">
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -1319,7 +1318,7 @@ const PersonalizedIdeaSelection = ({ userProfile, onIdeaSelect, onBackToDiscover
                                 <h3 className="text-lg font-semibold text-white mb-3">{idea.title}</h3>
                                 <p className="text-gray-300 text-sm mb-4 leading-relaxed">{idea.description}</p>
                             </div>
-                            
+
                             <div className="space-y-3 mb-6">
                                 <div>
                                     <h4 className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">Technologies</h4>
@@ -1330,7 +1329,7 @@ const PersonalizedIdeaSelection = ({ userProfile, onIdeaSelect, onBackToDiscover
                                     <p className="text-sm text-gray-300">{idea.learning}</p>
                                 </div>
                             </div>
-                            
+
                             <button
                                 onClick={() => handleIdeaSelect(idea)}
                                 className="w-full bg-gray-800 hover:bg-gray-700 text-white py-3 rounded-lg font-medium transition-colors border border-gray-700/50 flex items-center justify-center gap-2"
@@ -1341,7 +1340,7 @@ const PersonalizedIdeaSelection = ({ userProfile, onIdeaSelect, onBackToDiscover
                         </div>
                     ))}
                 </div>
-                
+
                 <div className="text-center mt-8">
                     <button
                         onClick={() => generatePersonalizedIdeas(true)}
@@ -1410,16 +1409,16 @@ const DiscoveryResult = ({ idea, userProfile, onBackToSelection, onExitDiscovery
                 <div className="stars"></div>
                 <div className="twinkling"></div>
             </div>
-            
+
             {/* Custom Header for Discovery */}
             <div className="relative z-10">
                 <DiscoveryHeader />
             </div>
-            
+
             {/* Use the same ProjectIdeaDisplay component as main app */}
             <div className="relative z-10 h-[calc(100vh-80px)]">
-                <ProjectIdeaDisplay 
-                    idea={idea.comprehensivePlan} 
+                <ProjectIdeaDisplay
+                    idea={idea.comprehensivePlan}
                     onStartNew={onBackToSelection}
                     user={user}
                     hideHeader={true}
@@ -1445,7 +1444,7 @@ const GameStep = ({ step, onAnswer, currentScore, totalSteps }) => {
             console.log('No option selected, cannot submit');
             return;
         }
-        
+
         console.log('Submitting answer:', selectedOption);
         setShowResult(true);
         setTimeout(() => {
@@ -1472,7 +1471,7 @@ const GameStep = ({ step, onAnswer, currentScore, totalSteps }) => {
                     <span className="text-green-400 font-medium">Score: {currentScore}</span>
                 </div>
                 <div className="w-full bg-gray-700 rounded-full h-2">
-                    <div 
+                    <div
                         className="bg-blue-500 h-2 rounded-full transition-all duration-300"
                         style={{ width: `${(step.stepId / totalSteps) * 100}%` }}
                     ></div>
@@ -1481,17 +1480,16 @@ const GameStep = ({ step, onAnswer, currentScore, totalSteps }) => {
 
             <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6">
                 <h3 className="text-xl font-semibold text-white mb-6">{step.question}</h3>
-                
+
                 <div className="space-y-3">
                     {step.options.map((option, index) => (
                         <button
                             key={index}
                             onClick={() => handleOptionClick(option)}
-                            className={`w-full text-left p-4 rounded-lg border transition-all duration-200 ${
-                                selectedOption === option
-                                    ? 'border-blue-500 bg-blue-500/20 text-blue-300'
-                                    : 'border-gray-600 bg-gray-700/50 text-gray-300 hover:border-gray-500 hover:bg-gray-700'
-                            }`}
+                            className={`w-full text-left p-4 rounded-lg border transition-all duration-200 ${selectedOption === option
+                                ? 'border-blue-500 bg-blue-500/20 text-blue-300'
+                                : 'border-gray-600 bg-gray-700/50 text-gray-300 hover:border-gray-500 hover:bg-gray-700'
+                                }`}
                             disabled={showResult}
                         >
                             {option}
@@ -1515,7 +1513,7 @@ const GameStep = ({ step, onAnswer, currentScore, totalSteps }) => {
                 >
                     {showResult ? 'Moving to next step...' : 'Continue'}
                 </button>
-                
+
                 {/* Debug info */}
                 <div className="mt-2 text-xs text-gray-500 text-center">
                     Debug: Selected="{selectedOption}", ShowResult={showResult.toString()}, ButtonEnabled={(!selectedOption || showResult) ? 'false' : 'true'}
@@ -1528,21 +1526,19 @@ const GameStep = ({ step, onAnswer, currentScore, totalSteps }) => {
 // Collapsible Section Component
 const CollapsibleSection = ({ title, content, isExpanded, onToggle, icon, isSpecial = false }) => {
     return (
-        <div className={`${
-            isSpecial 
-                ? 'bg-gray-900/80 border-blue-500/20' 
-                : 'bg-gray-900/60 border-gray-700/30'
-        } backdrop-blur-sm border rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 mb-3 hover:border-gray-600/50`}>
+        <div className={`${isSpecial
+            ? 'bg-gray-900/80 border-blue-500/20'
+            : 'bg-gray-900/60 border-gray-700/30'
+            } backdrop-blur-sm border rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 mb-3 hover:border-gray-600/50`}>
             <button
                 onClick={onToggle}
                 className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-white/3 transition-all duration-200 rounded-lg group"
             >
                 <div className="flex items-center gap-4">
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200 ${
-                        isSpecial 
-                            ? 'bg-blue-600/80' 
-                            : 'bg-gray-800/60 group-hover:bg-gray-700/60'
-                    }`}>
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200 ${isSpecial
+                        ? 'bg-blue-600/80'
+                        : 'bg-gray-800/60 group-hover:bg-gray-700/60'
+                        }`}>
                         <span className="text-lg">{icon}</span>
                     </div>
                     <div>
@@ -1557,15 +1553,13 @@ const CollapsibleSection = ({ title, content, isExpanded, onToggle, icon, isSpec
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
-                    <div className={`w-6 h-6 rounded-md flex items-center justify-center transition-all duration-200 ${
-                        isExpanded ? 'bg-blue-600/20 text-blue-400' : 'bg-gray-700/40 text-gray-500'
-                    }`}>
-                        <svg 
-                            className={`w-4 h-4 transform transition-transform duration-200 ${
-                                isExpanded ? 'rotate-180' : 'rotate-0'
-                            }`} 
-                            fill="none" 
-                            stroke="currentColor" 
+                    <div className={`w-6 h-6 rounded-md flex items-center justify-center transition-all duration-200 ${isExpanded ? 'bg-blue-600/20 text-blue-400' : 'bg-gray-700/40 text-gray-500'
+                        }`}>
+                        <svg
+                            className={`w-4 h-4 transform transition-transform duration-200 ${isExpanded ? 'rotate-180' : 'rotate-0'
+                                }`}
+                            fill="none"
+                            stroke="currentColor"
                             viewBox="0 0 24 24"
                         >
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -1573,10 +1567,9 @@ const CollapsibleSection = ({ title, content, isExpanded, onToggle, icon, isSpec
                     </div>
                 </div>
             </button>
-            
-            <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                isExpanded ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'
-            }`}>
+
+            <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isExpanded ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'
+                }`}>
                 <div className="px-6 pb-6">
                     <div className="bg-gray-800/40 rounded-lg p-4 border border-gray-700/20">
                         <div className="text-gray-200 whitespace-pre-wrap leading-relaxed text-sm">
@@ -1597,18 +1590,17 @@ const SidebarNavigation = ({ sections, selectedSection, onSectionSelect, isModif
                 <h3 className="text-lg font-semibold text-white mb-1">Project Sections</h3>
                 <p className="text-xs text-gray-500">Select a section to view or modify</p>
             </div>
-            
+
             {/* Scrollable sections container */}
             <div className="overflow-y-auto flex-1 p-3 space-y-1.5 custom-scrollbar">
                 {sections.filter(section => section.content.trim()).map((section) => (
                     <button
                         key={section.id}
                         onClick={() => onSectionSelect(section.id)}
-                        className={`w-full text-left p-3 rounded-lg transition-all duration-200 ${
-                            selectedSection === section.id
-                                ? 'bg-gray-900 border border-gray-700 text-white shadow-lg'
-                                : 'bg-black/80 border border-gray-800/60 text-gray-300 hover:bg-gray-900/60 hover:text-white'
-                        }`}
+                        className={`w-full text-left p-3 rounded-lg transition-all duration-200 ${selectedSection === section.id
+                            ? 'bg-gray-900 border border-gray-700 text-white shadow-lg'
+                            : 'bg-black/80 border border-gray-800/60 text-gray-300 hover:bg-gray-900/60 hover:text-white'
+                            }`}
                     >
                         <div className="flex items-center gap-2.5">
                             <span className="text-base opacity-80">{section.icon}</span>
@@ -1625,7 +1617,7 @@ const SidebarNavigation = ({ sections, selectedSection, onSectionSelect, isModif
                     </button>
                 ))}
             </div>
-            
+
             {/* Footer with subtle branding */}
             <div className="p-3 border-t border-gray-800/60 text-center">
                 <p className="text-xs text-gray-600">
@@ -1684,7 +1676,7 @@ const ChatModificationInterface = ({ onModifyIdea, isLoading, user }) => {
             handleSendMessage();
         }
     };
-    
+
     const toggleMinimize = () => {
         setIsMinimized(!isMinimized);
         if (isMinimized) {
@@ -1714,7 +1706,7 @@ const ChatModificationInterface = ({ onModifyIdea, isLoading, user }) => {
                             {isExpanded ? 'Hide History' : 'Show History'} ({chatHistory.length})
                         </button>
                     )}
-                    <button 
+                    <button
                         onClick={toggleMinimize}
                         className="text-gray-500 hover:text-gray-300 transition-colors p-1 rounded hover:bg-gray-900"
                     >
@@ -1730,16 +1722,14 @@ const ChatModificationInterface = ({ onModifyIdea, isLoading, user }) => {
                     {isExpanded && chatHistory.length > 0 && (
                         <div className="bg-black rounded-lg p-2 max-h-40 overflow-y-auto space-y-2 border border-gray-800/60">
                             {chatHistory.map((message) => (
-                                <div key={message.id} className={`flex gap-2 ${
-                                    message.type === 'user' ? 'justify-end' : 'justify-start'
-                                }`}>
-                                    <div className={`max-w-xs lg:max-w-md px-3 py-2 rounded-lg text-xs ${
-                                        message.type === 'user' 
-                                            ? 'bg-gray-900 border border-gray-800 text-gray-300' 
-                                            : message.type === 'error'
+                                <div key={message.id} className={`flex gap-2 ${message.type === 'user' ? 'justify-end' : 'justify-start'
+                                    }`}>
+                                    <div className={`max-w-xs lg:max-w-md px-3 py-2 rounded-lg text-xs ${message.type === 'user'
+                                        ? 'bg-gray-900 border border-gray-800 text-gray-300'
+                                        : message.type === 'error'
                                             ? 'bg-black border border-red-900/50 text-red-400'
                                             : 'bg-black border border-gray-800 text-gray-400'
-                                    }`}>
+                                        }`}>
                                         <p>{message.content}</p>
                                         <p className="text-xs opacity-60 mt-1 text-gray-600">
                                             {new Date(message.timestamp).toLocaleTimeString()}
@@ -1795,19 +1785,19 @@ const ChatModificationInterface = ({ onModifyIdea, isLoading, user }) => {
 const SectionEditor = ({ section, onModify, isLoading }) => {
     const [modifyPrompt, setModifyPrompt] = useState('');
     const [isExpanded, setIsExpanded] = useState(false);
-    
+
     const handleModify = () => {
         if (modifyPrompt.trim() && !isLoading) {
             onModify(section.id, modifyPrompt);
             setModifyPrompt('');
         }
     };
-    
+
     // Format content with line breaks instead of using marked library
     const formattedContent = section.content
         .split('\n')
         .map((line, i) => <p key={i} className="mb-2">{line}</p>);
-    
+
     return (
         <div className="max-w-4xl mx-auto p-6">
             {/* Section Header */}
@@ -1822,18 +1812,18 @@ const SectionEditor = ({ section, onModify, isLoading }) => {
                         tooltip="Modify Section"
                         onClick={() => setIsExpanded(!isExpanded)}
                         variant={isExpanded ? 'primary' : 'default'}
-                        className={isExpanded 
-                            ? 'bg-black border border-gray-700 text-gray-300' 
+                        className={isExpanded
+                            ? 'bg-black border border-gray-700 text-gray-300'
                             : 'bg-black border border-gray-800/60 text-gray-500 hover:text-gray-300'}
                     />
                 </div>
             </div>
-            
+
             {/* Section Content */}
             <div className="max-w-none mb-6 text-gray-300 whitespace-pre-wrap">
                 {formattedContent}
             </div>
-            
+
             {/* Modification Interface (expandable) */}
             {isExpanded && (
                 <div className="bg-black border border-gray-800/60 rounded-lg p-4 mb-6">
@@ -1886,13 +1876,13 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false }) => {
     // Parse the idea text into sections
     useEffect(() => {
         if (!currentIdea) return;
-        
+
         const lines = currentIdea.split('\n');
         const parsedSections = [];
         let currentSection = null;
         let titleSection = null;
         let overviewSection = null;
-        
+
         lines.forEach((line, index) => {
             // Check if line is a section header (starts with ##)
             if (line.trim().startsWith('##')) {
@@ -1910,7 +1900,7 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false }) => {
                         }
                     }
                 }
-                
+
                 // Start new section
                 const title = line.replace(/^#+\s*/, '').trim();
                 currentSection = {
@@ -1934,7 +1924,7 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false }) => {
                 }
             }
         });
-        
+
         // Add final section
         if (currentSection) {
             const titleLower = currentSection.title.toLowerCase();
@@ -1949,14 +1939,14 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false }) => {
                 }
             }
         }
-        
+
         // Combine title and overview sections
         if (titleSection || overviewSection) {
             const combinedContent = [
                 titleSection?.content || '',
                 overviewSection?.content || ''
             ].filter(Boolean).join('\n\n');
-            
+
             // Only add combined section if it has content
             if (combinedContent.trim()) {
                 const combinedSection = {
@@ -1966,13 +1956,13 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false }) => {
                     icon: '💡',
                     isSpecial: true
                 };
-                
+
                 parsedSections.unshift(combinedSection);
             }
         }
-        
+
         setSections(parsedSections);
-        
+
         // Select first section by default
         if (parsedSections.length > 0 && !selectedSection) {
             setSelectedSection(parsedSections[0].id);
@@ -2001,7 +1991,7 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false }) => {
         }
 
         setIsModifying(true);
-        
+
         try {
             const section = sections.find(s => s.id === sectionId);
             if (!section) return;
@@ -2030,7 +2020,7 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false }) => {
             if (result.data.success) {
                 // Update the current idea with the modified section
                 setCurrentIdea(result.data.modifiedIdea);
-                
+
                 // Auto-save the modified idea to history
                 const saveToHistory = firebase.functions().httpsCallable('saveIdeaToHistory');
                 await saveToHistory({
@@ -2076,7 +2066,7 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false }) => {
         }
 
         setIsModifying(true);
-        
+
         try {
             // Add to modification history
             const modification = {
@@ -2102,7 +2092,7 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false }) => {
             if (result.data.success) {
                 // Update the current idea with the modified version
                 setCurrentIdea(result.data.modifiedIdea);
-                
+
                 // Auto-save the modified idea to history
                 const saveToHistory = firebase.functions().httpsCallable('saveIdeaToHistory');
                 await saveToHistory({
@@ -2114,7 +2104,7 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false }) => {
                         modificationPrompt: modificationPrompt
                     }
                 });
-                
+
                 return result.data.modifiedIdea;
             } else {
                 throw new Error(result.data.error || 'Failed to modify idea');
@@ -2133,7 +2123,7 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false }) => {
             <div className="fixed inset-0 z-0">
                 <ParticleSystem />
             </div>
-            
+
             {/* Header - Matching AppScreen style - Only shown when not in DiscoveryResult */}
             {!hideHeader && (
                 <header className="bg-black/50 backdrop-blur-sm border-b border-gray-800 p-4 relative z-10">
@@ -2158,7 +2148,7 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false }) => {
                                     variant="admin"
                                 />
                             )}
-                            
+
                             {modificationHistory.length > 0 && (
                                 <IconButton
                                     iconType="reset"
@@ -2175,12 +2165,12 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false }) => {
                                 variant="primary"
                                 className="bg-black border border-gray-800 hover:bg-gray-900 text-gray-300 hover:text-white"
                             />
-                            
+
                             {/* User profile section */}
                             <div className="relative flex items-center">
-                                <UserProfileIcon onClick={() => {}} />
+                                <UserProfileIcon onClick={() => { }} />
                             </div>
-                            
+
                             <IconButton
                                 iconType="logout"
                                 tooltip="Logout"
@@ -2201,7 +2191,7 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false }) => {
             <div className="relative z-10 flex-1 flex overflow-hidden">
                 {/* Sidebar - Fixed width with dark theme */}
                 <div className="w-64 bg-black border-r border-gray-800/60 flex-shrink-0">
-                    <SidebarNavigation 
+                    <SidebarNavigation
                         sections={sections}
                         selectedSection={selectedSection}
                         onSectionSelect={handleSectionSelect}
@@ -2215,7 +2205,7 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false }) => {
                     <div className="flex-1 overflow-y-auto">
                         {selectedSectionData ? (
                             <div>
-                                <SectionEditor 
+                                <SectionEditor
                                     section={selectedSectionData}
                                     onModify={handleSectionModify}
                                     isLoading={isModifying}
@@ -2237,7 +2227,7 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false }) => {
                     {/* Compact Chat Interface at Bottom */}
                     <div className="border-t border-gray-800/60 bg-black">
                         <div className="px-3 py-2">
-                            <ChatModificationInterface 
+                            <ChatModificationInterface
                                 onModifyIdea={handleOverallIdeaModify}
                                 isLoading={isModifying}
                                 user={user}
@@ -2284,12 +2274,12 @@ const HistoryView = ({ user, onBack, onViewIdea }) => {
                 setIsLoading(false);
                 return;
             }
-            
+
             try {
                 const functions = firebase.functions();
                 const getUserHistory = functions.httpsCallable('getUserHistory');
                 const result = await getUserHistory({ userId: user.uid });
-                
+
                 if (result.data.success) {
                     setHistory(result.data.history);
                 }
@@ -2330,8 +2320,8 @@ const HistoryView = ({ user, onBack, onViewIdea }) => {
             ) : (
                 <div className="space-y-4">
                     {history.map((item) => (
-                        <div 
-                            key={item.id} 
+                        <div
+                            key={item.id}
                             className="bg-gray-800/30 border border-gray-700 rounded-lg p-4 hover:bg-gray-800/50 transition-colors cursor-pointer"
                             onClick={() => onViewIdea(item.idea)}
                         >
@@ -2359,26 +2349,26 @@ const HistoryView = ({ user, onBack, onViewIdea }) => {
 // User Profile Icon Component
 const UserProfileIcon = ({ onClick }) => {
     return (
-        <button 
+        <button
             onClick={onClick}
             className="w-10 h-10 rounded-full bg-black flex items-center justify-center cursor-pointer hover:bg-gray-900 transition-all duration-200"
             aria-label="Open user profile"
         >
             <div className="w-8 h-8 relative">
                 <svg viewBox="0 0 100 100" className="w-full h-full">
-                    <path 
-                        d="M50,15 C60,15 70,25 70,40 C70,47 65,55 60,58 C57,60 55,62 55,65 L55,70 C55,72 53,75 50,75 C47,75 45,72 45,70 L45,65 C45,62 43,60 40,58 C35,55 30,47 30,40 C30,25 40,15 50,15 Z" 
-                        fill="none" 
-                        stroke="#4ade80" 
+                    <path
+                        d="M50,15 C60,15 70,25 70,40 C70,47 65,55 60,58 C57,60 55,62 55,65 L55,70 C55,72 53,75 50,75 C47,75 45,72 45,70 L45,65 C45,62 43,60 40,58 C35,55 30,47 30,40 C30,25 40,15 50,15 Z"
+                        fill="none"
+                        stroke="#4ade80"
                         strokeWidth="4"
                         strokeLinecap="round"
                     />
                     <circle cx="40" cy="40" r="5" fill="#4ade80" />
                     <circle cx="60" cy="40" r="5" fill="#4ade80" />
-                    <path 
-                        d="M35,80 C35,80 40,85 50,85 C60,85 65,80 65,80" 
-                        fill="none" 
-                        stroke="#4ade80" 
+                    <path
+                        d="M35,80 C35,80 40,85 50,85 C60,85 65,80 65,80"
+                        fill="none"
+                        stroke="#4ade80"
                         strokeWidth="4"
                         strokeLinecap="round"
                     />
@@ -2388,8 +2378,91 @@ const UserProfileIcon = ({ onClick }) => {
     );
 };
 
+// Profile Editor Modal Component
+const ProfileEditor = ({ user, currentProfile, onClose, onSave, isLoading }) => {
+    const [name, setName] = useState(user.displayName || '');
+    const [bio, setBio] = useState(currentProfile?.bio || '');
+    const [location, setLocation] = useState(currentProfile?.location || '');
+    const [isSaving, setIsSaving] = useState(false);
+
+    const handleSave = async (e) => {
+        e.preventDefault();
+        setIsSaving(true);
+        try {
+            await onSave({
+                displayName: name,
+                bio,
+                location
+            });
+            onClose();
+        } catch (error) {
+            console.error("Error saving profile:", error);
+            alert("Failed to save profile");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/80 backdrop-blur-sm">
+            <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 w-full max-w-md shadow-2xl relative">
+                <button
+                    onClick={onClose}
+                    className="absolute top-4 right-4 text-gray-500 hover:text-white"
+                >
+                    <CloseIcon size={20} />
+                </button>
+
+                <h2 className="text-xl font-bold text-white mb-6">Edit Profile</h2>
+
+                <form onSubmit={handleSave} className="space-y-4">
+                    <div>
+                        <label className="block text-zinc-400 text-sm mb-1">Display Name</label>
+                        <input
+                            type="text"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            className="w-full bg-black/50 border border-zinc-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
+                            placeholder="Your Name"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-zinc-400 text-sm mb-1">Location</label>
+                        <input
+                            type="text"
+                            value={location}
+                            onChange={(e) => setLocation(e.target.value)}
+                            className="w-full bg-black/50 border border-zinc-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
+                            placeholder="e.g. Coding Galaxy"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-zinc-400 text-sm mb-1">Bio</label>
+                        <textarea
+                            value={bio}
+                            onChange={(e) => setBio(e.target.value)}
+                            className="w-full bg-black/50 border border-zinc-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500 resize-none h-24"
+                            placeholder="Tell us about yourself..."
+                        />
+                    </div>
+
+                    <button
+                        type="submit"
+                        disabled={isSaving || isLoading}
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-lg transition-colors flex items-center justify-center gap-2 mt-2"
+                    >
+                        {isSaving ? 'Saving...' : 'Save Changes'}
+                    </button>
+                </form>
+            </div>
+        </div>
+    );
+};
+
 // Enhanced User Profile Dropdown Component with 3D Effects
-const UserProfileDropdown = ({ user, userRole, onClose, onLogout }) => {
+const UserProfileDropdown = ({ user, userProfile, userRole, onClose, onLogout, onEditProfile }) => {
     const dropdownRef = useRef(null);
     const [isHovered, setIsHovered] = useState(false);
     const [mousePosition, setMousePosition] = useState({ x: 50, y: 50 });
@@ -2397,55 +2470,55 @@ const UserProfileDropdown = ({ user, userRole, onClose, onLogout }) => {
     const [targetTilt, setTargetTilt] = useState({ x: 0, y: 0 });
     const animationFrameRef = useRef();
     const lastUpdateTimeRef = useRef(0);
-    
+
     // Linear interpolation function
     const lerp = (start, end, factor) => {
         return start + (end - start) * factor;
     };
-    
+
     // Smooth tilt animation using requestAnimationFrame
     const updateTilt = useCallback(() => {
         const now = performance.now();
         const deltaTime = now - lastUpdateTimeRef.current;
         lastUpdateTimeRef.current = now;
-        
+
         setCardTilt((current) => {
             const lerpFactor = Math.min(deltaTime / 16, 1) * 0.15;
             const newX = lerp(current.x, targetTilt.x, lerpFactor);
             const newY = lerp(current.y, targetTilt.y, lerpFactor);
-            
+
             const threshold = 0.1;
             return {
                 x: Math.abs(newX - targetTilt.x) < threshold ? targetTilt.x : newX,
                 y: Math.abs(newY - targetTilt.y) < threshold ? targetTilt.y : newY,
             };
         });
-        
+
         if (isHovered) {
             animationFrameRef.current = requestAnimationFrame(updateTilt);
         }
     }, [targetTilt, isHovered]);
-    
+
     // Mouse move handler for 3D tilt effect
     const handleMouseMove = useCallback((e) => {
         if (dropdownRef.current && isHovered) {
             const rect = dropdownRef.current.getBoundingClientRect();
             const centerX = rect.left + rect.width / 2;
             const centerY = rect.top + rect.height / 2;
-            
+
             const mouseX = e.clientX - centerX;
             const mouseY = e.clientY - centerY;
-            
+
             // Calculate tilt angles (max 8 degrees for subtle effect)
             const maxTilt = 8;
             const tiltX = (mouseY / (rect.height / 2)) * maxTilt * -1;
             const tiltY = (mouseX / (rect.width / 2)) * maxTilt;
-            
+
             const constrainedTiltX = Math.max(-maxTilt, Math.min(maxTilt, tiltX));
             const constrainedTiltY = Math.max(-maxTilt, Math.min(maxTilt, tiltY));
-            
+
             setTargetTilt({ x: constrainedTiltX, y: constrainedTiltY });
-            
+
             // Calculate mouse position as percentage for gradients
             const x = ((e.clientX - rect.left) / rect.width) * 100;
             const y = ((e.clientY - rect.top) / rect.height) * 100;
@@ -2455,7 +2528,7 @@ const UserProfileDropdown = ({ user, userRole, onClose, onLogout }) => {
             });
         }
     }, [isHovered]);
-    
+
     // Generate holographic gradient based on mouse position and tilt
     const getHolographicStyle = () => {
         if (!isHovered) {
@@ -2464,29 +2537,29 @@ const UserProfileDropdown = ({ user, userRole, onClose, onLogout }) => {
                 transition: 'background 0.15s ease-out',
             };
         }
-        
+
         const { x, y } = mousePosition;
         const { x: tiltX, y: tiltY } = cardTilt;
-        
+
         const tiltIntensity = (Math.abs(tiltX) + Math.abs(tiltY)) / 16;
         const colorIntensity = 0.4 + tiltIntensity * 0.3;
-        
+
         const tiltOffsetX = tiltY * 2;
         const tiltOffsetY = tiltX * 2;
-        
+
         const adjustedX = Math.max(0, Math.min(100, x + tiltOffsetX));
         const adjustedY = Math.max(0, Math.min(100, y + tiltOffsetY));
-        
+
         const gradient1 = `radial-gradient(circle at ${adjustedX}% ${adjustedY}%, rgba(220, 160, 225, ${colorIntensity}) 0%, transparent 50%)`;
         const gradient2 = `radial-gradient(circle at ${100 - adjustedX}% ${100 - adjustedY}%, rgba(30, 210, 220, ${colorIntensity * 0.8}) 0%, transparent 40%)`;
         const gradient3 = `radial-gradient(circle at ${adjustedX}% ${100 - adjustedY}%, rgba(60, 230, 65, ${colorIntensity * 0.9}) 0%, transparent 45%)`;
-        
+
         return {
             background: `${gradient1}, ${gradient2}, ${gradient3}`,
             transition: 'none',
         };
     };
-    
+
     useEffect(() => {
         // Handle click outside to close dropdown
         const handleClickOutside = (event) => {
@@ -2494,19 +2567,19 @@ const UserProfileDropdown = ({ user, userRole, onClose, onLogout }) => {
                 onClose();
             }
         };
-        
+
         // Handle escape key to close dropdown
         const handleEscKey = (event) => {
             if (event.key === 'Escape') {
                 onClose();
             }
         };
-        
+
         // Add event listeners
         document.addEventListener('mousedown', handleClickOutside);
         document.addEventListener('keydown', handleEscKey);
         document.addEventListener('mousemove', handleMouseMove, { passive: true });
-        
+
         // Clean up event listeners
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
@@ -2517,7 +2590,7 @@ const UserProfileDropdown = ({ user, userRole, onClose, onLogout }) => {
             }
         };
     }, [onClose, handleMouseMove]);
-    
+
     // Animation frame management
     useEffect(() => {
         if (isHovered) {
@@ -2528,23 +2601,23 @@ const UserProfileDropdown = ({ user, userRole, onClose, onLogout }) => {
                 cancelAnimationFrame(animationFrameRef.current);
             }
         }
-        
+
         return () => {
             if (animationFrameRef.current) {
                 cancelAnimationFrame(animationFrameRef.current);
             }
         };
     }, [isHovered, updateTilt]);
-    
+
     // Handle logout click
     const handleLogout = (e) => {
         e.preventDefault();
         onClose();
         onLogout();
     };
-    
+
     return (
-        <div 
+        <div
             ref={dropdownRef}
             className="absolute right-0 top-full mt-2 w-80 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl z-[9999] overflow-hidden"
             style={{
@@ -2569,14 +2642,14 @@ const UserProfileDropdown = ({ user, userRole, onClose, onLogout }) => {
                 {/* Cosmic gradient header */}
                 <div className="h-32 relative bg-gradient-to-br from-purple-900/50 via-blue-900/50 to-teal-900/50 rounded-t-xl">
                     <div className="absolute inset-0 bg-gradient-to-t from-zinc-900/30 to-transparent rounded-t-xl"></div>
-                    
+
                     {/* Holographic overlay */}
                     <div
                         className="absolute inset-0 rounded-t-xl mix-blend-screen opacity-60"
                         style={getHolographicStyle()}
                     ></div>
                 </div>
-                
+
                 {/* Profile content */}
                 <div className="relative -mt-12 z-10 px-6 pb-6">
                     {/* Avatar */}
@@ -2584,19 +2657,19 @@ const UserProfileDropdown = ({ user, userRole, onClose, onLogout }) => {
                         <div className="w-24 h-24 rounded-full bg-black border-2 border-zinc-800 flex items-center justify-center relative">
                             <div className="w-16 h-16">
                                 <svg viewBox="0 0 100 100" className="w-full h-full">
-                                    <path 
-                                        d="M50,15 C60,15 70,25 70,40 C70,47 65,55 60,58 C57,60 55,62 55,65 L55,70 C55,72 53,75 50,75 C47,75 45,72 45,70 L45,65 C45,62 43,60 40,58 C35,55 30,47 30,40 C30,25 40,15 50,15 Z" 
-                                        fill="none" 
-                                        stroke="#1DED83" 
+                                    <path
+                                        d="M50,15 C60,15 70,25 70,40 C70,47 65,55 60,58 C57,60 55,62 55,65 L55,70 C55,72 53,75 50,75 C47,75 45,72 45,70 L45,65 C45,62 43,60 40,58 C35,55 30,47 30,40 C30,25 40,15 50,15 Z"
+                                        fill="none"
+                                        stroke="#1DED83"
                                         strokeWidth="4"
                                         strokeLinecap="round"
                                     />
                                     <circle cx="40" cy="40" r="5" fill="#1DED83" />
                                     <circle cx="60" cy="40" r="5" fill="#1DED83" />
-                                    <path 
-                                        d="M35,80 C35,80 40,85 50,85 C60,85 65,80 65,80" 
-                                        fill="none" 
-                                        stroke="#1DED83" 
+                                    <path
+                                        d="M35,80 C35,80 40,85 50,85 C60,85 65,80 65,80"
+                                        fill="none"
+                                        stroke="#1DED83"
                                         strokeWidth="4"
                                         strokeLinecap="round"
                                     />
@@ -2604,48 +2677,66 @@ const UserProfileDropdown = ({ user, userRole, onClose, onLogout }) => {
                             </div>
                         </div>
                     </div>
-                    
+
                     {/* User info */}
                     <div className="text-center mb-6">
                         <h1 className="text-2xl font-bold text-white mb-1 font-mono">{user.displayName}</h1>
-                        <p className="text-zinc-400 text-sm font-mono">{userRole?.isAdmin ? 'Administrator' : 'Ambassador of Pideas'}</p>
-                        
+                        <p className="text-zinc-400 text-sm font-mono">{userRole?.isAdmin ? 'Administrator' : 'Member'}</p>
+
                         {/* Location */}
-                        <div className="flex items-center justify-center gap-2 mt-3">
-                            <svg className="w-4 h-4" style={{ color: '#1DED83' }} fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                            </svg>
-                            <span className="font-mono text-white text-sm">Coding Galaxy</span>
-                        </div>
+                        {userProfile?.location && (
+                            <div className="flex items-center justify-center gap-2 mt-3 animate-fade-in">
+                                <svg className="w-4 h-4" style={{ color: '#1DED83' }} fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                                </svg>
+                                <span className="font-mono text-white text-sm">{userProfile.location}</span>
+                            </div>
+                        )}
                     </div>
-                    
+
                     {/* Bio */}
-                    <div className="text-center mb-6">
-                        <p className="text-zinc-300 leading-relaxed font-mono text-xs">
-                            From the distant Cosmic Ocean,<br/>
-                            I travel galaxies to decode mysteries<br/>
-                            and collect strange codes.
-                        </p>
-                    </div>
-                    
+                    {userProfile?.bio && (
+                        <div className="text-center mb-6 animate-fade-in">
+                            <p className="text-zinc-300 leading-relaxed font-mono text-xs">
+                                {userProfile.bio}
+                            </p>
+                        </div>
+                    )}
+
+                    {/* Stats Section with Gamification Display */}
+                    {(userProfile?.xp > 0 || userProfile?.level) && (
+                        <div className="mb-6 grid grid-cols-2 gap-3">
+                            <div className="bg-zinc-800/40 rounded-lg p-3 text-center border border-zinc-700/30">
+                                <div className="text-xs text-zinc-500 font-mono mb-1">Level</div>
+                                <div className="text-xl font-bold text-purple-400 font-mono">{userProfile.level || 1}</div>
+                            </div>
+                            <div className="bg-zinc-800/40 rounded-lg p-3 text-center border border-zinc-700/30">
+                                <div className="text-xs text-zinc-500 font-mono mb-1">XP</div>
+                                <div className="text-xl font-bold text-blue-400 font-mono">{userProfile.xp || 0}</div>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Email */}
                     <div className="mb-6 p-3 bg-zinc-800/50 rounded-lg border border-zinc-700/50">
                         <p className="text-zinc-400 text-xs mb-1 font-mono">Email Address</p>
                         <p className="text-white text-sm font-mono">{user.email}</p>
                     </div>
-                    
+
                     {/* Divider */}
                     <div className="w-full h-px bg-zinc-700 mb-4"></div>
-                    
+
                     {/* Action buttons */}
                     <div className="flex gap-3">
-                        <button className="flex-1 bg-zinc-800 border border-zinc-700 hover:bg-zinc-700 hover:border-zinc-600 text-zinc-300 py-2 px-4 rounded-lg transition-all duration-200 font-mono text-sm flex items-center justify-center gap-2">
+                        <button
+                            onClick={onEditProfile}
+                            className="flex-1 bg-zinc-800 border border-zinc-700 hover:bg-zinc-700 hover:border-zinc-600 text-zinc-300 py-2 px-4 rounded-lg transition-all duration-200 font-mono text-sm flex items-center justify-center gap-2">
                             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                 <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
                             </svg>
                             Settings
                         </button>
-                        <button 
+                        <button
                             onClick={handleLogout}
                             className="flex-1 bg-zinc-800 border border-zinc-700 hover:bg-zinc-700 hover:border-zinc-600 text-zinc-300 py-2 px-4 rounded-lg transition-all duration-200 font-mono text-sm flex items-center justify-center gap-2"
                         >
@@ -2676,7 +2767,9 @@ const AppScreen = ({ user, onLogout }) => {
     const [isLoadingHistory, setIsLoadingHistory] = useState(false);
     const [userRole, setUserRole] = useState(null);
     const [isLoadingRole, setIsLoadingRole] = useState(true);
-    
+    const [fullUserProfile, setFullUserProfile] = useState({});
+    const [showProfileEditor, setShowProfileEditor] = useState(false);
+
     // User profile states
     const [showWelcome, setShowWelcome] = useState(true);
     const [showProfileDropdown, setShowProfileDropdown] = useState(false);
@@ -2690,11 +2783,11 @@ const AppScreen = ({ user, onLogout }) => {
             setIsLoadingRole(false);
             return;
         }
-        
+
         try {
             const getUserRole = functions.httpsCallable('getUserRole');
             const result = await getUserRole({ userId: user.uid });
-            
+
             if (result.data.success) {
                 setUserRole(result.data);
             }
@@ -2705,15 +2798,61 @@ const AppScreen = ({ user, onLogout }) => {
         }
     };
 
+    // Load comprehensive user profile
+    const loadUserProfile = async () => {
+        if (!user || !firestore) return;
+
+        try {
+            const doc = await firestore.collection('users').doc(user.uid).get();
+            if (doc.exists) {
+                const data = doc.data();
+                setFullUserProfile(data);
+                // Also update student profile if exists
+                if (data.lastProfile) setStudentProfile(data.lastProfile);
+            }
+        } catch (error) {
+            console.error("Error loading user profile:", error);
+        }
+    };
+
+    // Save profile changes
+    const saveProfileChanges = async (updates) => {
+        if (!user || !firestore) return;
+
+        try {
+            await firestore.collection('users').doc(user.uid).set(updates, { merge: true });
+
+            // Update auth profile if name changed
+            if (updates.displayName && updates.displayName !== user.displayName) {
+                await user.updateProfile({ displayName: updates.displayName });
+            }
+
+            // Reload profile data
+            await loadUserProfile();
+
+            // Update local user object if name changed
+            if (updates.displayName) {
+                // This forces a refresh of the user object to reflect new display name
+                const currentUser = firebase.auth().currentUser;
+                // Force update
+                const newUser = { ...user, displayName: updates.displayName };
+                // Using a hacky way to force re-render if needed, or rely on auth state change
+            }
+        } catch (error) {
+            console.error("Error saving profile changes:", error);
+            throw error;
+        }
+    };
+
     // Load user history function
     const loadUserHistory = async () => {
         if (!functions) return;
-        
+
         setIsLoadingHistory(true);
         try {
             const getUserHistory = functions.httpsCallable('getUserHistory');
             const result = await getUserHistory({ userId: user.uid });
-            
+
             if (result.data.success) {
                 setUserHistory(result.data.history);
             }
@@ -2728,12 +2867,13 @@ const AppScreen = ({ user, onLogout }) => {
     useEffect(() => {
         loadUserRole();
         loadUserHistory();
-        
+        loadUserProfile();
+
         // Set timer to hide welcome message after 4 seconds
         const welcomeTimer = setTimeout(() => {
             setShowWelcome(false);
         }, 4000);
-        
+
         return () => clearTimeout(welcomeTimer);
     }, [user]);
 
@@ -2746,7 +2886,7 @@ const AppScreen = ({ user, onLogout }) => {
         try {
             const gameStepsGet = functions.httpsCallable('gameStepsGet');
             const result = await gameStepsGet({});
-            
+
             if (result.data.success) {
                 setGameSteps(result.data.steps);
                 setCurrentView('game');
@@ -2765,7 +2905,7 @@ const AppScreen = ({ user, onLogout }) => {
         const newResponses = [...gameResponses, answer];
         setGameResponses(newResponses);
         setCurrentScore(currentScore + answer.points);
-        
+
         // Build student profile
         const newProfile = { ...studentProfile };
         if (answer.category === 'stream') newProfile.stream = answer.answer;
@@ -2779,7 +2919,7 @@ const AppScreen = ({ user, onLogout }) => {
         else if (answer.category === 'preferredTechnologies') {
             newProfile.preferredTechnologies = newProfile.preferredTechnologies ? [...newProfile.preferredTechnologies, answer.answer] : [answer.answer];
         }
-        
+
         setStudentProfile(newProfile);
 
         if (currentStepIndex < gameSteps.length - 1) {
@@ -2802,16 +2942,16 @@ const AppScreen = ({ user, onLogout }) => {
 
         try {
             const generateIdea = functions.httpsCallable('generateIdea');
-            const result = await generateIdea({ 
+            const result = await generateIdea({
                 query: query,
                 studentProfile: profile,
                 gameResponses: responses
             });
-            
+
             if (result.data.success) {
                 setGeneratedIdea(result.data.idea);
                 setCurrentView('result');
-                
+
                 // Automatically save to history
                 try {
                     console.log('Attempting to auto-save idea to history for user:', user.uid);
@@ -2822,7 +2962,7 @@ const AppScreen = ({ user, onLogout }) => {
                         gameScore: currentScore,
                         gameStepsCount: responses.length
                     });
-                    
+
                     const saveIdeaToHistory = functions.httpsCallable('saveIdeaToHistory');
                     const saveResult = await saveIdeaToHistory({
                         userId: user.uid,
@@ -2834,9 +2974,9 @@ const AppScreen = ({ user, onLogout }) => {
                         },
                         gameSteps: responses
                     });
-                    
+
                     console.log('Idea automatically saved to history with result:', saveResult.data);
-                    
+
                     // Refresh history after saving
                     console.log('Refreshing history data...');
                     await loadUserHistory();
@@ -2845,7 +2985,7 @@ const AppScreen = ({ user, onLogout }) => {
                     console.error('Error auto-saving to history:', historyError);
                     // Don't show error to user as this is automatic
                 }
-                
+
                 // Save to user profile
                 if (firestore) {
                     await firestore.collection('users').doc(user.uid).set({
@@ -2868,7 +3008,7 @@ const AppScreen = ({ user, onLogout }) => {
 
     const saveToHistory = async () => {
         if (!functions) return;
-        
+
         try {
             const saveIdeaToHistory = functions.httpsCallable('saveIdeaToHistory');
             await saveIdeaToHistory({
@@ -2901,74 +3041,93 @@ const AppScreen = ({ user, onLogout }) => {
         <div className="min-h-screen flex flex-col bg-black relative">
             {/* Add particle system background */}
             <ParticleSystem />
-            
+
             {/* Header */}
-            <header className="bg-black/50 backdrop-blur-sm border-b border-gray-800 p-4 relative z-10">
-                <div className="max-w-6xl mx-auto flex justify-between items-center">
-                    <div className="flex items-center gap-4">
-                        <h1 className="text-2xl font-bold text-white">Pideas</h1>
-                        <span className="text-gray-400">|</span>
-                        <span className="text-gray-300">Gamified Project Idea Generator</span>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <IconButton
-                            iconType="history"
-                            tooltip="History"
-                            onClick={() => setCurrentView('history')}
-                            variant="default"
-                        />
-                        {userRole?.isAdmin && (
-                            <IconButton
-                                iconType="admin"
-                                tooltip="Admin Console"
-                                onClick={() => setCurrentView('admin')}
-                                variant="admin"
-                            />
-                        )}
-                        
-                        {/* User profile section with animation */}
-                        <div className="relative flex items-center">
-                            {/* Animated welcome message */}
-                            {showWelcome && (
-                                <span 
-                                    className={`text-gray-300 ${!showWelcome ? 'animate-fade-out' : 'animate-fade-in'}`}
-                                    style={{ minWidth: '150px' }}
-                                >
-                                    Welcome, {user.displayName}
-                                </span>
-                            )}
-                            
-                            {/* User profile icon (shows after welcome fades) */}
-                            {!showWelcome && (
-                                <div className="animate-fade-in">
-                                    <UserProfileIcon onClick={() => setShowProfileDropdown(!showProfileDropdown)} />
-                                </div>
-                            )}
-                            
-                            {/* User profile dropdown - positioned absolutely with high z-index */}
-                            {showProfileDropdown && (
-                                <div className="fixed inset-0 z-[9999]" style={{ pointerEvents: 'none' }}>
-                                    <div className="absolute right-0 top-[60px] mr-4" style={{ pointerEvents: 'auto' }}>
-                                        <UserProfileDropdown 
-                                            user={user} 
-                                            userRole={userRole} 
-                                            onClose={() => setShowProfileDropdown(false)}
-                                            onLogout={onLogout}
-                                        />
-                                    </div>
-                                </div>
-                            )}
+            {currentView !== 'result' && (
+                <header className="bg-black/50 backdrop-blur-sm border-b border-gray-800 p-4 relative z-10">
+                    <div className="max-w-6xl mx-auto flex justify-between items-center">
+                        <div className="flex items-center gap-4">
+                            <h1 className="text-2xl font-bold text-white">Pideas</h1>
+                            <span className="text-gray-400">|</span>
+                            <span className="text-gray-300">Gamified Project Idea Generator</span>
                         </div>
-                        
-                        <IconButton
-                            iconType="logout"
-                            tooltip="Logout"
-                            onClick={onLogout}
-                            variant="default"
-                        />
+                        <div className="flex items-center gap-4">
+                            <IconButton
+                                iconType="history"
+                                tooltip="History"
+                                onClick={() => setCurrentView('history')}
+                                variant="default"
+                            />
+                            {userRole?.isAdmin && (
+                                <IconButton
+                                    iconType="admin"
+                                    tooltip="Admin Console"
+                                    onClick={() => setCurrentView('admin')}
+                                    variant="admin"
+                                />
+                            )}
+
+                            {/* User profile section with animation */}
+                            <div className="relative flex items-center">
+                                {/* Animated welcome message */}
+                                {showWelcome && (
+                                    <span
+                                        className={`text-gray-300 ${!showWelcome ? 'animate-fade-out' : 'animate-fade-in'}`}
+                                        style={{ minWidth: '150px' }}
+                                    >
+                                        Welcome, {user.displayName}
+                                    </span>
+                                )}
+
+                                {/* User profile icon (shows after welcome fades) */}
+                                {!showWelcome && (
+                                    <div className="animate-fade-in">
+                                        <UserProfileIcon onClick={() => setShowProfileDropdown(!showProfileDropdown)} />
+                                    </div>
+                                )}
+
+                                {/* User profile dropdown - positioned absolutely with high z-index */}
+                                {showProfileDropdown && createPortal(
+                                    <div className="fixed inset-0 z-[9999]" style={{ pointerEvents: 'none' }}>
+                                        <div className="absolute right-0 top-[60px] mr-4" style={{ pointerEvents: 'auto' }}>
+                                            <UserProfileDropdown
+                                                user={user}
+                                                userProfile={fullUserProfile}
+                                                userRole={userRole}
+                                                onClose={() => setShowProfileDropdown(false)}
+                                                onLogout={onLogout}
+                                                onEditProfile={() => {
+                                                    setShowProfileDropdown(false);
+                                                    setShowProfileEditor(true);
+                                                }}
+                                            />
+                                        </div>
+                                    </div>,
+                                    document.body
+                                )}
+
+                                {showProfileEditor && createPortal(
+                                    <ProfileEditor
+                                        user={user}
+                                        currentProfile={fullUserProfile}
+                                        onClose={() => setShowProfileEditor(false)}
+                                        onSave={saveProfileChanges}
+                                        isLoading={false}
+                                    />,
+                                    document.body
+                                )}
+                            </div>
+
+                            <IconButton
+                                iconType="logout"
+                                tooltip="Logout"
+                                onClick={onLogout}
+                                variant="default"
+                            />
+                        </div>
                     </div>
-                </div>
-            </header>
+                </header>
+            )}
 
             {/* Main Content */}
             <main className="flex-1 flex flex-col items-center justify-center p-8 relative z-10">
@@ -2992,7 +3151,7 @@ const AppScreen = ({ user, onLogout }) => {
                                     className="w-full h-32 bg-gray-800/50 border border-gray-700 rounded-lg p-4 text-white placeholder-gray-400 resize-none focus:outline-none focus:border-blue-500 transition-colors"
                                 />
                             </div>
-                            
+
                             <button
                                 onClick={startGameFlow}
                                 disabled={!query.trim()}
@@ -3000,19 +3159,19 @@ const AppScreen = ({ user, onLogout }) => {
                             >
                                 🎮 Start Gamified Project Generation
                             </button>
-                            
+
                             <div className="text-center text-gray-400 text-sm">
                                 <p>Answer 7 fun questions to get a perfectly tailored project idea!</p>
                             </div>
                         </div>
-                        
+
                         {/* History Section */}
                         <div className="mt-12">
                             <div className="flex justify-between items-center mb-6">
                                 <h3 className="text-2xl font-bold text-white">Your Recent Project Ideas</h3>
                                 <span className="text-gray-400 text-sm">{userHistory.length} ideas generated</span>
                             </div>
-                            
+
                             {isLoadingHistory ? (
                                 <div className="bg-gray-800/30 border border-gray-700 rounded-lg p-8 text-center">
                                     <div className="text-gray-400">Loading your project history...</div>
@@ -3024,8 +3183,8 @@ const AppScreen = ({ user, onLogout }) => {
                             ) : (
                                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                                     {userHistory.slice(0, 6).map((item) => (
-                                        <div 
-                                            key={item.id} 
+                                        <div
+                                            key={item.id}
                                             className="bg-gray-800/30 border border-gray-700 rounded-lg p-4 hover:bg-gray-800/50 transition-colors cursor-pointer"
                                             onClick={() => {
                                                 setGeneratedIdea(item.idea);
@@ -3049,7 +3208,7 @@ const AppScreen = ({ user, onLogout }) => {
                                     ))}
                                 </div>
                             )}
-                            
+
                             {userHistory.length > 6 && (
                                 <div className="text-center mt-4">
                                     <button
@@ -3134,7 +3293,7 @@ const App = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [isInitializing, setIsInitializing] = useState(true);
     const [firebaseError, setFirebaseError] = useState(null);
-    
+
     // Discovery path states
     const [discoveryMode, setDiscoveryMode] = useState(false);
     const [discoveryStep, setDiscoveryStep] = useState('onboarding'); // 'onboarding', 'selection', 'generating'
@@ -3152,12 +3311,12 @@ const App = () => {
 
         try {
             const auth = firebase.auth();
-            
+
             // Listen for authentication state changes
             const unsubscribe = auth.onAuthStateChanged((user) => {
                 setUser(user);
                 setIsInitializing(false);
-                
+
                 // Check if user logged in for discovery
                 if (user && sessionStorage.getItem('startDiscoveryAfterLogin') === 'true') {
                     sessionStorage.removeItem('startDiscoveryAfterLogin');
@@ -3183,7 +3342,7 @@ const App = () => {
             alert('Firebase not available. Please run from Firebase hosting.');
             return;
         }
-        
+
         setIsLoading(true);
         try {
             const provider = new firebase.auth.GoogleAuthProvider();
@@ -3201,7 +3360,7 @@ const App = () => {
         if (typeof firebase === 'undefined') {
             return;
         }
-        
+
         try {
             const auth = firebase.auth();
             await auth.signOut();
@@ -3209,12 +3368,12 @@ const App = () => {
             console.error('Logout error:', error);
         }
     };
-    
+
     const handleDiscoveryPath = () => {
         setDiscoveryMode(true);
         setDiscoveryStep('onboarding');
     };
-    
+
     const handleDiscoveryComplete = (profile) => {
         console.log('Discovery onboarding completed, profile:', profile);
         setUserProfile(profile);
@@ -3222,11 +3381,11 @@ const App = () => {
         // Force a re-render to ensure the UI updates
         setForceRender(prev => prev + 1);
     };
-    
+
     const handleIdeaSelect = async (idea, profile) => {
         setSelectedIdea(idea);
         setDiscoveryStep('generating');
-        
+
         try {
             // Generate full project documentation for the selected idea
             const prompt = `Generate a comprehensive project plan for: "${idea.title}"
@@ -3261,20 +3420,20 @@ const App = () => {
             ## Evaluation Criteria
             
             Make it comprehensive and actionable for a ${profile.skillLevel} level student.`;
-            
+
             const generateIdea = firebase.functions().httpsCallable('generateIdea');
             const result = await generateIdea({ prompt });
-            
+
             if (result.data.success) {
                 // Stay in discovery mode but move to result step
                 setDiscoveryStep('result');
-                
+
                 // Store the generated comprehensive plan
                 setSelectedIdea({
                     ...idea,
                     comprehensivePlan: result.data.idea
                 });
-                
+
                 // Auto-save to history
                 try {
                     const saveIdeaToHistory = firebase.functions().httpsCallable('saveIdeaToHistory');
@@ -3289,7 +3448,7 @@ const App = () => {
                         },
                         gameSteps: []
                     });
-                    
+
                     await saveIdeaToHistory({
                         userId: user.uid,
                         ideaData: {
@@ -3314,12 +3473,12 @@ const App = () => {
             setDiscoveryStep('selection');
         }
     };
-    
+
     const handleBackToDiscovery = () => {
         setDiscoveryStep('onboarding');
         setUserProfile(null);
     };
-    
+
     const handleExitDiscovery = () => {
         setDiscoveryMode(false);
         setDiscoveryStep('onboarding');
@@ -3371,14 +3530,14 @@ const App = () => {
                     // Discovery Path Flow
                     <>
                         {discoveryStep === 'onboarding' && (
-                            <DiscoveryOnboarding 
+                            <DiscoveryOnboarding
                                 key={`onboarding-${forceRender}`} // Add a key to force re-render when needed
                                 onComplete={handleDiscoveryComplete}
                                 user={user}
                             />
                         )}
                         {discoveryStep === 'selection' && (
-                            <PersonalizedIdeaSelection 
+                            <PersonalizedIdeaSelection
                                 userProfile={userProfile}
                                 onIdeaSelect={handleIdeaSelect}
                                 onBackToDiscovery={handleBackToDiscovery}
@@ -3395,7 +3554,7 @@ const App = () => {
                             </div>
                         )}
                         {discoveryStep === 'result' && (
-                            <DiscoveryResult 
+                            <DiscoveryResult
                                 idea={selectedIdea}
                                 userProfile={userProfile}
                                 onBackToSelection={() => setDiscoveryStep('selection')}
@@ -3408,10 +3567,10 @@ const App = () => {
                     <AppScreen user={user} onLogout={handleLogout} onDiscoveryMode={handleDiscoveryPath} />
                 )
             ) : (
-                <LoginScreen 
-                    onLogin={handleLogin} 
+                <LoginScreen
+                    onLogin={handleLogin}
                     onDiscoveryPath={handleDiscoveryPath}
-                    isLoading={isLoading} 
+                    isLoading={isLoading}
                 />
             )}
         </div>

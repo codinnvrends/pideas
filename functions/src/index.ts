@@ -7,7 +7,7 @@
  * See a full list of supported triggers at https://firebase.google.com/docs/functions
  */
 
-import {setGlobalOptions} from "firebase-functions";
+import { setGlobalOptions } from "firebase-functions";
 import { onCall } from "firebase-functions/v2/https";
 import { logger } from "firebase-functions";
 // Import Firebase admin SDK
@@ -147,11 +147,11 @@ async function isUserAdmin(userId: string): Promise<boolean> {
   try {
     const db = admin.firestore();
     const userDoc = await db.collection('userRoles').doc(userId).get();
-    
+
     if (!userDoc.exists) {
       return false;
     }
-    
+
     const userData = userDoc.data() as UserRole;
     return userData.role === 'admin' && userData.status === 'active';
   } catch (error) {
@@ -170,7 +170,7 @@ async function logAdminAction(adminId: string, action: string, targetUserId?: st
       timestamp: new Date().toISOString(),
       details: details || {}
     };
-    
+
     await db.collection('adminLogs').add(actionLog);
   } catch (error) {
     logger.error('Error logging admin action:', error);
@@ -181,12 +181,12 @@ async function ensureUserRole(userId: string, email: string): Promise<void> {
   try {
     const db = admin.firestore();
     const userRoleDoc = await db.collection('userRoles').doc(userId).get();
-    
+
     if (!userRoleDoc.exists) {
       // Check if this is the first user (make them admin)
       const allUsersSnapshot = await db.collection('userRoles').limit(1).get();
       const isFirstUser = allUsersSnapshot.empty;
-      
+
       // Create user role (first user becomes admin)
       const userRole: UserRole = {
         userId,
@@ -195,9 +195,9 @@ async function ensureUserRole(userId: string, email: string): Promise<void> {
         createdAt: new Date().toISOString(),
         status: 'active'
       };
-      
+
       await db.collection('userRoles').doc(userId).set(userRole);
-      
+
       if (isFirstUser) {
         logger.info(`First user ${email} created as admin`);
       }
@@ -331,10 +331,10 @@ Ensure the project is:
 /**
  * Get gamification questions for context gathering
  */
-export const gameStepsGet = onCall({maxInstances: 5}, async (request: any) => {
+export const gameStepsGet = onCall({ maxInstances: 5, invoker: 'public' }, async (request: any) => {
   try {
     const { stepNumber } = request.data;
-    
+
     const gameSteps: GameStep[] = [
       {
         stepId: 1,
@@ -410,17 +410,17 @@ export const gameStepsGet = onCall({maxInstances: 5}, async (request: any) => {
 /**
  * Generate comprehensive project idea based on gamified context
  */
-export const generateIdea = onCall({maxInstances: 5, timeoutSeconds: 300}, async (request: any) => {
+export const generateIdea = onCall({ maxInstances: 5, timeoutSeconds: 300, invoker: 'public' }, async (request: any) => {
   try {
     const { query, prompt, studentProfile, gameResponses, discoveryMode }: IdeaGenerationRequest = request.data;
-    
+
     // Accept either query or prompt parameter for compatibility
     const inputQuery = query || prompt;
-    
+
     if (!inputQuery || typeof inputQuery !== "string") {
       throw new Error("Invalid query/prompt parameter");
     }
-    
+
     logger.info("Received request with:", { query, prompt, hasStudentProfile: !!studentProfile, discoveryMode });
 
     // Validate student profile structure
@@ -438,9 +438,9 @@ export const generateIdea = onCall({maxInstances: 5, timeoutSeconds: 300}, async
 
     // Check if this is a discovery mode request (multiple brief ideas)
     const isDiscoveryRequest = discoveryMode || inputQuery.includes('Generate 6-8') || inputQuery.includes('diverse project ideas');
-    
+
     let contextPrompt: string;
-    
+
     if (isDiscoveryRequest) {
       // Discovery mode: Generate multiple brief project ideas
       contextPrompt = createDiscoveryPrompt(inputQuery, profile);
@@ -448,34 +448,34 @@ export const generateIdea = onCall({maxInstances: 5, timeoutSeconds: 300}, async
       // Regular mode: Generate one comprehensive project plan
       contextPrompt = createComprehensivePrompt(inputQuery, profile);
     }
-    
+
     logger.info("Using prompt type:", isDiscoveryRequest ? 'Discovery (Multiple Ideas)' : 'Comprehensive (Single Plan)');
-    
+
     // Using the gemini model with genkit
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       logger.error("Missing Gemini API key in environment variables");
       throw new Error("Missing API key configuration. Please set GEMINI_API_KEY in environment variables.");
     }
-    
+
     logger.info("Using Gemini API with configured key");
-    
+
     try {
       const ai = genkit({
         plugins: [googleAI({
           apiKey: apiKey
         })],
-      model: googleAI.model('gemini-2.5-pro'),
+        model: googleAI.model('gemini-3-flash-preview'),
       });
-      
+
       const { text } = await ai.generate(contextPrompt);
-      
+
       if (!text || text.trim().length === 0) {
         throw new Error("Generated text is empty");
       }
-      
+
       logger.info("Successfully generated idea with length:", text.length);
-      
+
       // Validate the generated idea structure (basic validation)
       const ideaIsValid = isValidProjectIdea({ title: 'Generated', overview: text });
       logger.info("Generated idea validation:", ideaIsValid);
@@ -495,10 +495,10 @@ export const generateIdea = onCall({maxInstances: 5, timeoutSeconds: 300}, async
       };
     } catch (genkitError) {
       logger.error("Genkit error:", genkitError);
-      
+
       // Fallback to a simple response if genkit fails
       const fallbackIdea = `# ${query}\n\nBased on your profile as a ${profile.stream} student in ${profile.year}, here's a personalized project idea:\n\n## Project Overview\nThis project is designed for ${profile.skillLevel} level students and can be completed in ${profile.projectDuration}.\n\n## Technical Requirements\n- Technologies: ${profile.preferredTechnologies?.join(', ') || 'Flexible'}\n- Team Size: ${profile.teamSize}\n- Skill Level: ${profile.skillLevel}\n\n## Implementation Guide\n1. Start with basic setup and planning\n2. Implement core functionality\n3. Test and refine your solution\n\nThis project will help you develop practical skills in ${profile.interests?.join(', ') || 'your chosen area'}.`;
-      
+
       return {
         success: true,
         idea: fallbackIdea,
@@ -521,21 +521,21 @@ export const generateIdea = onCall({maxInstances: 5, timeoutSeconds: 300}, async
 /**
  * Save user's project idea to history
  */
-export const saveIdeaToHistory = onCall({maxInstances: 5}, async (request: any) => {
+export const saveIdeaToHistory = onCall({ maxInstances: 5, invoker: 'public' }, async (request: any) => {
   try {
     const { userId, ideaData, gameSteps }: HistorySaveRequest = request.data;
-    
+
     if (!userId) {
       throw new Error("User ID is required");
     }
-    
+
     // Ensure user role exists (create default if not)
     // Get user email from Firebase Auth
     try {
       const userRecord = await admin.auth().getUser(userId);
       if (userRecord.email) {
         await ensureUserRole(userId, userRecord.email);
-        
+
         // Update last login timestamp
         const db = admin.firestore();
         await db.collection('userRoles').doc(userId).update({
@@ -549,7 +549,7 @@ export const saveIdeaToHistory = onCall({maxInstances: 5}, async (request: any) 
     // Create a new history document in Firestore
     const historyId = `history_${Date.now()}`;
     const timestamp = new Date().toISOString();
-    
+
     // Prepare data for Firestore
     const historyData = {
       id: historyId,
@@ -561,13 +561,13 @@ export const saveIdeaToHistory = onCall({maxInstances: 5}, async (request: any) 
       gameStepsCount: gameSteps?.length || 0,
       generatedAt: timestamp
     };
-    
+
     logger.info("Saving idea to history for user:", userId);
-    
+
     // Save to Firestore
     const db = admin.firestore();
     await db.collection('projectHistory').doc(historyId).set(historyData);
-    
+
     // Also update the user document with a reference to their latest idea
     await db.collection('users').doc(userId).set({
       lastHistoryId: historyId,
@@ -594,10 +594,10 @@ export const saveIdeaToHistory = onCall({maxInstances: 5}, async (request: any) 
 /**
  * Get user's project idea history
  */
-export const getUserHistory = onCall({maxInstances: 5}, async (request: any) => {
+export const getUserHistory = onCall({ maxInstances: 5, invoker: 'public' }, async (request: any) => {
   try {
     const { userId } = request.data;
-    
+
     if (!userId) {
       throw new Error("User ID is required");
     }
@@ -611,17 +611,17 @@ export const getUserHistory = onCall({maxInstances: 5}, async (request: any) => 
       .orderBy('generatedAt', 'desc')
       .limit(50) // Limit to most recent 50 items
       .get();
-    
+
     // Transform data
     const historyItems: Array<any> = [];
     historySnapshot.forEach((doc: admin.firestore.QueryDocumentSnapshot) => {
       historyItems.push(doc.data());
     });
-    
+
     // Get user stats
     const userDoc = await db.collection('users').doc(userId).get();
     const userData = userDoc.exists ? userDoc.data() : {};
-    
+
     return {
       success: true,
       history: historyItems as Array<any>,
@@ -640,33 +640,33 @@ export const getUserHistory = onCall({maxInstances: 5}, async (request: any) => 
 /**
  * Get all users for admin console (admin only)
  */
-export const getAllUsers = onCall({maxInstances: 3}, async (request: any) => {
+export const getAllUsers = onCall({ maxInstances: 3, invoker: 'public' }, async (request: any) => {
   try {
     const { adminUserId } = request.data;
-    
+
     if (!adminUserId) {
       throw new Error("Admin user ID is required");
     }
-    
+
     // Check if user is admin
     const isAdmin = await isUserAdmin(adminUserId);
     if (!isAdmin) {
       throw new Error("Access denied: Admin privileges required");
     }
-    
+
     const db = admin.firestore();
-    
+
     // Get all user roles
     const usersSnapshot = await db.collection('userRoles').get();
     const users: UserRole[] = [];
-    
+
     usersSnapshot.forEach((doc) => {
       users.push(doc.data() as UserRole);
     });
-    
+
     // Log admin action
     await logAdminAction(adminUserId, 'VIEW_ALL_USERS');
-    
+
     return {
       success: true,
       users: users.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
@@ -680,17 +680,17 @@ export const getAllUsers = onCall({maxInstances: 3}, async (request: any) => {
 /**
  * Get user's role and permissions
  */
-export const getUserRole = onCall({maxInstances: 5}, async (request: any) => {
+export const getUserRole = onCall({ maxInstances: 5, invoker: 'public' }, async (request: any) => {
   try {
     const { userId } = request.data;
-    
+
     if (!userId) {
       throw new Error("User ID is required");
     }
-    
+
     const db = admin.firestore();
     const userDoc = await db.collection('userRoles').doc(userId).get();
-    
+
     if (!userDoc.exists) {
       // Return default user role
       return {
@@ -700,9 +700,9 @@ export const getUserRole = onCall({maxInstances: 5}, async (request: any) => {
         isAdmin: false
       };
     }
-    
+
     const userData = userDoc.data() as UserRole;
-    
+
     return {
       success: true,
       role: userData.role,
@@ -718,47 +718,47 @@ export const getUserRole = onCall({maxInstances: 5}, async (request: any) => {
 /**
  * Update user role (admin only)
  */
-export const updateUserRole = onCall({maxInstances: 3}, async (request: any) => {
+export const updateUserRole = onCall({ maxInstances: 3, invoker: 'public' }, async (request: any) => {
   try {
     const { adminUserId, targetUserId, newRole, newStatus }: UserManagementRequest = request.data;
-    
+
     if (!adminUserId || !targetUserId) {
       throw new Error("Admin user ID and target user ID are required");
     }
-    
+
     // Check if user is admin
     const isAdmin = await isUserAdmin(adminUserId);
     if (!isAdmin) {
       throw new Error("Access denied: Admin privileges required");
     }
-    
+
     const db = admin.firestore();
     const userDoc = await db.collection('userRoles').doc(targetUserId).get();
-    
+
     if (!userDoc.exists) {
       throw new Error("Target user not found");
     }
-    
+
     const currentData = userDoc.data() as UserRole;
     const updateData: Partial<UserRole> = {};
-    
+
     if (newRole && newRole !== currentData.role) {
       updateData.role = newRole;
     }
-    
+
     if (newStatus && newStatus !== currentData.status) {
       updateData.status = newStatus;
     }
-    
+
     if (Object.keys(updateData).length === 0) {
       return {
         success: true,
         message: "No changes needed"
       };
     }
-    
+
     await db.collection('userRoles').doc(targetUserId).update(updateData);
-    
+
     // Log admin action
     await logAdminAction(adminUserId, 'UPDATE_USER_ROLE', targetUserId, {
       previousRole: currentData.role,
@@ -766,7 +766,7 @@ export const updateUserRole = onCall({maxInstances: 3}, async (request: any) => 
       previousStatus: currentData.status,
       newStatus: newStatus || currentData.status
     });
-    
+
     return {
       success: true,
       message: "User role updated successfully",
@@ -781,40 +781,40 @@ export const updateUserRole = onCall({maxInstances: 3}, async (request: any) => 
 /**
  * Get all ideas across users (admin only)
  */
-export const getAllIdeas = onCall({maxInstances: 3}, async (request: any) => {
+export const getAllIdeas = onCall({ maxInstances: 3, invoker: 'public' }, async (request: any) => {
   try {
     const { adminUserId, limit = 100, searchQuery } = request.data;
-    
+
     if (!adminUserId) {
       throw new Error("Admin user ID is required");
     }
-    
+
     // Check if user is admin
     const isAdmin = await isUserAdmin(adminUserId);
     if (!isAdmin) {
       throw new Error("Access denied: Admin privileges required");
     }
-    
+
     const db = admin.firestore();
     let query = db.collection('projectHistory')
       .orderBy('generatedAt', 'desc')
       .limit(limit);
-    
+
     const snapshot = await query.get();
     const ideas: any[] = [];
-    
+
     snapshot.forEach((doc) => {
       const data = doc.data();
-      if (!searchQuery || 
-          data.query?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          data.idea?.toLowerCase().includes(searchQuery.toLowerCase())) {
+      if (!searchQuery ||
+        data.query?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        data.idea?.toLowerCase().includes(searchQuery.toLowerCase())) {
         ideas.push(data);
       }
     });
-    
+
     // Log admin action
     await logAdminAction(adminUserId, 'VIEW_ALL_IDEAS', undefined, { searchQuery, resultCount: ideas.length });
-    
+
     return {
       success: true,
       ideas,
@@ -829,10 +829,10 @@ export const getAllIdeas = onCall({maxInstances: 3}, async (request: any) => {
 /**
  * Get admin activity logs (admin only)
  */
-export const getAdminLogs = onCall({maxInstances: 3}, async (request: any) => {
+export const getAdminLogs = onCall({ maxInstances: 3 }, async (request: any) => {
   try {
     const { adminUserId, limit = 50 } = request.data;
-    
+
     if (!adminUserId) {
       return { success: false, error: 'Admin user ID is required' };
     }
@@ -864,10 +864,10 @@ export const getAdminLogs = onCall({maxInstances: 3}, async (request: any) => {
 /**
  * Modify a specific section of a project idea
  */
-export const modifyIdeaSection = onCall({maxInstances: 3, timeoutSeconds: 300}, async (request: any) => {
+export const modifyIdeaSection = onCall({ maxInstances: 3, timeoutSeconds: 300 }, async (request: any) => {
   try {
     const { userId, originalIdea, sectionTitle, sectionContent, modificationPrompt } = request.data;
-    
+
     if (!userId || !originalIdea || !sectionTitle || !modificationPrompt) {
       return { success: false, error: 'Missing required parameters' };
     }
@@ -921,7 +921,7 @@ Return the complete modified project idea:`;
           maxOutputTokens: 4000,
         },
       });
-      
+
       const modifiedIdea = llmResponse.text;
 
       if (!modifiedIdea || modifiedIdea.trim().length === 0) {
@@ -929,7 +929,7 @@ Return the complete modified project idea:`;
       }
 
       logger.info(`Section modification completed for user ${userId}`);
-      
+
       return {
         success: true,
         modifiedIdea: modifiedIdea,
@@ -939,16 +939,16 @@ Return the complete modified project idea:`;
 
     } catch (genkitError) {
       logger.error('Genkit error during section modification:', genkitError);
-      
+
       // Fallback: Simple text replacement approach
       logger.info('Using fallback modification approach');
-      
+
       const fallbackModification = `## ${sectionTitle}\n\n${sectionContent}\n\n**Modification Note:** ${modificationPrompt}\n\n*This section has been marked for modification. Please regenerate for full AI-powered modification.*`;
-      
+
       // Replace the section in the original idea
       const sectionRegex = new RegExp(`## ${sectionTitle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[\s\S]*?(?=## |$)`, 'i');
       const modifiedIdea = originalIdea.replace(sectionRegex, fallbackModification);
-      
+
       return {
         success: true,
         modifiedIdea: modifiedIdea,
@@ -967,23 +967,23 @@ Return the complete modified project idea:`;
 /**
  * Bulk user operations (admin only)
  */
-export const bulkUserOperations = onCall({maxInstances: 3}, async (request: any) => {
+export const bulkUserOperations = onCall({ maxInstances: 3 }, async (request: any) => {
   try {
     const { adminUserId, userIds, action, newRole, newStatus }: BulkUserRequest = request.data;
-    
+
     if (!adminUserId || !userIds || !Array.isArray(userIds) || !action) {
       throw new Error("Admin user ID, user IDs array, and action are required");
     }
-    
+
     // Check if user is admin
     const isAdmin = await isUserAdmin(adminUserId);
     if (!isAdmin) {
       throw new Error("Access denied: Admin privileges required");
     }
-    
+
     const db = admin.firestore();
     const results: any[] = [];
-    
+
     for (const userId of userIds) {
       try {
         if (action === 'changeRole' && newRole) {
@@ -997,7 +997,7 @@ export const bulkUserOperations = onCall({maxInstances: 3}, async (request: any)
         results.push({ userId, success: false, error: error instanceof Error ? error.message : 'Unknown error' });
       }
     }
-    
+
     // Log admin action
     await logAdminAction(adminUserId, 'BULK_USER_OPERATION', undefined, {
       action,
@@ -1006,7 +1006,7 @@ export const bulkUserOperations = onCall({maxInstances: 3}, async (request: any)
       newStatus,
       results
     });
-    
+
     return {
       success: true,
       results,

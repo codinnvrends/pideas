@@ -1872,6 +1872,7 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false }) => {
     const [isModifying, setIsModifying] = useState(false);
     const [currentIdea, setCurrentIdea] = useState(idea);
     const [modificationHistory, setModificationHistory] = useState([]);
+    const [isGeneratingCode, setIsGeneratingCode] = useState(false);
 
     // Parse the idea text into sections
     useEffect(() => {
@@ -2165,6 +2166,47 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false }) => {
                                 variant="primary"
                                 className="bg-black border border-gray-800 hover:bg-gray-900 text-gray-300 hover:text-white"
                             />
+
+                            <button
+                                onClick={async () => {
+                                    if (isGeneratingCode) return;
+                                    setIsGeneratingCode(true);
+                                    try {
+                                        const generateCodebase = firebase.functions().httpsCallable('generate_codebase', { timeout: 540000 });
+                                        const result = await generateCodebase({ idea: currentIdea });
+                                        if (result.data.success) {
+                                            // Create temporary link to trigger download reliably
+                                            const link = document.createElement('a');
+                                            link.href = result.data.downloadUrl;
+                                            link.download = 'project_codebase.zip';
+                                            document.body.appendChild(link);
+                                            link.click();
+                                            document.body.removeChild(link);
+                                            alert("Codebase generated! Downloading now...");
+                                        } else {
+                                            alert("Error generating codebase: " + result.data.error);
+                                        }
+                                    } catch (e) {
+                                        console.error(e);
+                                        alert("Failed to call generation function.");
+                                    } finally {
+                                        setIsGeneratingCode(false);
+                                    }
+                                }}
+                                disabled={isGeneratingCode}
+                                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 border border-blue-500"
+                            >
+                                {isGeneratingCode ? (
+                                    <>
+                                        <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                        <span>Building...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <span>⬇️ Download Code</span>
+                                    </>
+                                )}
+                            </button>
 
                             {/* User profile section */}
                             <div className="relative flex items-center">

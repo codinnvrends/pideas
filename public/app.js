@@ -2081,7 +2081,7 @@ const SectionEditor = ({ section, onUpdate, onModify, isLoading }) => {
 };
 
 // Enhanced Project Idea Display Component with Modification System
-const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false, customHeaderActions = null, userProfile, onNavigate, onLogout }) => {
+const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false, customHeaderActions = null, userProfile, onNavigate, onLogout, onDiscoveryMode }) => {
     const [sections, setSections] = useState([]);
     const [selectedSection, setSelectedSection] = useState(null);
     const [isModifying, setIsModifying] = useState(false);
@@ -2477,6 +2477,13 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false, custom
                                         variant="primary"
                                         className="bg-black border border-gray-800 hover:bg-gray-900 text-gray-300 hover:text-white"
                                     />
+                                    <button
+                                        onClick={onDiscoveryMode}
+                                        className="bg-purple-900/30 hover:bg-purple-900/50 text-purple-200 border border-purple-800/50 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                                    >
+                                        <span>🚀</span>
+                                        <span className="hidden md:inline">Discovery Mode</span>
+                                    </button>
                                 </>
                             )}
 
@@ -3308,7 +3315,7 @@ const UserProfileDropdown = ({ user, userProfile, userRole, onClose, onLogout, o
 };
 
 // Main App Screen Component
-const AppScreen = ({ user, onLogout }) => {
+const AppScreen = ({ user, onLogout, onDiscoveryMode }) => {
     const [currentView, setCurrentView] = useState('welcome');
     const [query, setQuery] = useState('');
     const [gameSteps, setGameSteps] = useState([]);
@@ -3721,8 +3728,19 @@ const AppScreen = ({ user, onLogout }) => {
                                 🎮 Start Gamified Project Generation
                             </button>
 
-                            <div className="text-center text-gray-400 text-sm">
+                            <div className="text-center text-gray-400 text-sm flex flex-col gap-4">
                                 <p>Answer 7 fun questions to get a perfectly tailored project idea!</p>
+
+                                <div className="border-t border-gray-800/50 pt-4 mt-2">
+                                    <p className="mb-3 text-gray-500">Or try our new advanced mode</p>
+                                    <button
+                                        onClick={onDiscoveryMode}
+                                        className="inline-flex items-center gap-2 text-purple-400 hover:text-purple-300 transition-colors border border-purple-900/50 bg-purple-900/10 hover:bg-purple-900/20 px-4 py-2 rounded-full text-sm font-medium"
+                                    >
+                                        <span>🚀</span>
+                                        <span>Enter Discovery Mode</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
@@ -3815,6 +3833,7 @@ const AppScreen = ({ user, onLogout }) => {
                         userProfile={fullUserProfile} // Pass profile for dropdown
                         onNavigate={setCurrentView}   // Pass navigation handler
                         onLogout={onLogout}           // Pass logout handler
+                        onDiscoveryMode={onDiscoveryMode} // Pass discovery handler
                     />
                 )}
 

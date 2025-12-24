@@ -20,11 +20,21 @@
   },
   "homepage": "https://github.com/dhaniram-kshirsagar/pideas#readme",
   "dependencies": {
+    "chart.js": "^4.5.1",
+    "firebase": "^12.7.0",
+    "framer-motion": "^12.23.26",
+    "html2pdf.js": "^0.12.1",
+    "lucide-react": "^0.562.0",
+    "marked": "^17.0.1",
     "react": "^19.1.0",
+    "react-chartjs-2": "^5.3.1",
     "react-dom": "^19.1.0"
   },
   "devDependencies": {
+    "autoprefixer": "^10.4.23",
+    "postcss": "^8.5.6",
     "react-scripts": "^5.0.1",
+    "tailwindcss": "^4.1.18",
     "typescript": "^5.8.3"
   }
 }

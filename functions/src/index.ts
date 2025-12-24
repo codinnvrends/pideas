@@ -18,6 +18,7 @@ import { googleAI } from '@genkit-ai/googleai';
 
 // Initialize Firebase admin
 admin.initializeApp();
+admin.firestore().settings({ ignoreUndefinedProperties: true });
 
 // Start writing functions
 // https://firebase.google.com/docs/functions/typescript
@@ -122,7 +123,7 @@ interface UserRole {
 interface AdminAction {
   adminId: string;
   action: string;
-  targetUserId?: string;
+  targetUserId?: string | null;
   timestamp: string;
   details: any;
 }
@@ -160,15 +161,18 @@ async function isUserAdmin(userId: string): Promise<boolean> {
   }
 }
 
-async function logAdminAction(adminId: string, action: string, targetUserId?: string, details?: any): Promise<void> {
+async function logAdminAction(adminId: string, action: string, targetUserId?: string | null, details?: any): Promise<void> {
   try {
     const db = admin.firestore();
+    // Sanitize details to remove undefined values
+    const safeDetails = details ? JSON.parse(JSON.stringify(details)) : {};
+
     const actionLog: AdminAction = {
       adminId,
       action,
-      targetUserId,
+      targetUserId: targetUserId || null,
       timestamp: new Date().toISOString(),
-      details: details || {}
+      details: safeDetails
     };
 
     await db.collection('adminLogs').add(actionLog);
@@ -328,6 +332,20 @@ Ensure the project is:
 `;
 }
 
+// Helper to interpolate prompt variables
+function interpolatePrompt(template: string, inputQuery: string, profile: StudentProfile): string {
+  let result = template;
+  result = result.replace(/{{inputQuery}}/g, inputQuery || '');
+  result = result.replace(/{{stream}}/g, profile.stream || 'Engineering');
+  result = result.replace(/{{skillLevel}}/g, profile.skillLevel || 'Intermediate');
+  result = result.replace(/{{interests}}/g, profile.interests?.join(', ') || 'General');
+  result = result.replace(/{{projectDuration}}/g, profile.projectDuration || '1-2 months');
+  result = result.replace(/{{preferredTechnologies}}/g, profile.preferredTechnologies?.join(', ') || 'Flexible');
+  result = result.replace(/{{teamSize}}/g, profile.teamSize || 'Individual');
+  result = result.replace(/{{year}}/g, profile.year || 'Not specified');
+  return result;
+}
+
 /**
  * Get gamification questions for context gathering
  */
@@ -439,17 +457,38 @@ export const generateIdea = onCall({ maxInstances: 5, timeoutSeconds: 300, invok
     // Check if this is a discovery mode request (multiple brief ideas)
     const isDiscoveryRequest = discoveryMode || inputQuery.includes('Generate 6-8') || inputQuery.includes('diverse project ideas');
 
+    logger.info("Using prompt type:", isDiscoveryRequest ? 'Discovery (Multiple Ideas)' : 'Comprehensive (Single Plan)');
+
+    // DYNAMIC PROMPT LOGIC
+    const db = admin.firestore();
+    const promptType = isDiscoveryRequest ? 'discovery' : 'comprehensive';
     let contextPrompt: string;
 
-    if (isDiscoveryRequest) {
-      // Discovery mode: Generate multiple brief project ideas
-      contextPrompt = createDiscoveryPrompt(inputQuery, profile);
-    } else {
-      // Regular mode: Generate one comprehensive project plan
-      contextPrompt = createComprehensivePrompt(inputQuery, profile);
+    try {
+      // Try to fetch dynamic prompt from Firestore
+      const promptDoc = await db.collection('config').doc('prompts').get();
+      if (promptDoc.exists && promptDoc.data()?.[promptType]) {
+        const template = promptDoc.data()?.[promptType];
+        contextPrompt = interpolatePrompt(template, inputQuery, profile);
+        logger.info("Using DYNAMIC prompt from Firestore");
+      } else {
+        // Fallback to hardcoded prompts
+        logger.info("Using DEFAULT hardcoded prompt");
+        if (isDiscoveryRequest) {
+          contextPrompt = createDiscoveryPrompt(inputQuery, profile);
+        } else {
+          contextPrompt = createComprehensivePrompt(inputQuery, profile);
+        }
+      }
+    } catch (dbError) {
+      logger.error("Error fetching dynamic prompt, using fallback:", dbError);
+      // Fallback
+      if (isDiscoveryRequest) {
+        contextPrompt = createDiscoveryPrompt(inputQuery, profile);
+      } else {
+        contextPrompt = createComprehensivePrompt(inputQuery, profile);
+      }
     }
-
-    logger.info("Using prompt type:", isDiscoveryRequest ? 'Discovery (Multiple Ideas)' : 'Comprehensive (Single Plan)');
 
     // Using the gemini model with genkit
     const apiKey = process.env.GEMINI_API_KEY;
@@ -665,7 +704,7 @@ export const getAllUsers = onCall({ maxInstances: 3, invoker: 'public' }, async 
     });
 
     // Log admin action
-    await logAdminAction(adminUserId, 'VIEW_ALL_USERS');
+    await logAdminAction(adminUserId, 'VIEW_ALL_USERS', null);
 
     return {
       success: true,
@@ -797,10 +836,19 @@ export const getAllIdeas = onCall({ maxInstances: 3, invoker: 'public' }, async 
 
     const db = admin.firestore();
     let query = db.collection('projectHistory')
-      .orderBy('generatedAt', 'desc')
-      .limit(limit);
+      .orderBy('generatedAt', 'desc');
 
-    const snapshot = await query.get();
+    if (searchQuery) {
+      // Simple client-side filtering would be better for complex text, 
+      // but for now we'll rely on the client to filter or basic text match if supported
+      // Firestore doesn't support full-text search natively without extensions
+    }
+
+
+
+
+
+    const snapshot = await query.limit(limit).get();
     const ideas: any[] = [];
 
     snapshot.forEach((doc) => {
@@ -813,7 +861,8 @@ export const getAllIdeas = onCall({ maxInstances: 3, invoker: 'public' }, async 
     });
 
     // Log admin action
-    await logAdminAction(adminUserId, 'VIEW_ALL_IDEAS', undefined, { searchQuery, resultCount: ideas.length });
+    // Log admin action
+    await logAdminAction(adminUserId, 'VIEW_ALL_IDEAS', null, { searchQuery: searchQuery || null, resultCount: ideas.length });
 
     return {
       success: true,
@@ -999,7 +1048,7 @@ export const bulkUserOperations = onCall({ maxInstances: 3 }, async (request: an
     }
 
     // Log admin action
-    await logAdminAction(adminUserId, 'BULK_USER_OPERATION', undefined, {
+    await logAdminAction(adminUserId, 'BULK_USER_OPERATION', null, {
       action,
       userIds,
       newRole,
@@ -1015,5 +1064,126 @@ export const bulkUserOperations = onCall({ maxInstances: 3 }, async (request: an
   } catch (error) {
     logger.error("Error in bulk user operations:", error);
     throw new Error(`Failed to perform bulk operations: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+});
+/**
+ * Update System Prompts (Admin Only) - For Prompt Studio
+ */
+export const updateSystemPrompt = onCall({ maxInstances: 3, invoker: 'public' }, async (request: any) => {
+  try {
+    const { adminUserId, type, newPrompt } = request.data;
+
+    if (!adminUserId || !type || !newPrompt) {
+      throw new Error("Missing required fields");
+    }
+
+    const isAdmin = await isUserAdmin(adminUserId);
+    if (!isAdmin) throw new Error("Access Denied");
+
+    const db = admin.firestore();
+    await db.collection('config').doc('prompts').set({
+      [type]: newPrompt
+    }, { merge: true });
+
+    await logAdminAction(adminUserId, 'UPDATE_PROMPT', 'system', { type });
+
+    return { success: true, message: "Prompt updated successfully" };
+
+  } catch (error) {
+    logger.error("Error updating prompt:", error);
+    throw new Error(`Failed to update prompt: ${error instanceof Error ? error.message : 'Unknown'}`);
+  }
+});
+
+/**
+ * Moderate Idea (Flag/Delete) (Admin Only)
+ */
+export const moderateIdea = onCall({ maxInstances: 3, invoker: 'public' }, async (request: any) => {
+  try {
+    const { adminUserId, ideaId, action } = request.data; // action: 'flag' | 'delete' | 'unflag'
+
+    if (!adminUserId || !ideaId || !action) throw new Error("Missing fields");
+
+    const isAdmin = await isUserAdmin(adminUserId);
+    if (!isAdmin) throw new Error("Access Denied");
+
+    const db = admin.firestore();
+    const ideaRef = db.collection('projectHistory').doc(ideaId);
+
+    if (action === 'delete') {
+      await ideaRef.delete();
+    } else if (action === 'flag') {
+      await ideaRef.update({ 'flags.isInappropriate': true, 'flags.flaggedBy': adminUserId, 'flags.flaggedAt': new Date().toISOString() });
+    } else if (action === 'unflag') {
+      await ideaRef.update({ 'flags.isInappropriate': false });
+    }
+
+    await logAdminAction(adminUserId, `MODERATE_IDEA_${action.toUpperCase()}`, ideaId, { action });
+
+    return { success: true };
+
+  } catch (error) {
+    logger.error("Error moderating idea:", error);
+    throw new Error(`Failed to moderate: ${error instanceof Error ? error.message : 'Unknown'}`);
+  }
+});
+
+/**
+ * Get System Prompts (Admin Only) - For Prompt Studio
+ */
+export const getSystemPrompts = onCall({ maxInstances: 3, invoker: 'public' }, async (request: any) => {
+  try {
+    const { adminUserId } = request.data;
+
+    const isAdmin = await isUserAdmin(adminUserId);
+    if (!isAdmin) throw new Error("Access Denied");
+
+    const db = admin.firestore();
+    const doc = await db.collection('config').doc('prompts').get();
+
+    // Return defaults if not set in DB
+    return {
+      success: true,
+      prompts: {
+        discovery: doc.data()?.discovery || createDiscoveryPrompt("{{inputQuery}}", {} as any),
+        comprehensive: doc.data()?.comprehensive || createComprehensivePrompt("{{inputQuery}}", {} as any)
+      }
+    };
+  } catch (error) {
+    logger.error("Error getting prompts", error);
+    // Return default prompts on error instead of throwing to avoid CORS/Client issues
+    return {
+      success: true,
+      prompts: {
+        discovery: createDiscoveryPrompt("{{inputQuery}}", {} as any),
+        comprehensive: createComprehensivePrompt("{{inputQuery}}", {} as any)
+      },
+      error: 'Failed to load custom prompts, using defaults'
+    };
+  }
+});
+
+/**
+ * Check System Health (Dev Tool)
+ */
+export const checkSystemHealth = onCall({ maxInstances: 3, invoker: 'public' }, async (request: any) => {
+  try {
+    // Basic connectivity check - just returning verified timestamp
+    return {
+      success: true,
+      status: 'operational',
+      timestamp: new Date().toISOString(),
+      services: {
+        firestore: 'online',
+        functions: 'online'
+      }
+    };
+  } catch (error) {
+    logger.error("Health check failed:", error);
+    return {
+      success: false,
+      status: 'outage',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
   }
 });

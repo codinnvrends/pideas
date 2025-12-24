@@ -8,6 +8,11 @@ styleSheet.textContent = `
         from { opacity: 0; transform: translateY(-10px); }
         to { opacity: 1; transform: translateY(0); }
     }
+
+    @keyframes scroll {
+        0% { transform: translateX(0); }
+        100% { transform: translateX(-50%); }
+    }
     
     /* Tooltip styles */
     .tooltip {
@@ -145,6 +150,21 @@ const CloseIcon = ({ size = 20, className = "" }) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
         <line x1="18" y1="6" x2="6" y2="18" />
         <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+);
+
+const GoogleIcon = ({ size = 20, className = "" }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+    </svg>
+);
+
+const GitHubIcon = ({ size = 20, className = "" }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+        <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.92 0-1.11.38-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.65.71 1.03 1.6 1.03 2.71 0 3.82-2.34 4.66-4.57 4.91.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2z" />
     </svg>
 );
 
@@ -309,101 +329,243 @@ const ParticleSystem = () => {
     return <canvas ref={canvasRef} id="particles-canvas" />;
 };
 
+// How It Works Modal Component
+const HowItWorksModal = ({ onClose }) => {
+    return (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-fade-in p-4">
+            <div className="bg-zinc-900/90 border border-zinc-700/50 rounded-2xl w-full max-w-4xl shadow-2xl relative overflow-hidden flex flex-col max-h-[90vh]">
+                {/* Close Button */}
+                <button
+                    onClick={onClose}
+                    className="absolute top-4 right-4 text-gray-500 hover:text-white z-10 p-2 rounded-full hover:bg-white/10 transition-colors"
+                >
+                    <CloseIcon size={24} />
+                </button>
+
+                {/* Modal Header */}
+                <div className="p-8 text-center border-b border-zinc-800/50">
+                    <h2 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400 mb-2">
+                        How Pideas Works
+                    </h2>
+                    <p className="text-gray-400">Turn your interests into a complete project roadmap in seconds</p>
+                </div>
+
+                {/* Steps Content */}
+                <div className="flex-1 overflow-y-auto p-8">
+                    <div className="grid md:grid-cols-3 gap-8">
+                        {/* Step 1 */}
+                        <div className="relative group">
+                            <div className="absolute inset-0 bg-blue-500/10 rounded-xl blur-lg group-hover:bg-blue-500/20 transition-all opacity-0 group-hover:opacity-100" />
+                            <div className="relative bg-black/40 border border-zinc-700/50 rounded-xl p-6 h-full flex flex-col items-center text-center hover:border-blue-500/50 transition-colors">
+                                <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mb-6 text-3xl shadow-[0_0_15px_rgba(59,130,246,0.3)]">
+                                    🚀
+                                </div>
+                                <h3 className="text-xl font-bold text-white mb-2">1. Choose Your Path</h3>
+                                <p className="text-gray-400 text-sm leading-relaxed">
+                                    Either start with a specific domain you love, or take our quick discovery quiz to find your perfect match.
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Step 2 */}
+                        <div className="relative group">
+                            <div className="absolute inset-0 bg-purple-500/10 rounded-xl blur-lg group-hover:bg-purple-500/20 transition-all opacity-0 group-hover:opacity-100" />
+                            <div className="relative bg-black/40 border border-zinc-700/50 rounded-xl p-6 h-full flex flex-col items-center text-center hover:border-purple-500/50 transition-colors">
+                                <div className="w-16 h-16 bg-purple-500/20 rounded-full flex items-center justify-center mb-6 text-3xl shadow-[0_0_15px_rgba(168,85,247,0.3)]">
+                                    🧠
+                                </div>
+                                <h3 className="text-xl font-bold text-white mb-2">2. AI Analysis</h3>
+                                <p className="text-gray-400 text-sm leading-relaxed">
+                                    Our advanced AI analyzes your skills, academic year, and interests to tailor a unique project idea just for you.
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Step 3 */}
+                        <div className="relative group">
+                            <div className="absolute inset-0 bg-green-500/10 rounded-xl blur-lg group-hover:bg-green-500/20 transition-all opacity-0 group-hover:opacity-100" />
+                            <div className="relative bg-black/40 border border-zinc-700/50 rounded-xl p-6 h-full flex flex-col items-center text-center hover:border-green-500/50 transition-colors">
+                                <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mb-6 text-3xl shadow-[0_0_15px_rgba(34,197,94,0.3)]">
+                                    📦
+                                </div>
+                                <h3 className="text-xl font-bold text-white mb-2">3. Get Full Roadmap</h3>
+                                <p className="text-gray-400 text-sm leading-relaxed">
+                                    Receive a complete comprehensive guide: technical stack, implementation steps, and even a starter codebase!
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Footer Action */}
+                <div className="p-6 border-t border-zinc-800/50 text-center bg-black/20">
+                    <button
+                        onClick={onClose}
+                        className="bg-white text-black hover:bg-gray-200 px-8 py-3 rounded-xl font-bold transition-all transform hover:scale-105"
+                    >
+                        Got it, let's build!
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// Trending Ticker Component
+const TrendingTicker = () => {
+    const trendingIdeas = [
+        "🤖 AI-Powered Study Assistant",
+        "🌱 IoT Smart Garden System",
+        "🏥 Telemedicine Blockchain Platform",
+        "🚗 Autonomous Traffic Control",
+        "📱 AR Interior Design App",
+        "🔐 Zero-Knowledge Auth System",
+        "🌍 Carbon Footprint Tracker",
+        "🎵 AI Music Composer",
+        "🎮 VR Education Platform",
+        "📊 Predictive Stock Market Analyzer"
+    ];
+
+    return (
+        <div className="w-full bg-black/40 backdrop-blur-md border-y border-white/5 py-3 overflow-hidden relative z-20">
+            <div className="flex items-center gap-8 whitespace-nowrap animate-[scroll_30s_linear_infinite] hover:pause-animation">
+                {/* Duplicate list to create seamless loop */}
+                {[...trendingIdeas, ...trendingIdeas].map((idea, i) => (
+                    <div key={i} className="flex items-center gap-2 text-gray-400 font-medium text-sm">
+                        <span className="text-blue-500">⚡</span>
+                        {idea}
+                    </div>
+                ))}
+            </div>
+            {/* Gradient masks for smooth fade edges */}
+            <div className="absolute inset-y-0 left-0 w-20 bg-gradient-to-r from-black to-transparent pointer-events-none" />
+            <div className="absolute inset-y-0 right-0 w-20 bg-gradient-to-l from-black to-transparent pointer-events-none" />
+        </div>
+    );
+};
+
 // Dual-Path Login Screen Component
 const LoginScreen = ({ onLogin, onDiscoveryPath, isLoading }) => {
+    const [showHowItWorks, setShowHowItWorks] = useState(false);
+
     return (
-        <div className="min-h-screen bg-black relative overflow-hidden">
-            {/* Fixed position background particles */}
+        <div className="min-h-screen bg-black relative overflow-hidden font-sans">
+            {/* Modal */}
+            {showHowItWorks && createPortal(
+                <HowItWorksModal onClose={() => setShowHowItWorks(false)} />,
+                document.body
+            )}
+
+            {/* Fixed position background particles with overlay */}
             <div className="fixed inset-0 z-0">
                 <ParticleSystem />
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-900/10 via-black to-blue-900/10 pointer-events-none" />
             </div>
 
-            {/* Main content container with clear vertical separation */}
+            {/* Main content container */}
             <div className="relative z-10 min-h-screen flex flex-col">
-                {/* Top header with proper height for logo */}
-                <header className="w-full h-40 flex items-center justify-center relative">
-                    {/* Interactive logo component with proper container */}
-                    <div className="w-full h-full relative" style={{ zIndex: 5 }}>
+                {/* Header */}
+                <header className="w-full h-32 flex items-center justify-center relative pt-8">
+                    <div className="w-full h-full relative z-10 transform hover:scale-105 transition-transform duration-500">
                         <InteractiveLogo />
                     </div>
                 </header>
 
-                {/* Content area with cards - adjusted padding for better spacing */}
-                <main className="flex-1 flex items-center justify-center px-4 pb-10 pt-0">
-                    <div className="max-w-4xl mx-auto w-full">
-                        <h2 className="text-2xl font-bold text-white text-center mb-8">
-                            Choose Your Path to Project Success
-                        </h2>
+                {/* Hero Text */}
+                <div className="text-center mb-12 relative z-10 px-4">
+                    <h1 className="text-5xl md:text-7xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white via-blue-100 to-gray-300 tracking-tight mb-4 drop-shadow-2xl">
+                        Stop Brainstorming. <br className="hidden md:block" /> Start Building.
+                    </h1>
+                    <p className="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto font-light">
+                        AI-powered project ideas tailored to your skills, interests, and academic goals.
+                    </p>
+                </div>
 
-                        <div className="grid md:grid-cols-2 gap-6">
-                            {/* Existing Users Card */}
-                            <div className="bg-gray-900/80 border border-gray-700/50 rounded-xl p-6 hover:border-gray-600/70 transition-all duration-300 hover:bg-gray-900/90">
-                                <div className="text-center">
-                                    <div className="w-16 h-16 bg-gray-800/60 rounded-full flex items-center justify-center mx-auto mb-4">
-                                        <span className="text-2xl">🚀</span>
-                                    </div>
-                                    <h3 className="text-xl font-semibold text-white mb-3">
-                                        I Know What I Want
-                                    </h3>
-                                    <p className="text-gray-300 text-sm mb-6 leading-relaxed">
-                                        Perfect for students who already have project ideas or know their field of interest.
-                                        Jump straight into generating detailed project plans.
-                                    </p>
-                                    <button
-                                        onClick={onLogin}
-                                        disabled={isLoading}
-                                        className="w-full bg-white text-gray-800 px-6 py-3 rounded-lg font-medium hover:bg-gray-100 transition-colors duration-200 flex items-center justify-center gap-3 disabled:opacity-50"
-                                    >
-                                        <svg className="w-5 h-5" viewBox="0 0 24 24">
-                                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-                                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-                                        </svg>
-                                        {isLoading ? 'Signing in...' : 'Quick Start'}
-                                    </button>
-                                </div>
-                            </div>
+                {/* Content area with enhanced cards */}
+                <main className="flex-1 flex items-start justify-center px-4 pb-20">
+                    <div className="max-w-5xl mx-auto w-full grid md:grid-cols-2 gap-8">
 
-                            {/* Discovery Path Card */}
-                            <div className="bg-gray-900/80 border border-gray-700/50 rounded-xl p-6 hover:border-gray-600/70 transition-all duration-300 hover:bg-gray-900/90">
-                                <div className="text-center">
-                                    <div className="w-16 h-16 bg-gray-800/60 rounded-full flex items-center justify-center mx-auto mb-4">
-                                        <span className="text-2xl">🎯</span>
-                                    </div>
-                                    <h3 className="text-xl font-semibold text-white mb-3">
-                                        Help Me Discover
-                                    </h3>
-                                    <p className="text-gray-300 text-sm mb-6 leading-relaxed">
-                                        Not sure what to build? Take our interactive quiz to discover personalized
-                                        project ideas based on your skills, interests, and goals.
-                                    </p>
-                                    <button
-                                        onClick={() => {
-                                            // Set discovery mode flag and then login
-                                            sessionStorage.setItem('startDiscoveryAfterLogin', 'true');
-                                            onLogin();
-                                        }}
-                                        disabled={isLoading}
-                                        className="w-full bg-gray-800 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center gap-3 border border-gray-700/50 disabled:opacity-50"
-                                    >
-                                        <svg className="w-5 h-5" viewBox="0 0 24 24">
-                                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-                                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-                                        </svg>
-                                        {isLoading ? 'Signing in...' : 'Start Discovery'}
-                                    </button>
+                        {/* Existing Users Card */}
+                        <div className="group relative">
+                            <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-2xl opacity-20 group-hover:opacity-40 blur transition duration-500"></div>
+                            <div className="relative h-full bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-8 hover:border-white/20 transition-all duration-300 flex flex-col">
+                                <div className="w-16 h-16 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 rounded-2xl flex items-center justify-center mb-6 text-blue-400 border border-blue-500/30 shadow-[0_0_15px_rgba(59,130,246,0.2)]">
+                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                                    </svg>
                                 </div>
+                                <h3 className="text-2xl font-bold text-white mb-3 tracking-wide">
+                                    I Know What I Want
+                                </h3>
+                                <p className="text-gray-400 text-sm mb-8 leading-relaxed flex-grow font-light">
+                                    Skip the discovery phase. Directly input your domain (e.g., "AI Health App") and generate a comprehensive project plan instantly.
+                                </p>
+                                <button
+                                    onClick={onLogin}
+                                    disabled={isLoading}
+                                    className="w-full bg-white text-black hover:bg-gray-100 px-6 py-4 rounded-xl font-bold text-base transition-all duration-200 flex items-center justify-center gap-3 transform group-hover:translate-y-[-2px] shadow-lg shadow-white/5"
+                                >
+                                    <GoogleIcon size={20} />
+                                    {isLoading ? 'Connecting...' : 'Continue with Google'}
+                                </button>
                             </div>
                         </div>
 
-                        <p className="text-center text-gray-400 text-sm mt-6">
-                            Both paths lead to the same powerful project generation system
-                        </p>
+                        {/* Discovery Path Card */}
+                        <div className="group relative">
+                            <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl opacity-20 group-hover:opacity-40 blur transition duration-500"></div>
+                            <div className="relative h-full bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-8 hover:border-white/20 transition-all duration-300 flex flex-col">
+                                <div className="w-16 h-16 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-2xl flex items-center justify-center mb-6 text-purple-400 border border-purple-500/30 shadow-[0_0_15px_rgba(168,85,247,0.2)]">
+                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <circle cx="12" cy="12" r="10" />
+                                        <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
+                                    </svg>
+                                </div>
+                                <h3 className="text-2xl font-bold text-white mb-3 tracking-wide">
+                                    Help Me Discover
+                                </h3>
+                                <p className="text-gray-400 text-sm mb-8 leading-relaxed flex-grow font-light">
+                                    Not sure where to start? Take our 30-second interactive quiz to uncover project ideas that match your unique skills and interests.
+                                </p>
+                                <button
+                                    onClick={() => {
+                                        sessionStorage.setItem('startDiscoveryAfterLogin', 'true');
+                                        onLogin();
+                                    }}
+                                    disabled={isLoading}
+                                    className="w-full bg-white/5 hover:bg-white/10 text-white px-6 py-4 rounded-xl font-bold text-base transition-all duration-200 flex items-center justify-center gap-3 border border-white/10 backdrop-blur-md transform group-hover:translate-y-[-2px]"
+                                >
+                                    <span className="text-xl">✨</span>
+                                    {isLoading ? 'Starting...' : 'Start Discovery'}
+                                </button>
+                            </div>
+                        </div>
+
                     </div>
+
+                    <div className="text-center mt-12">
+                        <button
+                            onClick={() => setShowHowItWorks(true)}
+                            className="group flex items-center justify-center gap-2 mx-auto text-gray-500 hover:text-white transition-colors duration-300 px-4 py-2 rounded-full hover:bg-white/5"
+                        >
+                            <span className="w-5 h-5 flex items-center justify-center rounded-full border border-gray-600 group-hover:border-white text-xs">?</span>
+                            <span className="text-sm font-medium tracking-wide">How it works</span>
+                        </button>
+                    </div>
+
+                    {/* Social Proof / Trusted By */}
+                    {/* <div className="absolute bottom-6 left-0 w-full text-center">
+                        <p className="text-gray-600 text-xs font-medium uppercase tracking-widest mb-4">Trusted by students from</p>
+                        <div className="flex justify-center gap-8 opacity-40 grayscale">
+                            <span className="text-gray-500 font-bold">MIT</span>
+                            <span className="text-gray-500 font-bold">STANFORD</span>
+                            <span className="text-gray-500 font-bold">IIT</span>
+                        </div>
+                    </div> */}
                 </main>
+
+                {/* Trending Ticker at Bottom */}
+                <TrendingTicker />
             </div>
         </div>
     );
@@ -1374,54 +1536,43 @@ const DiscoveryResult = ({ idea, userProfile, onBackToSelection, onExitDiscovery
         );
     }
 
-    // Custom header for discovery mode
-    const DiscoveryHeader = () => (
-        <div className="bg-gray-900/80 border-b border-gray-700/50 p-4">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold text-white">Your Comprehensive Project Plan</h1>
-                    <p className="text-gray-400 text-sm mt-1">
-                        Generated from: {idea.title}
-                    </p>
-                </div>
-                <div className="flex gap-3">
-                    <button
-                        onClick={onBackToSelection}
-                        className="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium transition-colors border border-gray-700/50"
-                    >
-                        ← Back to Ideas
-                    </button>
-                    <button
-                        onClick={onExitDiscovery}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-                    >
-                        Exit Discovery
-                    </button>
-                </div>
-            </div>
-        </div>
+    // Custom actions for Discovery mode to inject into the standard header
+    const discoveryActions = (
+        <>
+            <button
+                onClick={onBackToSelection}
+                className="bg-gray-800 hover:bg-gray-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border border-gray-700/50 flex items-center gap-2"
+            >
+                <span>←</span>
+                <span>Back</span>
+            </button>
+            <button
+                onClick={onExitDiscovery}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
+            >
+                Exit Discovery
+            </button>
+        </>
     );
 
     return (
-        <div className="min-h-screen bg-black text-white relative overflow-hidden">
+        <div className="h-screen bg-black text-white relative overflow-hidden">
             {/* Particle Background */}
             <div className="absolute inset-0 z-0">
                 <div className="stars"></div>
                 <div className="twinkling"></div>
             </div>
 
-            {/* Custom Header for Discovery */}
-            <div className="relative z-10">
-                <DiscoveryHeader />
-            </div>
-
-            {/* Use the same ProjectIdeaDisplay component as main app */}
-            <div className="relative z-10 h-[calc(100vh-80px)]">
+            {/* Use unified ProjectIdeaDisplay with custom navigation actions */}
+            {/* We pass hideHeader={false} (default) so standard header renders. */}
+            {/* We pass customHeaderActions to replace standard nav buttons. */}
+            <div className="relative z-10 h-screen">
                 <ProjectIdeaDisplay
                     idea={idea.comprehensivePlan}
                     onStartNew={onBackToSelection}
                     user={user}
-                    hideHeader={true}
+                    hideHeader={false}
+                    customHeaderActions={discoveryActions}
                 />
             </div>
         </div>
@@ -1781,10 +1932,35 @@ const ChatModificationInterface = ({ onModifyIdea, isLoading, user }) => {
     );
 };
 
-// Section Editor Component
-const SectionEditor = ({ section, onModify, isLoading }) => {
+// SectionEditor Component
+const SectionEditor = ({ section, onUpdate, onModify, isLoading }) => {
     const [modifyPrompt, setModifyPrompt] = useState('');
     const [isExpanded, setIsExpanded] = useState(false);
+
+    // Handle checkbox clicks in rendered markdown
+    const handleContentClick = (e) => {
+        if (e.target.tagName === 'INPUT' && e.target.type === 'checkbox') {
+            // Find which checkbox index this is
+            const checkboxes = Array.from(e.currentTarget.querySelectorAll('input[type="checkbox"]'));
+            const index = checkboxes.indexOf(e.target);
+
+            if (index !== -1 && onUpdate) {
+                // Find corresponding checkbox in markdown source
+                let currentIndex = 0;
+                // Regex matches '- [ ]' or '- [x]'
+                const newContent = section.content.replace(/- \[[ x]\]/g, (match) => {
+                    if (currentIndex === index) {
+                        currentIndex++;
+                        // Toggle state
+                        return match === '- [ ]' ? '- [x]' : '- [ ]';
+                    }
+                    currentIndex++;
+                    return match;
+                });
+                onUpdate(newContent);
+            }
+        }
+    };
 
     const handleModify = () => {
         if (modifyPrompt.trim() && !isLoading) {
@@ -1793,13 +1969,20 @@ const SectionEditor = ({ section, onModify, isLoading }) => {
         }
     };
 
-    // Format content with line breaks instead of using marked library
-    const formattedContent = section.content
-        .split('\n')
-        .map((line, i) => <p key={i} className="mb-2">{line}</p>);
+    // Parse Markdown if marked is available, otherwise basic formatting
+    const getMarkdownContent = () => {
+        if (window.marked) {
+            let html = window.marked.parse(section.content);
+            // Enable checkboxes for interactivity by removing disabled attribute
+            html = html.replace(/disabled=""/g, '').replace(/disabled/g, '');
+            return { __html: html };
+        }
+        // Fallback for missing library
+        return { __html: section.content.replace(/\n/g, '<br/>') };
+    };
 
     return (
-        <div className="max-w-4xl mx-auto p-6">
+        <div className="w-full max-w-6xl px-6 md:px-10 py-6">
             {/* Section Header */}
             <div className="flex items-center justify-between border-b border-gray-800/60 pb-3 mb-5">
                 <div className="flex items-center gap-3">
@@ -1820,8 +2003,40 @@ const SectionEditor = ({ section, onModify, isLoading }) => {
             </div>
 
             {/* Section Content */}
-            <div className="max-w-none mb-6 text-gray-300 whitespace-pre-wrap">
-                {formattedContent}
+            <div
+                className="max-w-none mb-6 text-gray-300 prose prose-invert prose-p:text-gray-300 prose-headings:text-gray-200 prose-a:text-blue-400 prose-strong:text-white prose-ul:list-disc prose-ol:list-decimal prose-li:marker:text-gray-500"
+                onClick={handleContentClick}
+            >
+                {/* Special styling for Project Title & Overview */}
+                {section.title.toLowerCase().includes('title') && section.title.toLowerCase().includes('overview') ? (
+                    <div>
+                        {(() => {
+                            const lines = section.content.split('\n').filter(l => l.trim());
+                            const title = lines[0];
+                            const description = lines.slice(1).join('\n');
+
+                            // Check if the first line is actually a title (not a header marker)
+                            const cleanTitle = title.replace(/^#+\s*/, '').replace(/\*\*/g, '').replace(/:$/, '');
+
+                            return (
+                                <div>
+                                    <h1 className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 mb-6 leading-tight">
+                                        {cleanTitle}
+                                    </h1>
+                                    <div className="text-lg md:text-xl text-gray-300 leading-relaxed font-light">
+                                        <div dangerouslySetInnerHTML={{
+                                            __html: window.marked
+                                                ? window.marked.parse(description)
+                                                : description
+                                        }} />
+                                    </div>
+                                </div>
+                            );
+                        })()}
+                    </div>
+                ) : (
+                    <div dangerouslySetInnerHTML={getMarkdownContent()} />
+                )}
             </div>
 
             {/* Modification Interface (expandable) */}
@@ -1866,13 +2081,64 @@ const SectionEditor = ({ section, onModify, isLoading }) => {
 };
 
 // Enhanced Project Idea Display Component with Modification System
-const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false }) => {
+const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false, customHeaderActions = null, userProfile, onNavigate, onLogout }) => {
     const [sections, setSections] = useState([]);
     const [selectedSection, setSelectedSection] = useState(null);
     const [isModifying, setIsModifying] = useState(false);
     const [currentIdea, setCurrentIdea] = useState(idea);
     const [modificationHistory, setModificationHistory] = useState([]);
     const [isGeneratingCode, setIsGeneratingCode] = useState(false);
+    const [exportLoading, setExportLoading] = useState(false);
+    const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+    const [showProfileEditor, setShowProfileEditor] = useState(false);
+
+    // Initialize Markdown Renderer
+    useEffect(() => {
+        if (window.marked) {
+            window.marked.setOptions({
+                breaks: true,
+                gfm: true
+            });
+        }
+    }, []);
+
+    // Export PDF Handler
+    const handleExportPDF = async () => {
+        if (!window.html2pdf) return;
+        setExportLoading(true);
+        // Target the hidden full-content container
+        const element = document.getElementById('project-idea-pdf-export');
+
+        // Temporarily make it visible for capture (off-screen)
+        // Note: html2pdf clones the element, so as long as it's rendered, it should work.
+        // If it's display:none, it might be empty. Ideally we position it absolute off-screen.
+
+        const opt = {
+            margin: 0.5,
+            filename: `pideas-${currentIdea.substring(0, 20).trim()}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: {
+                scale: 2,
+                useCORS: true,
+                logging: false
+            },
+            jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
+            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+        };
+
+        try {
+            await window.html2pdf().set(opt).from(element).save();
+        } finally {
+            setExportLoading(false);
+        }
+    };
+
+    // Copy Markdown Handler
+    const handleCopyMarkdown = () => {
+        navigator.clipboard.writeText(currentIdea).then(() => {
+            alert('Project Idea copied to clipboard!');
+        });
+    };
 
     // Parse the idea text into sections
     useEffect(() => {
@@ -1982,6 +2248,42 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false }) => {
         if (titleLower.includes('implementation') || titleLower.includes('guide')) return '🚀';
         if (titleLower.includes('variation') || titleLower.includes('extension')) return '🔄';
         return '📄';
+    };
+
+    // Handle manual section update (e.g., checkbox toggle)
+    const handleSectionUpdate = (sectionId, newContent) => {
+        const updatedSections = sections.map(s =>
+            s.id === sectionId ? { ...s, content: newContent } : s
+        );
+
+        // We update the local sections state immediately for responsiveness
+        setSections(updatedSections);
+
+        // Reconstruct the full idea string to ensure consistency (and persistence if we were saving)
+        // We use the special "title-overview" id logic used in parsing
+        const reconstructedIdea = updatedSections.map(s => {
+            if (s.id === 'intro') return s.content;
+            if (s.id === 'title-overview') {
+                // If it's the combined section, we assume the title is "Project Title & Overview"
+                // The content usually has the ## headers inside if it was split, 
+                // but here 's.content' is just the raw text of the combined section.
+                // However, the parser logic creates 'content' for title-overview by joining titleSection and overviewSection.
+                // If we edited it, we just put it back. 
+                // But wait, the section title in 's.title' is just "Project Title & Overview".
+                // We need to valid heading format. 
+                // Simplest is to just print the content if it already has headers, 
+                // OR wrap it if it doesn't. 
+                // Given the parser joins them with \n\n, and they originally had no headers in 'content' (headers were stripped?),
+                // Let's look at the parser: 
+                // title = line.replace(/^#+\s*/, '').trim(); 
+                // So 'content' does NOT have the header. 
+                // So we definitely need to prepend the header.
+                return `## ${s.title}\n${s.content}`;
+            }
+            return `## ${s.title}\n${s.content}`;
+        }).join('\n\n');
+
+        setCurrentIdea(reconstructedIdea);
     };
 
     // Handle section modification
@@ -2119,7 +2421,7 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false }) => {
     };
 
     return (
-        <div className="h-screen bg-black relative overflow-hidden flex flex-col">
+        <div className="h-full bg-black relative overflow-hidden flex flex-col">
             {/* Background particles effect */}
             <div className="fixed inset-0 z-0">
                 <ParticleSystem />
@@ -2128,44 +2430,78 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false }) => {
             {/* Header - Matching AppScreen style - Only shown when not in DiscoveryResult */}
             {!hideHeader && (
                 <header className="bg-black/50 backdrop-blur-sm border-b border-gray-800 p-4 relative z-10">
-                    <div className="max-w-6xl mx-auto flex justify-between items-center">
-                        <div className="flex items-center gap-4">
+                    <div className="w-full px-6 flex justify-between items-center">
+                        <button
+                            onClick={() => onStartNew ? onStartNew() : (onNavigate && onNavigate('welcome'))}
+                            className="flex items-center gap-4 hover:opacity-80 transition-opacity"
+                        >
                             <h1 className="text-2xl font-bold text-white">Pideas</h1>
                             <span className="text-gray-400">|</span>
                             <span className="text-gray-300">Your Personalized Project Idea</span>
-                        </div>
+                        </button>
                         <div className="flex items-center gap-4">
                             <IconButton
                                 iconType="history"
                                 tooltip="History"
-                                onClick={() => window.location.reload()} // Navigate back to main page
+                                onClick={() => onNavigate && onNavigate('history')}
                                 variant="default"
                             />
                             {user && user.role === 'admin' && (
                                 <IconButton
                                     iconType="admin"
                                     tooltip="Admin Console"
-                                    onClick={() => window.location.reload()} // Navigate back to main page
+                                    onClick={() => onNavigate && onNavigate('admin')}
                                     variant="admin"
                                 />
                             )}
 
-                            {modificationHistory.length > 0 && (
-                                <IconButton
-                                    iconType="reset"
-                                    tooltip="Reset to Original"
-                                    onClick={handleResetToOriginal}
-                                    variant="default"
-                                    className="text-gray-400 hover:text-white bg-black hover:bg-gray-900 border border-gray-800/60"
-                                />
+                            {customHeaderActions ? (
+                                // Render custom actions (e.g., for Discovery mode)
+                                customHeaderActions
+                            ) : (
+                                // Render standard actions
+                                <>
+                                    {modificationHistory.length > 0 && (
+                                        <IconButton
+                                            iconType="reset"
+                                            tooltip="Reset to Original"
+                                            onClick={handleResetToOriginal}
+                                            variant="default"
+                                            className="text-gray-400 hover:text-white bg-black hover:bg-gray-900 border border-gray-800/60"
+                                        />
+                                    )}
+                                    <IconButton
+                                        iconType="idea"
+                                        tooltip="Generate New Idea"
+                                        onClick={onStartNew}
+                                        variant="primary"
+                                        className="bg-black border border-gray-800 hover:bg-gray-900 text-gray-300 hover:text-white"
+                                    />
+                                </>
                             )}
-                            <IconButton
-                                iconType="idea"
-                                tooltip="Generate New Idea"
-                                onClick={onStartNew}
-                                variant="primary"
-                                className="bg-black border border-gray-800 hover:bg-gray-900 text-gray-300 hover:text-white"
-                            />
+
+                            {/* Export Buttons (Desktop) */}
+                            <div className="hidden md:flex gap-2 border-l border-gray-800 pl-4 ml-4">
+                                <button
+                                    onClick={handleCopyMarkdown}
+                                    className="bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 text-gray-300 px-3 py-1.5 rounded-lg text-sm transition-colors flex items-center gap-2"
+                                >
+                                    <span>📋</span>
+                                    <span>Copy MD</span>
+                                </button>
+                                <button
+                                    onClick={handleExportPDF}
+                                    disabled={exportLoading}
+                                    className="bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 text-gray-300 px-3 py-1.5 rounded-lg text-sm transition-colors flex items-center gap-2 disabled:opacity-50"
+                                >
+                                    {exportLoading ? (
+                                        <div className="w-3 h-3 border-2 border-gray-500 border-t-white rounded-full animate-spin"></div>
+                                    ) : (
+                                        <span>📄</span>
+                                    )}
+                                    <span>Export PDF</span>
+                                </button>
+                            </div>
 
                             <button
                                 onClick={async () => {
@@ -2210,24 +2546,61 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false }) => {
 
                             {/* User profile section */}
                             <div className="relative flex items-center">
-                                <UserProfileIcon onClick={() => { }} />
+                                <UserProfileIcon onClick={() => setShowProfileDropdown(!showProfileDropdown)} />
+
+                                {/* User profile dropdown */}
+                                {showProfileDropdown && ReactDOM.createPortal(
+                                    <div className="fixed inset-0 z-[9999]" style={{ pointerEvents: 'none' }}>
+                                        <div className="absolute right-0 top-[60px] mr-4" style={{ pointerEvents: 'auto' }}>
+                                            <UserProfileDropdown
+                                                user={user}
+                                                userProfile={userProfile || {}}
+                                                onClose={() => setShowProfileDropdown(false)}
+                                                onLogout={onLogout}
+                                                onEditProfile={() => {
+                                                    setShowProfileDropdown(false);
+                                                    setShowProfileEditor(true);
+                                                }}
+                                            />
+                                        </div>
+                                    </div>,
+                                    document.body
+                                )}
+
+                                {showProfileEditor && ReactDOM.createPortal(
+                                    <ProfileEditor
+                                        user={user}
+                                        currentProfile={userProfile || {}}
+                                        onClose={() => setShowProfileEditor(false)}
+                                        onSave={async (updates) => {
+                                            // Profile save logic would need to be passed down or handled here
+                                            // For now, simpler to just close
+                                            setShowProfileEditor(false);
+                                            alert('Please update profile from main page for now.');
+                                        }}
+                                        isLoading={false}
+                                    />,
+                                    document.body
+                                )}
                             </div>
 
                             <IconButton
                                 iconType="logout"
                                 tooltip="Logout"
                                 onClick={() => {
-                                    if (typeof firebase !== 'undefined') {
+                                    if (onLogout) onLogout();
+                                    else if (typeof firebase !== 'undefined') {
                                         firebase.auth().signOut();
+                                        window.location.reload();
                                     }
-                                    window.location.reload();
                                 }}
                                 variant="default"
                             />
                         </div>
                     </div>
                 </header>
-            )}
+            )
+            }
 
             {/* Main Content */}
             <div className="relative z-10 flex-1 flex overflow-hidden">
@@ -2242,9 +2615,9 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false }) => {
                 </div>
 
                 {/* Main Content Area with Chat */}
-                <div className="flex-1 flex flex-col bg-black">
-                    {/* Content Display Area */}
-                    <div className="flex-1 overflow-y-auto">
+                <div className="flex-1 flex flex-col bg-black relative" id="project-idea-content">
+                    {/* Content Display Area - scrollbar-gutter prevents layout shift */}
+                    <div className="flex-1 overflow-y-auto [scrollbar-gutter:stable] pb-40">
                         {selectedSectionData ? (
                             <div>
                                 <SectionEditor
@@ -2266,46 +2639,75 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false }) => {
                         )}
                     </div>
 
-                    {/* Compact Chat Interface at Bottom */}
-                    <div className="border-t border-gray-800/60 bg-black">
-                        <div className="px-3 py-2">
-                            <ChatModificationInterface
-                                onModifyIdea={handleOverallIdeaModify}
-                                isLoading={isModifying}
-                                user={user}
-                            />
+                    {/* Check if user has explicit 'admin' role or is owner */}
+                    {/* Floating Chat Interface */}
+                    <div className="absolute bottom-6 left-0 right-0 px-6 flex justify-center pointer-events-none z-20">
+                        <div className="w-full max-w-3xl pointer-events-auto shadow-2xl shadow-blue-900/10">
+                            <div className="bg-gray-900/90 backdrop-blur-md border border-gray-700/50 rounded-2xl overflow-hidden ring-1 ring-white/10">
+                                <ChatModificationInterface
+                                    onModifyIdea={handleOverallIdeaModify}
+                                    isLoading={isModifying}
+                                    user={user}
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
             {/* Modification History Panel (if any modifications) */}
-            {modificationHistory.length > 0 && (
-                <div className="bg-black border-t border-gray-800/60 p-3">
-                    <div className="max-w-7xl mx-auto">
-                        <div className="flex items-center gap-2 mb-2">
-                            <span className="text-sm font-medium text-gray-400">Modification History:</span>
-                            <span className="text-xs text-gray-500">({modificationHistory.length} changes)</span>
-                        </div>
-                        <div className="flex gap-2 overflow-x-auto pb-1">
-                            {modificationHistory.map((mod) => (
-                                <div key={mod.id} className="flex-shrink-0 bg-black rounded-lg p-3 border border-gray-800/60 min-w-64">
-                                    <div className="text-xs font-medium text-gray-400">{mod.sectionTitle}</div>
-                                    <div className="text-xs text-gray-500 mt-1 line-clamp-2">{mod.prompt}</div>
-                                    <div className="text-xs text-gray-600 mt-2">
-                                        {new Date(mod.timestamp).toLocaleTimeString()}
+            {
+                modificationHistory.length > 0 && (
+                    <div className="bg-black border-t border-gray-800/60 p-3">
+                        <div className="max-w-7xl mx-auto">
+                            <div className="flex items-center gap-2 mb-2">
+                                <span className="text-sm font-medium text-gray-400">Modification History:</span>
+                                <span className="text-xs text-gray-500">({modificationHistory.length} changes)</span>
+                            </div>
+                            <div className="flex gap-2 overflow-x-auto pb-1">
+                                {modificationHistory.map((mod) => (
+                                    <div key={mod.id} className="flex-shrink-0 bg-black rounded-lg p-3 border border-gray-800/60 min-w-64">
+                                        <div className="text-xs font-medium text-gray-400">{mod.sectionTitle}</div>
+                                        <div className="text-xs text-gray-500 mt-1 line-clamp-2">{mod.prompt}</div>
+                                        <div className="text-xs text-gray-600 mt-2">
+                                            {new Date(mod.timestamp).toLocaleTimeString()}
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                ))}
+                            </div>
                         </div>
                     </div>
+                )
+            }
+            {/* Hidden container for PDF Export - Renders all sections */}
+            <div id="project-idea-pdf-export" className="absolute top-0 left-[-9999px] width-[800px] bg-white text-black p-8">
+                <h1 className="text-3xl font-bold mb-2">Project Idea: {currentIdea.split('\n')[0].replace('#', '').trim() || 'Custom Project'}</h1>
+                <p className="text-gray-500 mb-8 border-b pb-4">Generated by Pideas AI</p>
+
+                <div className="space-y-8">
+                    {sections.map(section => (
+                        <div key={section.id} className="pdf-section mb-6 break-inside-avoid">
+                            <h2 className="text-2xl font-bold mb-4 flex items-center gap-2 border-b pb-2">
+                                <span>{section.icon}</span>
+                                <span>{section.title}</span>
+                            </h2>
+                            {/* Render content using the same MarkDown logic but black text for PDF */}
+                            <div className="prose prose-sm max-w-none text-black">
+                                <div dangerouslySetInnerHTML={{
+                                    __html: window.marked
+                                        ? window.marked.parse(section.content || '')
+                                        : section.content
+                                }} />
+                            </div>
+                        </div>
+                    ))}
                 </div>
-            )}
-        </div>
+            </div>
+        </div >
     );
 };
 
-// History Component
+// History Component with Redesigned Glassmorphism UI
 const HistoryView = ({ user, onBack, onViewIdea }) => {
     const [history, setHistory] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -2335,50 +2737,161 @@ const HistoryView = ({ user, onBack, onViewIdea }) => {
         loadHistory();
     }, [user]);
 
+    // Helper to extract a clean title from the raw text
+    const getProjectTitle = (item) => {
+        if (!item.idea || typeof item.idea !== 'string') {
+            // Fallback to query
+            const titleMatch = item.query.match(/for:\s*["']([^"']+)["']/i);
+            if (titleMatch) return titleMatch[1];
+            return item.query.length > 50 ? item.query.substring(0, 50) + '...' : item.query;
+        }
+
+        const lines = item.idea.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+
+        // Strategy 1: Look for "## PROJECT TITLE" followed by a bold line
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+
+            // Check if this line is a generic header
+            if (line.toUpperCase().includes('PROJECT TITLE') && line.startsWith('#')) {
+                // Look at the next non-empty line
+                if (i + 1 < lines.length) {
+                    const nextLine = lines[i + 1];
+                    const boldMatch = nextLine.match(/\*\*(.*?)\*\*/); // Look for bold text anywhere in the line
+                    if (boldMatch) {
+                        return boldMatch[1].replace(/:$/, '').trim();
+                    }
+                    // If not bold, maybe just the text itself?
+                    return nextLine.replace(/:$/, '').trim();
+                }
+            }
+        }
+
+        // Strategy 2: Look for the first H1 header that ISN'T generic
+        for (const line of lines) {
+            if (line.startsWith('#')) {
+                const headerText = line.replace(/^#+\s*/, '').trim();
+                if (headerText.toUpperCase() !== 'PROJECT TITLE') {
+                    return headerText;
+                }
+            }
+        }
+
+        // Strategy 3: Just find the first bold text that isn't "PROJECT TITLE"
+        const boldMatch = item.idea.match(/\*\*(.*?)\*\*/);
+        if (boldMatch) {
+            const extracted = boldMatch[1].replace(/:$/, '').trim();
+            if (extracted.toUpperCase() !== 'PROJECT TITLE') {
+                return extracted;
+            }
+        }
+
+        // Fallback: Query analysis
+        const titleMatch = item.query.match(/for:\s*["']([^"']+)["']/i);
+        if (titleMatch) return titleMatch[1];
+
+        return item.query.length > 50 ? item.query.substring(0, 50) + '...' : item.query;
+    };
+
+    // Helper to get a short preview text
+    const getPreviewText = (item) => {
+        if (item.idea && typeof item.idea === 'string') {
+            // Remove headers and extra whitespace
+            const text = item.idea.replace(/#+\s.*$/mg, '').replace(/\n+/g, ' ').trim();
+            return text.substring(0, 120) + '...';
+        }
+        return "Click to view project details.";
+    };
+
     if (isLoading) {
         return (
-            <div className="max-w-4xl mx-auto text-center">
-                <div className="text-white">Loading your project history...</div>
+            <div className="flex h-[50vh] items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                    <div className="text-gray-400">Loading your journey...</div>
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="max-w-4xl mx-auto">
-            <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-white">Your Project History</h2>
+        <div className="max-w-7xl mx-auto px-4 py-8">
+            <div className="flex justify-between items-center mb-10">
+                <div>
+                    <h2 className="text-3xl font-bold text-white mb-2">Your Project History</h2>
+                    <p className="text-gray-400">Review your past generated ideas and plans</p>
+                </div>
                 <button
                     onClick={onBack}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                    className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium transition-all hover:scale-105 border border-gray-700/50"
                 >
-                    Back to Generator
+                    <span>←</span>
+                    <span>Back to Generator</span>
                 </button>
             </div>
 
             {history.length === 0 ? (
-                <div className="bg-gray-800/30 border border-gray-700 rounded-lg p-8 text-center">
-                    <p className="text-gray-400">No project ideas generated yet. Start your first gamified session!</p>
+                <div className="text-center py-20 bg-gray-900/40 backdrop-blur-sm border border-gray-800 rounded-2xl">
+                    <div className="w-20 h-20 mx-auto mb-6 bg-gray-800 rounded-full flex items-center justify-center">
+                        <span className="text-3xl">🌱</span>
+                    </div>
+                    <h3 className="text-xl font-semibold text-white mb-2">No projects yet</h3>
+                    <p className="text-gray-400 max-w-md mx-auto mb-8">
+                        Start your journey by generating your first personalized project idea!
+                    </p>
+                    <button
+                        onClick={onBack}
+                        className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-medium shadow-lg shadow-blue-500/20 transition-all hover:scale-105"
+                    >
+                        Generate New Idea
+                    </button>
                 </div>
             ) : (
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {history.map((item) => (
                         <div
                             key={item.id}
-                            className="bg-gray-800/30 border border-gray-700 rounded-lg p-4 hover:bg-gray-800/50 transition-colors cursor-pointer"
                             onClick={() => onViewIdea(item.idea)}
+                            className="group relative bg-gray-900/40 backdrop-blur-md border border-gray-800/60 hover:border-blue-500/50 rounded-2xl p-6 transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/10 hover:-translate-y-1 cursor-pointer overflow-hidden"
                         >
-                            <div className="flex justify-between items-start mb-2">
-                                <h3 className="text-lg font-semibold text-white">{item.query}</h3>
-                                <span className="text-green-400 font-medium">Score: {item.gameScore}</span>
+                            {/* Gradient Overlay on Hover */}
+                            <div className="absolute inset-0 bg-gradient-to-br from-blue-600/5 to-purple-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+                            {/* Header: Score & Date */}
+                            <div className="flex justify-between items-start mb-4 relative z-10">
+                                <div className="flex items-center gap-2 bg-black/40 px-3 py-1 rounded-full border border-gray-800">
+                                    <span className="text-xs text-gray-400">Score</span>
+                                    <span className="text-sm font-bold text-green-400">{item.gameScore}</span>
+                                </div>
+                                <div className="text-xs text-gray-500 font-mono">
+                                    {new Date(item.generatedAt).toLocaleDateString()}
+                                </div>
                             </div>
-                            <div className="text-sm text-gray-400 mb-2">
-                                {item.studentProfile.stream} • {item.studentProfile.year} • {item.studentProfile.skillLevel}
+
+                            {/* Title */}
+                            <h3 className="text-xl font-bold text-white mb-3 line-clamp-2 relative z-10 group-hover:text-blue-400 transition-colors">
+                                {getProjectTitle(item)}
+                            </h3>
+
+                            {/* Badges */}
+                            <div className="flex flex-wrap gap-2 mb-4 relative z-10">
+                                <span className="text-xs px-2 py-1 rounded-md bg-purple-500/10 text-purple-300 border border-purple-500/20">
+                                    {item.studentProfile?.stream || 'General'}
+                                </span>
+                                <span className="text-xs px-2 py-1 rounded-md bg-blue-500/10 text-blue-300 border border-blue-500/20">
+                                    {item.studentProfile?.skillLevel || 'Beginner'}
+                                </span>
                             </div>
-                            <div className="text-xs text-gray-500 mb-2">
-                                Generated on {new Date(item.generatedAt).toLocaleDateString()}
-                            </div>
-                            <div className="text-xs text-blue-400">
-                                Click to view full idea →
+
+                            {/* Preview Text */}
+                            <p className="text-sm text-gray-400 line-clamp-3 mb-6 relative z-10">
+                                {getPreviewText(item)}
+                            </p>
+
+                            {/* Footer Action */}
+                            <div className="flex items-center text-blue-400 text-sm font-medium group-hover:translate-x-1 transition-transform relative z-10">
+                                View Full Plan
+                                <span className="ml-1 transition-transform group-hover:ml-2">→</span>
                             </div>
                         </div>
                     ))}
@@ -2946,7 +3459,9 @@ const AppScreen = ({ user, onLogout }) => {
     const handleGameAnswer = (answer) => {
         const newResponses = [...gameResponses, answer];
         setGameResponses(newResponses);
-        setCurrentScore(currentScore + answer.points);
+        // Calculate new score locally to avoid state race condition
+        const newScore = currentScore + answer.points;
+        setCurrentScore(newScore);
 
         // Build student profile
         const newProfile = { ...studentProfile };
@@ -2968,11 +3483,12 @@ const AppScreen = ({ user, onLogout }) => {
             setCurrentStepIndex(currentStepIndex + 1);
         } else {
             // Game completed, now generate idea
-            generatePersonalizedIdea(newProfile, newResponses);
+            // Pass the newScore explicitly to avoid using stale state
+            generatePersonalizedIdea(newProfile, newResponses, newScore);
         }
     };
 
-    const generatePersonalizedIdea = async (profile, responses) => {
+    const generatePersonalizedIdea = async (profile, responses, finalScore = currentScore) => {
         if (!query.trim()) {
             alert('Please enter your project idea query first.');
             setCurrentView('welcome');
@@ -3001,7 +3517,7 @@ const AppScreen = ({ user, onLogout }) => {
                         query: query,
                         ideaLength: result.data.idea ? result.data.idea.length : 0,
                         profileSummary: profile,
-                        gameScore: currentScore,
+                        gameScore: finalScore,
                         gameStepsCount: responses.length
                     });
 
@@ -3012,7 +3528,7 @@ const AppScreen = ({ user, onLogout }) => {
                             query,
                             idea: result.data.idea,
                             studentProfile: profile,
-                            gameScore: currentScore
+                            gameScore: finalScore
                         },
                         gameSteps: responses
                     });
@@ -3033,7 +3549,7 @@ const AppScreen = ({ user, onLogout }) => {
                     await firestore.collection('users').doc(user.uid).set({
                         lastQuery: query,
                         lastProfile: profile,
-                        lastScore: currentScore,
+                        lastScore: finalScore,
                         name: user.displayName,
                         email: user.email,
                     }, { merge: true });
@@ -3080,14 +3596,14 @@ const AppScreen = ({ user, onLogout }) => {
     };
 
     return (
-        <div className="min-h-screen flex flex-col bg-black relative">
+        <div className={`${currentView === 'result' || currentView === 'admin' ? 'h-screen overflow-hidden' : 'min-h-screen'} flex flex-col bg-black relative`}>
             {/* Add particle system background */}
             <ParticleSystem />
 
             {/* Header */}
             {currentView !== 'result' && (
                 <header className="bg-black/50 backdrop-blur-sm border-b border-gray-800 p-4 relative z-10">
-                    <div className="max-w-6xl mx-auto flex justify-between items-center">
+                    <div className="w-full px-6 flex justify-between items-center">
                         <div className="flex items-center gap-4">
                             <h1 className="text-2xl font-bold text-white">Pideas</h1>
                             <span className="text-gray-400">|</span>
@@ -3172,7 +3688,10 @@ const AppScreen = ({ user, onLogout }) => {
             )}
 
             {/* Main Content */}
-            <main className="flex-1 flex flex-col items-center justify-center p-8 relative z-10">
+            <main className={`flex-1 flex flex-col relative z-10 ${currentView === 'result' || currentView === 'admin'
+                ? 'overflow-hidden' // Full screen views
+                : 'items-center justify-center p-8' // Centered views (welcome, history)
+                }`}>
                 {currentView === 'welcome' && (
                     <div className="w-full max-w-4xl">
                         <div className="text-center mb-8">
@@ -3293,6 +3812,9 @@ const AppScreen = ({ user, onLogout }) => {
                         idea={generatedIdea}
                         onStartNew={startNewIdea}
                         user={user}
+                        userProfile={fullUserProfile} // Pass profile for dropdown
+                        onNavigate={setCurrentView}   // Pass navigation handler
+                        onLogout={onLogout}           // Pass logout handler
                     />
                 )}
 
@@ -3316,15 +3838,17 @@ const AppScreen = ({ user, onLogout }) => {
             </main>
 
             {/* Footer */}
-            <footer className="text-center py-6 text-gray-500 text-sm">
-                <p>Powered by <span className="text-white font-medium">AI & Gamification</span></p>
-                <div className="mt-2 space-x-4">
-                    <a href="#" className="hover:text-gray-300 transition-colors">Privacy Policy</a>
-                    <a href="#" className="hover:text-gray-300 transition-colors">Terms of Service</a>
-                    <a href="#" className="hover:text-gray-300 transition-colors">Contact</a>
-                </div>
-                <p className="mt-2">© 2024 Pideas. All rights reserved.</p>
-            </footer>
+            {currentView !== 'result' && currentView !== 'admin' && (
+                <footer className="text-center py-6 text-gray-500 text-sm">
+                    <p>Powered by <span className="text-white font-medium">AI & Gamification</span></p>
+                    <div className="mt-2 space-x-4">
+                        <a href="#" className="hover:text-gray-300 transition-colors">Privacy Policy</a>
+                        <a href="#" className="hover:text-gray-300 transition-colors">Terms of Service</a>
+                        <a href="#" className="hover:text-gray-300 transition-colors">Contact</a>
+                    </div>
+                    <p className="mt-2">© 2024 Pideas. All rights reserved.</p>
+                </footer>
+            )}
         </div>
     );
 };
@@ -3431,7 +3955,7 @@ const App = () => {
         try {
             // Generate full project documentation for the selected idea
             const prompt = `Generate a comprehensive project plan for: "${idea.title}"
-            
+
             Based on comprehensive user profile:
             - Academic Stream: ${profile.stream || 'Computer Science'}
             - Academic Year: ${profile.year || '2nd-year'}
@@ -3446,11 +3970,11 @@ const App = () => {
             - Budget Range (INR): ${profile.budgetRange || 'no-budget'}
             - Learning Goals: ${Array.isArray(profile.learningGoals) && profile.learningGoals.length > 0 ? profile.learningGoals.join(', ') : 'Skill development'}
             - Industry Focus: ${profile.industryFocus || 'education'}
-            
+
             Project Brief: ${idea.description}
             Technologies: ${idea.technologies}
             Learning Outcomes: ${idea.learning}
-            
+
             Please provide a detailed project plan with:
             ## Project Title & Overview
             ## Learning Objectives
@@ -3460,7 +3984,7 @@ const App = () => {
             ## Resources & Tools
             ## Timeline & Milestones
             ## Evaluation Criteria
-            
+
             Make it comprehensive and actionable for a ${profile.skillLevel} level student.`;
 
             const generateIdea = firebase.functions().httpsCallable('generateIdea');

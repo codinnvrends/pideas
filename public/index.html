@@ -1,25 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pideas - Project Idea Generator</title>
-    
+
     <!-- Firebase SDKs -->
     <script src="/__/firebase/10.12.2/firebase-app-compat.js?v=2"></script>
     <script src="/__/firebase/10.12.2/firebase-auth-compat.js?v=2"></script>
     <script src="/__/firebase/10.12.2/firebase-firestore-compat.js?v=2"></script>
     <script src="/__/firebase/10.12.2/firebase-functions-compat.js?v=2"></script>
     <script src="/__/firebase/init.js?v=2"></script>
-    
+
     <!-- React and Babel -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <style>
         body {
             margin: 0;
@@ -28,7 +32,7 @@
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             overflow-x: hidden;
         }
-        
+
         #particles-canvas {
             position: fixed;
             top: 0;
@@ -38,12 +42,12 @@
             z-index: 1;
             pointer-events: none;
         }
-        
+
         .content {
             position: relative;
             z-index: 2;
         }
-        
+
         .particle-text {
             position: absolute;
             top: 50%;
@@ -56,7 +60,7 @@
             pointer-events: none;
             z-index: 1;
         }
-        
+
         @media (max-width: 768px) {
             .particle-text {
                 font-size: 2.5rem;
@@ -64,11 +68,13 @@
         }
     </style>
 </head>
+
 <body>
     <div id="root"></div>
-    
+
     <script type="text/babel" src="InteractiveLogo.js"></script>
     <script type="text/babel" src="admin-console.js"></script>
     <script type="text/babel" src="app.js"></script>
 </body>
+
 </html>

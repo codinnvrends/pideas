@@ -1,6 +1,323 @@
 const { useState, useEffect, useRef } = React;
 
+// Removed Recharts import
+
+
+// Prompt Studio Component
+const PromptStudio = ({ user, isLoading, setIsLoading }) => {
+    const [prompts, setPrompts] = useState({ discovery: '', comprehensive: '' });
+    const [activePrompt, setActivePrompt] = useState('discovery');
+    const [status, setStatus] = useState({ type: '', message: '' });
+
+    useEffect(() => {
+        loadPrompts();
+    }, []);
+
+    const loadPrompts = async () => {
+        setIsLoading(true);
+        try {
+            const getSystemPrompts = firebase.functions().httpsCallable('getSystemPrompts');
+            const result = await getSystemPrompts({ adminUserId: user.uid });
+            if (result.data.success) {
+                setPrompts(result.data.prompts);
+            }
+        } catch (error) {
+            console.error('Error loading prompts:', error);
+            setStatus({ type: 'error', message: 'Failed to load prompts' });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleSave = async () => {
+        setIsLoading(true);
+        setStatus({ type: '', message: '' });
+        try {
+            const updateSystemPrompt = firebase.functions().httpsCallable('updateSystemPrompt');
+            await updateSystemPrompt({
+                adminUserId: user.uid,
+                type: activePrompt,
+                newPrompt: prompts[activePrompt]
+            });
+            setStatus({ type: 'success', message: 'Prompt saved successfully!' });
+        } catch (error) {
+            console.error('Error saving prompt:', error);
+            setStatus({ type: 'error', message: error.message });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    return (
+        <div className="space-y-6">
+            <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-bold text-white">🎨 Prompt Studio</h2>
+                <div className="flex space-x-2">
+                    <button
+                        onClick={() => setActivePrompt('discovery')}
+                        className={`px-4 py-2 rounded-lg transition-colors ${activePrompt === 'discovery' ? 'bg-purple-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}
+                    >
+                        Discovery Mode
+                    </button>
+                    <button
+                        onClick={() => setActivePrompt('comprehensive')}
+                        className={`px-4 py-2 rounded-lg transition-colors ${activePrompt === 'comprehensive' ? 'bg-purple-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}
+                    >
+                        Comprehensive Mode
+                    </button>
+                </div>
+            </div>
+
+            {status.message && (
+                <div className={`p-4 rounded-lg ${status.type === 'error' ? 'bg-red-900/50 text-red-200' : 'bg-green-900/50 text-green-200'}`}>
+                    {status.message}
+                </div>
+            )}
+
+            <div className="bg-gray-900 border border-gray-700 rounded-xl p-6 shadow-xl">
+                <div className="mb-4 text-sm text-gray-400">
+                    <p>Supported Variables: <code className="text-purple-400">{'{{inputQuery}}'}</code>, <code className="text-purple-400">{'{{stream}}'}</code>, <code className="text-purple-400">{'{{skillLevel}}'}</code>, <code className="text-purple-400">{'{{interests}}'}</code>, <code className="text-purple-400">{'{{projectDuration}}'}</code></p>
+                </div>
+                <textarea
+                    value={prompts[activePrompt]}
+                    onChange={(e) => setPrompts({ ...prompts, [activePrompt]: e.target.value })}
+                    className="w-full h-[500px] bg-gray-800 border border-gray-700 rounded-lg p-4 text-gray-300 font-mono text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    placeholder="Enter system prompt template..."
+                />
+                <div className="mt-4 flex justify-end">
+                    <button
+                        onClick={handleSave}
+                        disabled={isLoading}
+                        className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg transition-colors flex items-center shadow-lg shadow-purple-900/20 disabled:opacity-50"
+                    >
+                        {isLoading ? (
+                            <><i className="fas fa-spinner fa-spin mr-2"></i> Saving...</>
+                        ) : (
+                            <><i className="fas fa-save mr-2"></i> Save Prompt</>
+                        )}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 // Admin Console Components
+
+
+// Admin Console Components
+
+// System Health Widget
+const SystemHealthWidget = () => {
+    const [health, setHealth] = useState({ status: 'checking', services: {}, timestamp: null });
+
+    useEffect(() => {
+        checkHealth();
+        const interval = setInterval(checkHealth, 30000); // Check every 30s
+        return () => clearInterval(interval);
+    }, []);
+
+    const checkHealth = async () => {
+        try {
+            const check = firebase.functions().httpsCallable('checkSystemHealth');
+            const result = await check();
+            setHealth(result.data);
+        } catch (error) {
+            setHealth({ status: 'outage', error: error.message });
+        }
+    };
+
+    return (
+        <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-700 rounded-xl p-4 flex items-center justify-between shadow-lg mb-6">
+            <div className="flex items-center gap-3">
+                <div className={`w-3 h-3 rounded-full ${health.status === 'operational' ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
+                <div>
+                    <h4 className="text-sm font-semibold text-white">System Status</h4>
+                    <p className="text-xs text-gray-400">
+                        {health.status === 'operational' ? 'All systems operational' : 'System outages detected'}
+                    </p>
+                </div>
+            </div>
+            {health.timestamp && (
+                <div className="text-xs text-gray-500 font-mono">
+                    Last check: {new Date(health.timestamp).toLocaleTimeString()}
+                </div>
+            )}
+        </div>
+    );
+};
+// Analytics Dashboard Component (Chart.js Version)
+const AnalyticsDashboard = ({ users, ideas, isLoading }) => {
+    const streamChartRef = useRef(null);
+    const skillChartRef = useRef(null);
+    const growthChartRef = useRef(null);
+    const chartsRef = useRef({}); // Store chart instances to destroy them on cleanup
+
+    useEffect(() => {
+        if (!isLoading && users.length > 0 && ideas.length > 0) {
+            initCharts();
+        }
+        return () => {
+            // Cleanup charts
+            Object.values(chartsRef.current).forEach(chart => chart.destroy());
+        };
+    }, [isLoading, users, ideas]);
+
+    const initCharts = () => {
+        // DATA PROCESSING
+        // 1. Ideas by Stream
+        const streamCounts = {};
+        ideas.forEach(idea => {
+            const stream = idea.studentProfile?.stream || 'Unknown';
+            streamCounts[stream] = (streamCounts[stream] || 0) + 1;
+        });
+        const streamLabels = Object.keys(streamCounts);
+        const streamData = Object.values(streamCounts);
+
+        // 2. Skill Levels
+        const skillCounts = {};
+        ideas.forEach(idea => {
+            const skill = idea.studentProfile?.skillLevel?.split(' ')[0] || 'Unknown';
+            skillCounts[skill] = (skillCounts[skill] || 0) + 1;
+        });
+        const skillLabels = Object.keys(skillCounts);
+        const skillData = Object.values(skillCounts);
+
+        // 3. User Growth
+        const dates = {};
+        users.forEach(user => {
+            const date = new Date(user.createdAt).toLocaleDateString();
+            dates[date] = (dates[date] || 0) + 1;
+        });
+        // Sort dates
+        const sortedDates = Object.keys(dates).sort((a, b) => new Date(a) - new Date(b));
+        const growthData = sortedDates.map(date => dates[date]);
+
+
+        // CHART INITIALIZATION
+
+        // Destroy existing charts if any
+        if (chartsRef.current.stream) chartsRef.current.stream.destroy();
+        if (chartsRef.current.skill) chartsRef.current.skill.destroy();
+        if (chartsRef.current.growth) chartsRef.current.growth.destroy();
+
+        // 1. Pie Chart
+        const ctxStream = streamChartRef.current.getContext('2d');
+        chartsRef.current.stream = new Chart(ctxStream, {
+            type: 'pie',
+            data: {
+                labels: streamLabels,
+                datasets: [{
+                    data: streamData,
+                    backgroundColor: ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'right', labels: { color: '#fff' } },
+                    title: { display: false }
+                }
+            }
+        });
+
+        // 2. Bar Chart
+        const ctxSkill = skillChartRef.current.getContext('2d');
+        chartsRef.current.skill = new Chart(ctxSkill, {
+            type: 'bar',
+            data: {
+                labels: skillLabels,
+                datasets: [{
+                    label: 'Users',
+                    data: skillData,
+                    backgroundColor: '#8b5cf6',
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    title: { display: false }
+                },
+                scales: {
+                    y: { grid: { color: '#374151' }, ticks: { color: '#9CA3AF' } },
+                    x: { grid: { display: false }, ticks: { color: '#9CA3AF' } }
+                }
+            }
+        });
+
+        // 3. Line Chart
+        const ctxGrowth = growthChartRef.current.getContext('2d');
+        chartsRef.current.growth = new Chart(ctxGrowth, {
+            type: 'line',
+            data: {
+                labels: sortedDates,
+                datasets: [{
+                    label: 'New Users',
+                    data: growthData,
+                    borderColor: '#10B981',
+                    backgroundColor: '#10B981',
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    title: { display: false }
+                },
+                scales: {
+                    y: { grid: { color: '#374151' }, ticks: { color: '#9CA3AF' } },
+                    x: { grid: { color: '#374151' }, ticks: { color: '#9CA3AF' } }
+                }
+            }
+        });
+    };
+
+    if (isLoading) {
+        return (
+            <div className="text-center p-12">
+                <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+                <p className="text-gray-400 mt-4 font-medium">Crunching numbers...</p>
+            </div>
+        );
+    }
+
+    return (
+        <div className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Stream Distribution Pie Chart */}
+                <div className="bg-gray-900/50 backdrop-blur-sm border border-blue-500/30 rounded-xl p-6 shadow-xl">
+                    <h3 className="text-xl font-bold text-white mb-4">📚 Ideas by Stream</h3>
+                    <div className="h-64 relative">
+                        <canvas ref={streamChartRef}></canvas>
+                    </div>
+                </div>
+
+                {/* Skill Level Bar Chart */}
+                <div className="bg-gray-900/50 backdrop-blur-sm border border-purple-500/30 rounded-xl p-6 shadow-xl">
+                    <h3 className="text-xl font-bold text-white mb-4">⚡ User Skill Levels</h3>
+                    <div className="h-64 relative">
+                        <canvas ref={skillChartRef}></canvas>
+                    </div>
+                </div>
+
+                {/* User Growth Line Chart */}
+                <div className="bg-gray-900/50 backdrop-blur-sm border border-green-500/30 rounded-xl p-6 shadow-xl lg:col-span-2">
+                    <h3 className="text-xl font-bold text-white mb-4">📈 User Growth Trend</h3>
+                    <div className="h-64 relative">
+                        <canvas ref={growthChartRef}></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 // Stats Card Component
 const StatsCard = ({ title, value, subtitle, color = 'blue', icon }) => {
@@ -10,7 +327,7 @@ const StatsCard = ({ title, value, subtitle, color = 'blue', icon }) => {
         green: 'from-green-600 to-green-800 border-green-500',
         orange: 'from-orange-600 to-orange-800 border-orange-500'
     };
-    
+
     return (
         <div className={`bg-gradient-to-br ${colorClasses[color]} border rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300`}>
             <div className="flex items-center justify-between">
@@ -41,7 +358,7 @@ const UserManagementTable = ({ users, onUpdateUser, onBulkAction, isLoading }) =
 
     // Filter and sort users
     const filteredUsers = users
-        .filter(user => 
+        .filter(user =>
             user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
             user.userId.toLowerCase().includes(searchQuery.toLowerCase())
         )
@@ -49,11 +366,11 @@ const UserManagementTable = ({ users, onUpdateUser, onBulkAction, isLoading }) =
             const aVal = a[sortField];
             const bVal = b[sortField];
             const direction = sortDirection === 'asc' ? 1 : -1;
-            
+
             if (sortField === 'createdAt' || sortField === 'lastLogin') {
                 return direction * (new Date(bVal || 0).getTime() - new Date(aVal || 0).getTime());
             }
-            
+
             return direction * (aVal > bVal ? 1 : -1);
         });
 
@@ -67,8 +384,8 @@ const UserManagementTable = ({ users, onUpdateUser, onBulkAction, isLoading }) =
     };
 
     const handleSelectUser = (userId) => {
-        setSelectedUsers(prev => 
-            prev.includes(userId) 
+        setSelectedUsers(prev =>
+            prev.includes(userId)
                 ? prev.filter(id => id !== userId)
                 : [...prev, userId]
         );
@@ -76,22 +393,22 @@ const UserManagementTable = ({ users, onUpdateUser, onBulkAction, isLoading }) =
 
     const handleSelectAll = () => {
         setSelectedUsers(
-            selectedUsers.length === filteredUsers.length 
-                ? [] 
+            selectedUsers.length === filteredUsers.length
+                ? []
                 : filteredUsers.map(user => user.userId)
         );
     };
 
     const handleBulkAction = () => {
         if (!bulkAction || selectedUsers.length === 0) return;
-        
+
         onBulkAction({
             userIds: selectedUsers,
             action: bulkAction,
             newRole: bulkRole,
             newStatus: bulkStatus
         });
-        
+
         setSelectedUsers([]);
     };
 
@@ -122,6 +439,23 @@ const UserManagementTable = ({ users, onUpdateUser, onBulkAction, isLoading }) =
                             🔍
                         </div>
                     </div>
+                    <button
+                        onClick={() => {
+                            const csvContent = "data:text/csv;charset=utf-8," +
+                                ["User ID,Email,Role,Status,Created At,Last Login"].join(",") + "\n" +
+                                users.map(u => `${u.userId},${u.email},${u.role},${u.status},${u.createdAt},${u.lastLogin}`).join("\n");
+                            const encodedUri = encodeURI(csvContent);
+                            const link = document.createElement("a");
+                            link.setAttribute("href", encodedUri);
+                            link.setAttribute("download", "users_export.csv");
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                        }}
+                        className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-300 shadow-lg hover:shadow-xl flex items-center gap-2"
+                    >
+                        📊 Export CSV
+                    </button>
                 </div>
             </div>
 
@@ -144,7 +478,7 @@ const UserManagementTable = ({ users, onUpdateUser, onBulkAction, isLoading }) =
                             <option value="changeRole">Change Role</option>
                             <option value="changeStatus">Change Status</option>
                         </select>
-                        
+
                         {bulkAction === 'changeRole' && (
                             <select
                                 value={bulkRole}
@@ -155,7 +489,7 @@ const UserManagementTable = ({ users, onUpdateUser, onBulkAction, isLoading }) =
                                 <option value="admin">Admin</option>
                             </select>
                         )}
-                        
+
                         {bulkAction === 'changeStatus' && (
                             <select
                                 value={bulkStatus}
@@ -166,7 +500,7 @@ const UserManagementTable = ({ users, onUpdateUser, onBulkAction, isLoading }) =
                                 <option value="inactive">Inactive</option>
                             </select>
                         )}
-                        
+
                         <button
                             onClick={handleBulkAction}
                             disabled={!bulkAction}
@@ -191,7 +525,7 @@ const UserManagementTable = ({ users, onUpdateUser, onBulkAction, isLoading }) =
                                     className="w-4 h-4 text-purple-600 bg-gray-700 border-purple-500/30 rounded focus:ring-purple-500 focus:ring-2"
                                 />
                             </th>
-                            <th 
+                            <th
                                 className="text-left p-4 cursor-pointer hover:text-purple-400 transition-colors group"
                                 onClick={() => handleSort('email')}
                             >
@@ -199,7 +533,7 @@ const UserManagementTable = ({ users, onUpdateUser, onBulkAction, isLoading }) =
                                     📧 Email <SortIcon field="email" />
                                 </div>
                             </th>
-                            <th 
+                            <th
                                 className="text-left p-4 cursor-pointer hover:text-purple-400 transition-colors group"
                                 onClick={() => handleSort('role')}
                             >
@@ -207,7 +541,7 @@ const UserManagementTable = ({ users, onUpdateUser, onBulkAction, isLoading }) =
                                     👤 Role <SortIcon field="role" />
                                 </div>
                             </th>
-                            <th 
+                            <th
                                 className="text-left p-4 cursor-pointer hover:text-purple-400 transition-colors group"
                                 onClick={() => handleSort('status')}
                             >
@@ -215,7 +549,7 @@ const UserManagementTable = ({ users, onUpdateUser, onBulkAction, isLoading }) =
                                     🟢 Status <SortIcon field="status" />
                                 </div>
                             </th>
-                            <th 
+                            <th
                                 className="text-left p-4 cursor-pointer hover:text-purple-400 transition-colors group"
                                 onClick={() => handleSort('createdAt')}
                             >
@@ -223,7 +557,7 @@ const UserManagementTable = ({ users, onUpdateUser, onBulkAction, isLoading }) =
                                     📅 Created <SortIcon field="createdAt" />
                                 </div>
                             </th>
-                            <th 
+                            <th
                                 className="text-left p-4 cursor-pointer hover:text-purple-400 transition-colors group"
                                 onClick={() => handleSort('lastLogin')}
                             >
@@ -231,6 +565,7 @@ const UserManagementTable = ({ users, onUpdateUser, onBulkAction, isLoading }) =
                                     🕒 Last Login <SortIcon field="lastLogin" />
                                 </div>
                             </th>
+                            <th className="text-left p-4 font-semibold text-gray-200">💰 Est. Cost</th>
                             <th className="text-left p-4 font-semibold text-gray-200">⚙️ Actions</th>
                         </tr>
                     </thead>
@@ -267,20 +602,18 @@ const UserManagementTable = ({ users, onUpdateUser, onBulkAction, isLoading }) =
                                         </div>
                                     </td>
                                     <td className="p-4">
-                                        <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${
-                                            user.role === 'admin' 
-                                                ? 'bg-gradient-to-r from-purple-600 to-purple-800 text-purple-100 shadow-lg shadow-purple-500/25' 
-                                                : 'bg-gradient-to-r from-blue-600 to-blue-800 text-blue-100 shadow-lg shadow-blue-500/25'
-                                        }`}>
+                                        <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${user.role === 'admin'
+                                            ? 'bg-gradient-to-r from-purple-600 to-purple-800 text-purple-100 shadow-lg shadow-purple-500/25'
+                                            : 'bg-gradient-to-r from-blue-600 to-blue-800 text-blue-100 shadow-lg shadow-blue-500/25'
+                                            }`}>
                                             {user.role === 'admin' ? '👑 Admin' : '👤 User'}
                                         </span>
                                     </td>
                                     <td className="p-4">
-                                        <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${
-                                            user.status === 'active' 
-                                                ? 'bg-gradient-to-r from-green-600 to-green-800 text-green-100 shadow-lg shadow-green-500/25' 
-                                                : 'bg-gradient-to-r from-red-600 to-red-800 text-red-100 shadow-lg shadow-red-500/25'
-                                        }`}>
+                                        <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${user.status === 'active'
+                                            ? 'bg-gradient-to-r from-green-600 to-green-800 text-green-100 shadow-lg shadow-green-500/25'
+                                            : 'bg-gradient-to-r from-red-600 to-red-800 text-red-100 shadow-lg shadow-red-500/25'
+                                            }`}>
                                             {user.status === 'active' ? '🟢 Active' : '🔴 Inactive'}
                                         </span>
                                     </td>
@@ -289,6 +622,13 @@ const UserManagementTable = ({ users, onUpdateUser, onBulkAction, isLoading }) =
                                     </td>
                                     <td className="p-4 text-gray-300 font-medium">
                                         {user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : '❌ Never'}
+                                    </td>
+                                    <td className="p-4 text-gray-300 font-medium">
+                                        <div className="flex items-center gap-1">
+                                            <span className="text-green-400">$</span>
+                                            {/* Estimate based on avg cost per idea (approx $0.0005) */}
+                                            {((user.totalIdeasGenerated || 0) * 0.0005).toFixed(4)}
+                                        </div>
                                     </td>
                                     <td className="p-4">
                                         <div className="flex gap-2">
@@ -320,8 +660,8 @@ const UserManagementTable = ({ users, onUpdateUser, onBulkAction, isLoading }) =
     );
 };
 
-// Ideas Management Component
-const IdeasManagement = ({ ideas, onSearch, isLoading }) => {
+// Feature: Ideas Management Component
+const IdeasManagement = ({ ideas, onSearch, isLoading, user }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [expandedIdeas, setExpandedIdeas] = useState(new Set());
 
@@ -342,8 +682,24 @@ const IdeasManagement = ({ ideas, onSearch, isLoading }) => {
         });
     };
 
+    const handleModerate = async (ideaId, action) => {
+        if (!confirm(`Are you sure you want to ${action} this idea?`)) return;
+
+        try {
+            const moderateIdea = firebase.functions().httpsCallable('moderateIdea');
+            await moderateIdea({ adminUserId: user.uid, ideaId, action });
+            // Optimistic update or refresh would go here. 
+            // For now, we rely on parent refresh or just alert success
+            alert(`Inappropriate content ${action}ed successfully. Refresh to see changes.`);
+        } catch (error) {
+            console.error("Moderation failed:", error);
+            const msg = error.details?.message || error.message || "Unknown error";
+            alert("Action failed: " + msg);
+        }
+    };
+
     const exportData = (format) => {
-        const dataStr = format === 'json' 
+        const dataStr = format === 'json'
             ? JSON.stringify(ideas, null, 2)
             : ideas.map(idea => ({
                 userId: idea.userId,
@@ -351,7 +707,7 @@ const IdeasManagement = ({ ideas, onSearch, isLoading }) => {
                 generatedAt: idea.generatedAt,
                 gameScore: idea.gameScore
             })).map(row => Object.values(row).join(',')).join('\n');
-        
+
         const dataBlob = new Blob([dataStr], { type: format === 'json' ? 'application/json' : 'text/csv' });
         const url = URL.createObjectURL(dataBlob);
         const link = document.createElement('a');
@@ -412,7 +768,7 @@ const IdeasManagement = ({ ideas, onSearch, isLoading }) => {
                     </div>
                 ) : (
                     ideas.map((idea, index) => (
-                        <div key={idea.id} className="bg-gradient-to-r from-gray-800/40 to-gray-900/40 backdrop-blur-sm border border-blue-500/20 rounded-xl p-6 hover:border-blue-400/40 transition-all duration-300 shadow-lg hover:shadow-xl">
+                        <div key={idea.id} className={`bg-gradient-to-r from-gray-800/40 to-gray-900/40 backdrop-blur-sm border rounded-xl p-6 transition-all duration-300 shadow-lg hover:shadow-xl ${idea.flags?.isInappropriate ? 'border-red-500/50' : 'border-blue-500/20 hover:border-blue-400/40'}`}>
                             <div className="flex justify-between items-start mb-4">
                                 <div className="flex-1">
                                     <div className="flex items-center gap-3 mb-3">
@@ -420,6 +776,11 @@ const IdeasManagement = ({ ideas, onSearch, isLoading }) => {
                                             {index + 1}
                                         </div>
                                         <h4 className="text-xl font-bold text-white">{idea.query}</h4>
+                                        {idea.flags?.isInappropriate && (
+                                            <span className="px-2 py-1 bg-red-900/50 text-red-200 text-xs rounded-full border border-red-500/30">
+                                                🚩 Flagged
+                                            </span>
+                                        )}
                                     </div>
                                     <div className="flex items-center gap-4 text-sm">
                                         <div className="flex items-center gap-2">
@@ -438,23 +799,143 @@ const IdeasManagement = ({ ideas, onSearch, isLoading }) => {
                                         </div>
                                     </div>
                                 </div>
-                                <button
-                                    onClick={() => toggleExpanded(idea.id)}
-                                    className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 ${
-                                        expandedIdeas.has(idea.id)
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => handleModerate(idea.id, idea.flags?.isInappropriate ? 'unflag' : 'flag')}
+                                        className={`p-2 rounded-lg transition-colors ${idea.flags?.isInappropriate ? 'bg-red-900/50 text-red-400 hover:bg-red-900' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}
+                                        title={idea.flags?.isInappropriate ? "Unflag Idea" : "Flag as Inappropriate"}
+                                    >
+                                        <span className="text-lg">🚩</span>
+                                    </button>
+                                    <button
+                                        onClick={() => handleModerate(idea.id, 'delete')}
+                                        className="p-2 bg-red-900/20 hover:bg-red-900/40 text-red-400 rounded-lg transition-colors"
+                                        title="Delete Idea"
+                                    >
+                                        <span className="text-lg">🗑️</span>
+                                    </button>
+                                    <button
+                                        onClick={() => toggleExpanded(idea.id)}
+                                        className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 ${expandedIdeas.has(idea.id)
                                             ? 'bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white'
                                             : 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white'
-                                    }`}
-                                >
-                                    {expandedIdeas.has(idea.id) ? '🔼 Collapse' : '🔽 Expand'}
-                                </button>
+                                            }`}
+                                    >
+                                        {expandedIdeas.has(idea.id) ? '🔼 Collapse' : '🔽 Expand'}
+                                    </button>
+                                </div>
                             </div>
-                            
+
                             {expandedIdeas.has(idea.id) && (
                                 <div className="mt-6 p-6 bg-gray-900/60 backdrop-blur-sm rounded-xl border border-blue-500/20">
                                     <div className="text-sm text-gray-200 whitespace-pre-wrap leading-relaxed">
                                         {idea.idea}
                                     </div>
+                                </div>
+                            )}
+                        </div>
+                    ))
+                )}
+            </div>
+        </div>
+    );
+};
+
+
+// Logs Explorer Component
+const LogsExplorer = ({ logs, isLoading }) => {
+    const [filter, setFilter] = useState('');
+    const [expandedLogs, setExpandedLogs] = useState(new Set());
+
+    const getActionIcon = (action) => {
+        const iconMap = {
+            'VIEW_ALL_USERS': '👀',
+            'UPDATE_USER_ROLE': '🔄',
+            'BULK_USER_OPERATIONS': '⚡',
+            'VIEW_ALL_IDEAS': '💡',
+            'EXPORT_DATA': '📤',
+            'LOGIN': '🔐',
+            'LOGOUT': '🚪',
+            'MODERATE_IDEA_FLAG': '🚩',
+            'MODERATE_IDEA_DELETE': '🗑️',
+            'MODERATE_IDEA_UNFLAG': '🏳️',
+            'UPDATE_PROMPT': '🎨'
+        };
+        return iconMap[action] || '📝';
+    };
+
+    const getActionColor = (action) => {
+        if (action.includes('MODERATE')) return 'from-red-600 to-red-800';
+        if (action.includes('UPDATE')) return 'from-purple-600 to-purple-800';
+        return 'from-blue-600 to-blue-800';
+    };
+
+    const toggleExpand = (id) => {
+        setExpandedLogs(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(id)) newSet.delete(id);
+            else newSet.add(id);
+            return newSet;
+        });
+    };
+
+    const filteredLogs = logs.filter(log =>
+        !filter || log.action.toLowerCase().includes(filter.toLowerCase())
+    );
+
+    return (
+        <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-700 rounded-xl p-6 shadow-2xl">
+            <div className="flex justify-between items-center mb-6">
+                <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-gray-700 rounded-lg flex items-center justify-center">
+                        <span className="text-white text-sm font-bold">📜</span>
+                    </div>
+                    <h3 className="text-2xl font-bold text-white">System Logs</h3>
+                </div>
+                <div>
+                    <select
+                        value={filter}
+                        onChange={(e) => setFilter(e.target.value)}
+                        className="bg-gray-800 text-white px-4 py-2 rounded-lg border border-gray-600 focus:outline-none focus:border-purple-500"
+                    >
+                        <option value="">All Actions</option>
+                        <option value="VIEW">Views</option>
+                        <option value="UPDATE">Updates</option>
+                        <option value="MODERATE">Moderation</option>
+                    </select>
+                </div>
+            </div>
+
+            <div className="space-y-3">
+                {isLoading ? (
+                    <div className="text-center p-8 text-gray-400">Loading logs...</div>
+                ) : filteredLogs.length === 0 ? (
+                    <div className="text-center p-8 text-gray-500">No logs found</div>
+                ) : (
+                    filteredLogs.map((log, idx) => (
+                        <div key={idx} className="border border-gray-800 rounded-lg overflow-hidden">
+                            <div
+                                onClick={() => toggleExpand(idx)}
+                                className="bg-gray-800/50 p-4 flex items-center justify-between cursor-pointer hover:bg-gray-800 transition-colors"
+                            >
+                                <div className="flex items-center gap-4">
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center bg-gradient-to-br ${getActionColor(log.action)} shadow-lg`}>
+                                        <span className="text-white text-xs">{getActionIcon(log.action)}</span>
+                                    </div>
+                                    <div>
+                                        <div className="text-white font-medium font-mono">{log.action}</div>
+                                        <div className="text-xs text-gray-400">
+                                            {new Date(log.timestamp).toLocaleString()} • {log.adminUserId}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="text-gray-500">
+                                    {expandedLogs.has(idx) ? '🔼' : '🔽'}
+                                </div>
+                            </div>
+                            {expandedLogs.has(idx) && (
+                                <div className="p-4 bg-black/30 font-mono text-xs text-green-400 overflow-x-auto">
+                                    <pre>{JSON.stringify(log.details || {}, null, 2)}</pre>
                                 </div>
                             )}
                         </div>
@@ -501,7 +982,7 @@ const AdminLogs = ({ logs, isLoading }) => {
                 </div>
                 <h3 className="text-2xl font-bold text-white">Admin Activity Logs</h3>
             </div>
-            
+
             <div className="space-y-3">
                 {isLoading ? (
                     <div className="text-center p-12">
@@ -558,7 +1039,7 @@ const AdminLogs = ({ logs, isLoading }) => {
 
 // Main Admin Console Component
 const AdminConsole = ({ user, onBack }) => {
-    const [activeTab, setActiveTab] = useState('users');
+    const [activeTab, setActiveTab] = useState('analytics'); // Default to Analytics for impact
     const [users, setUsers] = useState([]);
     const [ideas, setIdeas] = useState([]);
     const [logs, setLogs] = useState([]);
@@ -571,7 +1052,12 @@ const AdminConsole = ({ user, onBack }) => {
 
     useEffect(() => {
         if (userRole?.isAdmin) {
-            loadData();
+            // Load ALL data for analytics initially
+            if (activeTab === 'analytics') {
+                loadAllData();
+            } else {
+                loadData();
+            }
         }
     }, [activeTab, userRole]);
 
@@ -580,7 +1066,7 @@ const AdminConsole = ({ user, onBack }) => {
             const functions = firebase.functions();
             const getUserRole = functions.httpsCallable('getUserRole');
             const result = await getUserRole({ userId: user.uid });
-            
+
             if (result.data.success) {
                 setUserRole(result.data);
             }
@@ -593,7 +1079,7 @@ const AdminConsole = ({ user, onBack }) => {
         setIsLoading(true);
         try {
             const functions = firebase.functions();
-            
+
             if (activeTab === 'users') {
                 const getAllUsers = functions.httpsCallable('getAllUsers');
                 const result = await getAllUsers({ adminUserId: user.uid });
@@ -618,6 +1104,29 @@ const AdminConsole = ({ user, onBack }) => {
         } finally {
             setIsLoading(false);
         }
+    }
+
+
+
+    const loadAllData = async () => {
+        setIsLoading(true);
+        try {
+            const functions = firebase.functions();
+
+            // Parallel fetch for analytics
+            const [usersResult, ideasResult] = await Promise.all([
+                functions.httpsCallable('getAllUsers')({ adminUserId: user.uid }),
+                functions.httpsCallable('getAllIdeas')({ adminUserId: user.uid })
+            ]);
+
+            if (usersResult.data.success) setUsers(usersResult.data.users);
+            if (ideasResult.data.success) setIdeas(ideasResult.data.ideas);
+
+        } catch (error) {
+            console.error("Error loading analytics data:", error);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleUpdateUser = async (targetUserId, updates) => {
@@ -629,7 +1138,7 @@ const AdminConsole = ({ user, onBack }) => {
                 targetUserId,
                 ...updates
             });
-            
+
             if (result.data.success) {
                 // Refresh users list
                 loadData();
@@ -647,7 +1156,7 @@ const AdminConsole = ({ user, onBack }) => {
                 adminUserId: user.uid,
                 ...bulkData
             });
-            
+
             if (result.data.success) {
                 // Refresh users list
                 loadData();
@@ -661,11 +1170,11 @@ const AdminConsole = ({ user, onBack }) => {
         try {
             const functions = firebase.functions();
             const getAllIdeas = functions.httpsCallable('getAllIdeas');
-            const result = await getAllIdeas({ 
+            const result = await getAllIdeas({
                 adminUserId: user.uid,
-                searchQuery 
+                searchQuery
             });
-            
+
             if (result.data.success) {
                 setIdeas(result.data.ideas);
             }
@@ -700,7 +1209,7 @@ const AdminConsole = ({ user, onBack }) => {
     }
 
     return (
-        <div className="max-w-7xl mx-auto">
+        <div className="container mx-auto px-4 py-8 max-w-7xl min-h-screen">
             {/* Header */}
             <div className="flex justify-between items-center mb-8">
                 <div className="flex items-center gap-4">
@@ -721,6 +1230,9 @@ const AdminConsole = ({ user, onBack }) => {
                     ← Back to App
                 </button>
             </div>
+
+            {/* System Health */}
+            <SystemHealthWidget />
 
             {/* Stats Dashboard */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -747,21 +1259,21 @@ const AdminConsole = ({ user, onBack }) => {
                 />
             </div>
 
-            {/* Tab Navigation */}
-            <div className="flex space-x-2 mb-8 bg-gray-900/50 backdrop-blur-sm p-2 rounded-xl border border-purple-500/20">
+            <div className="flex flex-wrap md:flex-nowrap gap-2 mb-8 bg-gray-900/50 backdrop-blur-sm p-2 rounded-xl border border-purple-500/20">
                 {[
-                    { id: 'users', label: 'User Management', count: users.length, icon: '👥', color: 'purple' },
-                    { id: 'ideas', label: 'Ideas Management', count: ideas.length, icon: '💡', color: 'blue' },
-                    { id: 'logs', label: 'Activity Logs', count: logs.length, icon: '📊', color: 'green' }
+                    { id: 'analytics', label: 'Dashboard', count: 0, icon: '📊', color: 'indigo' },
+                    { id: 'users', label: 'Users', count: users.length, icon: '👥', color: 'purple' },
+                    { id: 'ideas', label: 'Ideas', count: ideas.length, icon: '💡', color: 'blue' },
+                    { id: 'prompt-studio', label: 'Prompt Studio', count: 0, icon: '🎨', color: 'pink' },
+                    { id: 'logs', label: 'Logs', count: logs.length, icon: '📝', color: 'green' }
                 ].map((tab) => (
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
-                        className={`flex items-center gap-3 px-6 py-4 rounded-lg font-medium transition-all duration-300 flex-1 ${
-                            activeTab === tab.id
-                                ? `bg-gradient-to-r from-${tab.color}-600 to-${tab.color}-800 text-white shadow-lg shadow-${tab.color}-500/25`
-                                : 'bg-gray-800/30 text-gray-300 hover:bg-gray-800/50 hover:text-white'
-                        }`}
+                        className={`flex items-center gap-3 px-6 py-4 rounded-lg font-medium transition-all duration-300 flex-1 ${activeTab === tab.id
+                            ? `bg-gradient-to-r from-${tab.color}-600 to-${tab.color}-800 text-white shadow-lg shadow-${tab.color}-500/25`
+                            : 'bg-gray-800/30 text-gray-300 hover:bg-gray-800/50 hover:text-white'
+                            }`}
                     >
                         <span className="text-xl">{tab.icon}</span>
                         <div className="flex-1 text-left">
@@ -778,6 +1290,14 @@ const AdminConsole = ({ user, onBack }) => {
             </div>
 
             {/* Tab Content */}
+            {activeTab === 'analytics' && (
+                <AnalyticsDashboard
+                    users={users}
+                    ideas={ideas}
+                    isLoading={isLoading}
+                />
+            )}
+
             {activeTab === 'users' && (
                 <UserManagementTable
                     users={users}
@@ -792,11 +1312,20 @@ const AdminConsole = ({ user, onBack }) => {
                     ideas={ideas}
                     onSearch={handleSearchIdeas}
                     isLoading={isLoading}
+                    user={user}
+                />
+            )}
+
+            {activeTab === 'prompt-studio' && (
+                <PromptStudio
+                    user={user}
+                    isLoading={isLoading}
+                    setIsLoading={setIsLoading}
                 />
             )}
 
             {activeTab === 'logs' && (
-                <AdminLogs
+                <LogsExplorer
                     logs={logs}
                     isLoading={isLoading}
                 />

@@ -4,7 +4,8 @@
 .pnp.js
 
 # Python virtual environment
-/venv
+venv/
+__pycache__/
 
 # Lago example dependencies
 /lago-example/node_modules

@@ -92,6 +92,94 @@ styleSheet.textContent = `
         transform: translateY(-10px) scale(0.95);
         transition: opacity 200ms, transform 200ms;
     }
+    /* Light Mode Overrides */
+    body.light-mode {
+        background-color: #f8fafc !important; /* Slate 50 */
+        color: #0f172a !important; /* Slate 900 */
+    }
+    
+    /* Backgrounds */
+    body.light-mode .bg-black { background-color: #f1f5f9 !important; } /* Slate 100 as main refreshing bg */
+    body.light-mode .bg-gray-900 { background-color: #ffffff !important; border-color: #cbd5e1 !important; } /* White cards */
+    body.light-mode .bg-gray-800\/30, 
+    body.light-mode .bg-gray-800\/50,
+    body.light-mode .bg-gray-900\/50,
+    body.light-mode .bg-gray-900\/90 { 
+        background-color: rgba(255, 255, 255, 0.8) !important; 
+        backdrop-filter: blur(12px) !important;
+        border-color: #e2e8f0 !important; /* Slate 200 */
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
+    }
+
+    body.light-mode .bg-gray-800 { 
+        background-color: #ffffff !important; 
+        border-color: #e2e8f0 !important; 
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1) !important; 
+        color: #334155 !important;
+    }
+    
+    body.light-mode .bg-zinc-900 { 
+        background-color: #f1f5f9 !important; 
+        border-color: #e2e8f0 !important;
+        color: #334155 !important;
+    }
+    
+    /* Text Colors */
+    body.light-mode .text-white { color: #0f172a !important; } /* Slate 900 */
+    body.light-mode .text-gray-100 { color: #1e293b !important; } /* Slate 800 */
+    body.light-mode .text-gray-200 { color: #334155 !important; } /* Slate 700 */
+    body.light-mode .text-gray-300 { color: #475569 !important; } /* Slate 600 */
+    body.light-mode .text-gray-400 { color: #64748b !important; } /* Slate 500 */
+    body.light-mode .text-gray-500 { color: #94a3b8 !important; } /* Slate 400 */
+    
+    /* Borders */
+    body.light-mode .border-gray-700, 
+    body.light-mode .border-gray-800,
+    body.light-mode .border-zinc-700 { border-color: #e2e8f0 !important; } /* Slate 200 */
+
+    /* Buttons & Interactive */
+    body.light-mode button.bg-gray-800:hover { background-color: #f8fafc !important; }
+    
+    /* Specific Gradient/Header Fixes */
+    body.light-mode header {
+        background-color: rgba(255, 255, 255, 0.9) !important;
+        border-bottom-color: #e2e8f0 !important;
+    }
+    
+    /* Inputs */
+    body.light-mode textarea, 
+    body.light-mode input[type="text"] {
+        background-color: #ffffff !important;
+        border-color: #cbd5e1 !important;
+        color: #0f172a !important;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+    }
+    
+    /* Particles Canvas in Light mode needs to be behind but visible */
+    body.light-mode canvas#particles-canvas {
+        opacity: 0.6;
+    }
+
+
+    /* Toast Notifications */
+    .toast-enter {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    .toast-enter-active {
+        transform: translateX(0);
+        opacity: 1;
+        transition: all 300ms ease-out;
+    }
+    .toast-exit {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    .toast-exit-active {
+        transform: translateX(100%);
+        opacity: 0;
+        transition: all 300ms ease-in;
+    }
 `;
 document.head.appendChild(styleSheet);
 
@@ -142,9 +230,61 @@ const ResetIcon = ({ size = 20, className = "" }) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
         <polyline points="23,4 23,10 17,10" />
         <polyline points="1,20 1,14 7,14" />
-        <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15" />
+        <path d="M3 21v-8a2 2 0 0 1-2-2h17.25c.414 0 .75-.336.75-.75V3.25c0-.414-.336-.75-.75-.75H3.25c-.414 0-.75.336-.75.75v8.25c0 .414.336.75.75.75h11.25" />
     </svg>
 );
+
+// Toast Component
+const Toast = ({ id, message, type = 'info', onClose }) => {
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            onClose(id);
+        }, 5000);
+        return () => clearTimeout(timer);
+    }, [id, onClose]);
+
+    const icons = {
+        success: <svg className="w-5 h-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>,
+        error: <svg className="w-5 h-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>,
+        info: <svg className="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
+        warning: <svg className="w-5 h-5 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+    };
+
+    const bgColors = {
+        success: 'bg-green-900/40 border-green-800',
+        error: 'bg-red-900/40 border-red-800',
+        info: 'bg-blue-900/40 border-blue-800',
+        warning: 'bg-yellow-900/40 border-yellow-800'
+    };
+
+    return (
+        <div className={`flex items-center gap-3 px-4 py-3 rounded-lg border backdrop-blur-md shadow-lg min-w-[300px] mb-2 toast-enter-active ${bgColors[type] || bgColors.info}`}>
+            <div className="flex-shrink-0">
+                {icons[type] || icons.info}
+            </div>
+            <p className="text-sm font-medium text-white flex-1">{message}</p>
+            <button onClick={() => onClose(id)} className="text-gray-400 hover:text-white transition-colors">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+    );
+};
+
+// Toast Container
+const ToastContainer = ({ toasts, removeToast }) => {
+    if (toasts.length === 0) return null;
+
+    return ReactDOM.createPortal(
+        <div className="fixed top-4 right-4 z-[99999] flex flex-col items-end">
+            {toasts.map(toast => (
+                <Toast key={toast.id} {...toast} onClose={removeToast} />
+            ))}
+        </div>,
+        document.body
+    );
+};
 
 const CloseIcon = ({ size = 20, className = "" }) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -215,12 +355,12 @@ const IconButton = ({
 // Import the InteractiveLogo component
 // InteractiveLogo.js must be loaded before this script
 
-// Particle system for background effect
-const ParticleSystem = () => {
+// Particle System Component with Theme Support
+const ParticleSystem = ({ theme }) => {
     const canvasRef = useRef(null);
-    const animationRef = useRef(null);
     const particlesRef = useRef([]);
     const mouseRef = useRef({ x: 0, y: 0 });
+    const animationRef = useRef(null);
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -265,6 +405,10 @@ const ParticleSystem = () => {
         const animate = () => {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+            // Set colors based on theme
+            const particleColor = theme === 'light' ? '0, 0, 0' : '255, 255, 255'; // Pure Black vs White
+            const connectionColor = theme === 'light' ? '0, 0, 0' : '255, 255, 255'; // Black vs White
+
             // Draw particles
             particlesRef.current.forEach((particle, index) => {
                 // Update position
@@ -293,7 +437,7 @@ const ParticleSystem = () => {
                 // Draw particle
                 ctx.beginPath();
                 ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
-                ctx.fillStyle = `rgba(255, 255, 255, ${particle.opacity})`;
+                ctx.fillStyle = `rgba(${particleColor}, ${particle.opacity})`;
                 ctx.fill();
 
                 // Draw connections
@@ -306,7 +450,7 @@ const ParticleSystem = () => {
                         ctx.beginPath();
                         ctx.moveTo(particle.x, particle.y);
                         ctx.lineTo(otherParticle.x, otherParticle.y);
-                        ctx.strokeStyle = `rgba(255, 255, 255, ${0.1 * (1 - distance / 100)})`;
+                        ctx.strokeStyle = `rgba(${connectionColor}, ${0.1 * (1 - distance / 100)})`;
                         ctx.stroke();
                     }
                 });
@@ -324,9 +468,9 @@ const ParticleSystem = () => {
                 cancelAnimationFrame(animationRef.current);
             }
         };
-    }, []);
+    }, [theme]); // Re-run effect when theme changes to ensure colors update
 
-    return <canvas ref={canvasRef} id="particles-canvas" />;
+    return <canvas ref={canvasRef} id="particles-canvas" className="fixed inset-0 pointer-events-none" />;
 };
 
 // How It Works Modal Component
@@ -445,7 +589,7 @@ const TrendingTicker = () => {
 };
 
 // Dual-Path Login Screen Component
-const LoginScreen = ({ onLogin, onDiscoveryPath, isLoading }) => {
+const LoginScreen = ({ onLogin, onDiscoveryPath, isLoading, theme, toggleTheme }) => {
     const [showHowItWorks, setShowHowItWorks] = useState(false);
 
     return (
@@ -458,25 +602,41 @@ const LoginScreen = ({ onLogin, onDiscoveryPath, isLoading }) => {
 
             {/* Fixed position background particles with overlay */}
             <div className="fixed inset-0 z-0">
-                <ParticleSystem />
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-900/10 via-black to-blue-900/10 pointer-events-none" />
+                <ParticleSystem theme={theme} />
+                <div className={`absolute inset-0 pointer-events-none ${theme === 'light' ? 'bg-gradient-to-br from-blue-50/50 via-white/80 to-purple-50/50' : 'bg-gradient-to-br from-purple-900/10 via-black to-blue-900/10'}`} />
             </div>
 
             {/* Main content container */}
             <div className="relative z-10 min-h-screen flex flex-col">
                 {/* Header */}
                 <header className="w-full h-32 flex items-center justify-center relative pt-8">
+                    <div className="absolute top-8 right-8 z-50">
+                        <button
+                            onClick={toggleTheme}
+                            className={`p-2 transition-colors rounded-lg ${theme === 'light' ? 'text-gray-600 hover:bg-gray-100 hover:text-black' : 'text-gray-400 hover:bg-white/10 hover:text-white'}`}
+                        >
+                            {theme === 'light' ? (
+                                <svg className="w-6 h-6 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+                                </svg>
+                            ) : (
+                                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                                </svg>
+                            )}
+                        </button>
+                    </div>
                     <div className="w-full h-full relative z-10 transform hover:scale-105 transition-transform duration-500">
-                        <InteractiveLogo />
+                        <InteractiveLogo theme={theme} />
                     </div>
                 </header>
 
                 {/* Hero Text */}
                 <div className="text-center mb-12 relative z-10 px-4">
-                    <h1 className="text-5xl md:text-7xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white via-blue-100 to-gray-300 tracking-tight mb-4 drop-shadow-2xl">
+                    <h1 className={`text-5xl md:text-7xl font-bold bg-clip-text text-transparent tracking-tight mb-4 drop-shadow-2xl ${theme === 'light' ? 'bg-gradient-to-r from-black via-gray-800 to-gray-600' : 'bg-gradient-to-r from-white via-blue-100 to-gray-300'}`}>
                         Stop Brainstorming. <br className="hidden md:block" /> Start Building.
                     </h1>
-                    <p className="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto font-light">
+                    <p className={`text-lg md:text-xl max-w-2xl mx-auto font-light ${theme === 'light' ? 'text-gray-600' : 'text-gray-400'}`}>
                         AI-powered project ideas tailored to your skills, interests, and academic goals.
                     </p>
                 </div>
@@ -487,23 +647,23 @@ const LoginScreen = ({ onLogin, onDiscoveryPath, isLoading }) => {
 
                         {/* Existing Users Card */}
                         <div className="group relative">
-                            <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-2xl opacity-20 group-hover:opacity-40 blur transition duration-500"></div>
-                            <div className="relative h-full bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-8 hover:border-white/20 transition-all duration-300 flex flex-col">
-                                <div className="w-16 h-16 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 rounded-2xl flex items-center justify-center mb-6 text-blue-400 border border-blue-500/30 shadow-[0_0_15px_rgba(59,130,246,0.2)]">
+                            <div className={`absolute -inset-0.5 rounded-2xl opacity-20 group-hover:opacity-40 blur transition duration-500 ${theme === 'light' ? 'bg-gradient-to-r from-blue-300 to-cyan-300' : 'bg-gradient-to-r from-blue-600 to-cyan-600'}`}></div>
+                            <div className={`relative h-full rounded-2xl p-8 transition-all duration-300 flex flex-col ${theme === 'light' ? 'bg-white border-gray-200 border shadow-xl' : 'bg-black/40 backdrop-blur-xl border border-white/10 hover:border-white/20'}`}>
+                                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-6 border ${theme === 'light' ? 'bg-blue-50 text-blue-600 border-blue-200' : 'bg-gradient-to-br from-blue-500/20 to-cyan-500/20 text-blue-400 border-blue-500/30'}`}>
                                     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                         <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
                                     </svg>
                                 </div>
-                                <h3 className="text-2xl font-bold text-white mb-3 tracking-wide">
+                                <h3 className={`text-2xl font-bold mb-3 tracking-wide ${theme === 'light' ? 'text-gray-900' : 'text-white'}`}>
                                     I Know What I Want
                                 </h3>
-                                <p className="text-gray-400 text-sm mb-8 leading-relaxed flex-grow font-light">
+                                <p className={`text-sm mb-8 leading-relaxed flex-grow font-light ${theme === 'light' ? 'text-gray-600' : 'text-gray-400'}`}>
                                     Skip the discovery phase. Directly input your domain (e.g., "AI Health App") and generate a comprehensive project plan instantly.
                                 </p>
                                 <button
                                     onClick={onLogin}
                                     disabled={isLoading}
-                                    className="w-full bg-white text-black hover:bg-gray-100 px-6 py-4 rounded-xl font-bold text-base transition-all duration-200 flex items-center justify-center gap-3 transform group-hover:translate-y-[-2px] shadow-lg shadow-white/5"
+                                    className={`w-full px-6 py-4 rounded-xl font-bold text-base transition-all duration-200 flex items-center justify-center gap-3 transform group-hover:translate-y-[-2px] shadow-lg ${theme === 'light' ? 'bg-black text-white hover:bg-gray-800' : 'bg-white text-black hover:bg-gray-100 shadow-white/5'}`}
                                 >
                                     <GoogleIcon size={20} />
                                     {isLoading ? 'Connecting...' : 'Continue with Google'}
@@ -513,18 +673,18 @@ const LoginScreen = ({ onLogin, onDiscoveryPath, isLoading }) => {
 
                         {/* Discovery Path Card */}
                         <div className="group relative">
-                            <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl opacity-20 group-hover:opacity-40 blur transition duration-500"></div>
-                            <div className="relative h-full bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-8 hover:border-white/20 transition-all duration-300 flex flex-col">
-                                <div className="w-16 h-16 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-2xl flex items-center justify-center mb-6 text-purple-400 border border-purple-500/30 shadow-[0_0_15px_rgba(168,85,247,0.2)]">
+                            <div className={`absolute -inset-0.5 rounded-2xl opacity-20 group-hover:opacity-40 blur transition duration-500 ${theme === 'light' ? 'bg-gradient-to-r from-purple-300 to-pink-300' : 'bg-gradient-to-r from-purple-600 to-pink-600'}`}></div>
+                            <div className={`relative h-full rounded-2xl p-8 transition-all duration-300 flex flex-col ${theme === 'light' ? 'bg-white border-gray-200 border shadow-xl' : 'bg-black/40 backdrop-blur-xl border border-white/10 hover:border-white/20'}`}>
+                                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-6 border ${theme === 'light' ? 'bg-purple-50 text-purple-600 border-purple-200' : 'bg-gradient-to-br from-purple-500/20 to-pink-500/20 text-purple-400 border-purple-500/30'}`}>
                                     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                         <circle cx="12" cy="12" r="10" />
                                         <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
                                     </svg>
                                 </div>
-                                <h3 className="text-2xl font-bold text-white mb-3 tracking-wide">
+                                <h3 className={`text-2xl font-bold mb-3 tracking-wide ${theme === 'light' ? 'text-gray-900' : 'text-white'}`}>
                                     Help Me Discover
                                 </h3>
-                                <p className="text-gray-400 text-sm mb-8 leading-relaxed flex-grow font-light">
+                                <p className={`text-sm mb-8 leading-relaxed flex-grow font-light ${theme === 'light' ? 'text-gray-600' : 'text-gray-400'}`}>
                                     Not sure where to start? Take our 30-second interactive quiz to uncover project ideas that match your unique skills and interests.
                                 </p>
                                 <button
@@ -533,7 +693,7 @@ const LoginScreen = ({ onLogin, onDiscoveryPath, isLoading }) => {
                                         onLogin();
                                     }}
                                     disabled={isLoading}
-                                    className="w-full bg-white/5 hover:bg-white/10 text-white px-6 py-4 rounded-xl font-bold text-base transition-all duration-200 flex items-center justify-center gap-3 border border-white/10 backdrop-blur-md transform group-hover:translate-y-[-2px]"
+                                    className={`w-full px-6 py-4 rounded-xl font-bold text-base transition-all duration-200 flex items-center justify-center gap-3 backdrop-blur-md transform group-hover:translate-y-[-2px] ${theme === 'light' ? 'bg-gray-100 hover:bg-gray-200 text-gray-900 border border-gray-300' : 'bg-white/5 hover:bg-white/10 text-white border border-white/10'}`}
                                 >
                                     <span className="text-xl">✨</span>
                                     {isLoading ? 'Starting...' : 'Start Discovery'}
@@ -2081,7 +2241,7 @@ const SectionEditor = ({ section, onUpdate, onModify, isLoading }) => {
 };
 
 // Enhanced Project Idea Display Component with Modification System
-const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false, customHeaderActions = null, userProfile, onNavigate, onLogout, onDiscoveryMode }) => {
+const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false, customHeaderActions = null, userProfile, onNavigate, onLogout, onDiscoveryMode, theme }) => {
     const [sections, setSections] = useState([]);
     const [selectedSection, setSelectedSection] = useState(null);
     const [isModifying, setIsModifying] = useState(false);
@@ -2091,6 +2251,17 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false, custom
     const [exportLoading, setExportLoading] = useState(false);
     const [showProfileDropdown, setShowProfileDropdown] = useState(false);
     const [showProfileEditor, setShowProfileEditor] = useState(false);
+    const [isMobile, setIsMobile] = useState(false);
+    const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+    const [generationOperationId, setGenerationOperationId] = useState(null);
+    const [codePreviewData, setCodePreviewData] = useState(null);
+
+    useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth < 768);
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
 
     // Initialize Markdown Renderer
     useEffect(() => {
@@ -2424,8 +2595,16 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false, custom
         <div className="h-full bg-black relative overflow-hidden flex flex-col">
             {/* Background particles effect */}
             <div className="fixed inset-0 z-0">
-                <ParticleSystem />
+                <ParticleSystem theme={theme} />
             </div>
+
+            {generationOperationId && <CodeGenerationLoadingScreen operationId={generationOperationId} theme={theme} />}
+            {codePreviewData && <CodePreviewBrowser
+                previewUrl={codePreviewData.previewUrl}
+                downloadUrl={codePreviewData.downloadUrl}
+                theme={theme}
+                onClose={() => setCodePreviewData(null)}
+            />}
 
             {/* Header - Matching AppScreen style - Only shown when not in DiscoveryResult */}
             {!hideHeader && (
@@ -2514,18 +2693,18 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false, custom
                                 onClick={async () => {
                                     if (isGeneratingCode) return;
                                     setIsGeneratingCode(true);
+                                    const opId = crypto.randomUUID();
+                                    setGenerationOperationId(opId);
+
                                     try {
                                         const generateCodebase = firebase.functions().httpsCallable('generate_codebase', { timeout: 540000 });
-                                        const result = await generateCodebase({ idea: currentIdea });
+                                        const result = await generateCodebase({ idea: currentIdea, operationId: opId });
+
                                         if (result.data.success) {
-                                            // Create temporary link to trigger download reliably
-                                            const link = document.createElement('a');
-                                            link.href = result.data.downloadUrl;
-                                            link.download = 'project_codebase.zip';
-                                            document.body.appendChild(link);
-                                            link.click();
-                                            document.body.removeChild(link);
-                                            alert("Codebase generated! Downloading now...");
+                                            setCodePreviewData({
+                                                previewUrl: result.data.previewUrl,
+                                                downloadUrl: result.data.downloadUrl
+                                            });
                                         } else {
                                             alert("Error generating codebase: " + result.data.error);
                                         }
@@ -2534,6 +2713,7 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false, custom
                                         alert("Failed to call generation function.");
                                     } finally {
                                         setIsGeneratingCode(false);
+                                        setGenerationOperationId(null);
                                     }
                                 }}
                                 disabled={isGeneratingCode}
@@ -2546,7 +2726,7 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false, custom
                                     </>
                                 ) : (
                                     <>
-                                        <span>⬇️ Download Code</span>
+                                        <span>⬇️ Generate Code</span>
                                     </>
                                 )}
                             </button>
@@ -2648,17 +2828,56 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false, custom
 
                     {/* Check if user has explicit 'admin' role or is owner */}
                     {/* Floating Chat Interface */}
-                    <div className="absolute bottom-6 left-0 right-0 px-6 flex justify-center pointer-events-none z-20">
-                        <div className="w-full max-w-3xl pointer-events-auto shadow-2xl shadow-blue-900/10">
-                            <div className="bg-gray-900/90 backdrop-blur-md border border-gray-700/50 rounded-2xl overflow-hidden ring-1 ring-white/10">
-                                <ChatModificationInterface
-                                    onModifyIdea={handleOverallIdeaModify}
-                                    isLoading={isModifying}
-                                    user={user}
-                                />
+                    {/* Responsive Chat Interface */}
+                    {isMobile ? (
+                        <>
+                            {/* Mobile Sticky Bar */}
+                            {!isDrawerOpen && (
+                                <div
+                                    className="fixed bottom-0 left-0 right-0 p-4 bg-gray-900 border-t border-gray-800 z-30 cursor-pointer safe-area-bottom shadow-[0_-5px_20px_rgba(0,0,0,0.5)]"
+                                    onClick={() => setIsDrawerOpen(true)}
+                                >
+                                    <div className="bg-gray-800 rounded-full px-4 py-3 text-gray-400 flex items-center justify-between border border-gray-700 shadow-lg">
+                                        <span>💬 Modify this project...</span>
+                                        <span className="bg-purple-600 text-white rounded-full p-1 w-6 h-6 flex items-center justify-center text-xs shadow-lg shadow-purple-900/50">↑</span>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Mobile Drawer */}
+                            <div className={`fixed inset-x-0 bottom-0 bg-gray-900 border-t border-gray-800 z-[9999] transition-transform duration-300 ease-out transform ${isDrawerOpen ? 'translate-y-0' : 'translate-y-full'} rounded-t-2xl shadow-[0_-10px_40px_rgba(0,0,0,0.5)] flex flex-col`} style={{ height: '70vh' }}>
+                                {/* Drawer Handle/Header */}
+                                <div className="p-3 border-b border-gray-800 flex justify-between items-center bg-gray-800/50 rounded-t-2xl cursor-pointer" onClick={() => setIsDrawerOpen(false)}>
+                                    <div className="w-12 h-1.5 bg-gray-600 rounded-full mx-auto" />
+                                </div>
+                                <div className="flex-1 overflow-hidden p-0 relative">
+                                    <ChatModificationInterface
+                                        onModifyIdea={handleOverallIdeaModify}
+                                        isLoading={isModifying}
+                                        user={user}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Drawer Backdrop */}
+                            {isDrawerOpen && (
+                                <div className="fixed inset-0 bg-black/80 z-[9990] backdrop-blur-sm" onClick={() => setIsDrawerOpen(false)} />
+                            )}
+                        </>
+                    ) : (
+                        /* Desktop Floating Interface */
+                        <div className="absolute bottom-6 left-0 right-0 px-6 flex justify-center pointer-events-none z-20">
+                            <div className="w-full max-w-3xl pointer-events-auto shadow-2xl shadow-blue-900/10">
+                                <div className="bg-gray-900/90 backdrop-blur-md border border-gray-700/50 rounded-2xl overflow-hidden ring-1 ring-white/10">
+                                    <ChatModificationInterface
+                                        onModifyIdea={handleOverallIdeaModify}
+                                        isLoading={isModifying}
+                                        user={user}
+                                    />
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    )}
                 </div>
             </div>
 
@@ -3315,7 +3534,7 @@ const UserProfileDropdown = ({ user, userProfile, userRole, onClose, onLogout, o
 };
 
 // Main App Screen Component
-const AppScreen = ({ user, onLogout, onDiscoveryMode }) => {
+const AppScreen = ({ user, onLogout, onDiscoveryMode, addToast, theme, toggleTheme }) => {
     const [currentView, setCurrentView] = useState('welcome');
     const [query, setQuery] = useState('');
     const [gameSteps, setGameSteps] = useState([]);
@@ -3613,10 +3832,25 @@ const AppScreen = ({ user, onLogout, onDiscoveryMode }) => {
                     <div className="w-full px-6 flex justify-between items-center">
                         <div className="flex items-center gap-4">
                             <h1 className="text-2xl font-bold text-white">Pideas</h1>
-                            <span className="text-gray-400">|</span>
-                            <span className="text-gray-300">Gamified Project Idea Generator</span>
+                            <span className="text-gray-400 hidden md:inline">|</span>
+                            <span className="text-gray-300 hidden md:inline">Gamified Project Idea Generator</span>
                         </div>
                         <div className="flex items-center gap-4">
+                            <button
+                                onClick={toggleTheme}
+                                className="p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-white/10"
+                                title={theme === 'dark' ? "Switch to Light Mode" : "Switch to Dark Mode"}
+                            >
+                                {theme === 'dark' ? (
+                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                                    </svg>
+                                ) : (
+                                    <svg className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+                                    </svg>
+                                )}
+                            </button>
                             <IconButton
                                 iconType="history"
                                 tooltip="History"
@@ -3834,6 +4068,7 @@ const AppScreen = ({ user, onLogout, onDiscoveryMode }) => {
                         onNavigate={setCurrentView}   // Pass navigation handler
                         onLogout={onLogout}           // Pass logout handler
                         onDiscoveryMode={onDiscoveryMode} // Pass discovery handler
+                        theme={theme}
                     />
                 )}
 
@@ -3852,6 +4087,7 @@ const AppScreen = ({ user, onLogout, onDiscoveryMode }) => {
                     <AdminConsole
                         user={user}
                         onBack={() => setCurrentView('welcome')}
+                        theme={theme}
                     />
                 )}
             </main>
@@ -3884,7 +4120,34 @@ const App = () => {
     const [discoveryStep, setDiscoveryStep] = useState('onboarding'); // 'onboarding', 'selection', 'generating'
     const [userProfile, setUserProfile] = useState(null);
     const [selectedIdea, setSelectedIdea] = useState(null);
-    const [forceRender, setForceRender] = useState(0); // Add this state to force re-render when needed
+    const [forceRender, setForceRender] = useState(0);
+    const [toasts, setToasts] = useState([]);
+    const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+
+    const toggleTheme = () => {
+        setTheme(prev => {
+            const newTheme = prev === 'dark' ? 'light' : 'dark';
+            localStorage.setItem('theme', newTheme);
+            return newTheme;
+        });
+    };
+
+    useEffect(() => {
+        if (theme === 'light') {
+            document.body.classList.add('light-mode');
+        } else {
+            document.body.classList.remove('light-mode');
+        }
+    }, [theme]);
+
+    const addToast = (message, type = 'info') => {
+        const id = Date.now();
+        setToasts(prev => [...prev, { id, message, type }]);
+    };
+
+    const removeToast = (id) => {
+        setToasts(prev => prev.filter(toast => toast.id !== id));
+    };
 
     useEffect(() => {
         // Check if Firebase is available
@@ -3924,7 +4187,7 @@ const App = () => {
     // All handler functions (no hooks) - must be before early returns
     const handleLogin = async () => {
         if (typeof firebase === 'undefined') {
-            alert('Firebase not available. Please run from Firebase hosting.');
+            addToast('Firebase not available. Please run from Firebase hosting.', 'error');
             return;
         }
 
@@ -3935,7 +4198,7 @@ const App = () => {
             await auth.signInWithPopup(provider);
         } catch (error) {
             console.error('Authentication error:', error);
-            alert('Login failed: ' + error.message);
+            addToast('Login failed: ' + error.message, 'error');
         } finally {
             setIsLoading(false);
         }
@@ -4054,7 +4317,7 @@ const App = () => {
             }
         } catch (error) {
             console.error('Error generating project plan:', error);
-            alert('Failed to generate project plan. Please try again.');
+            addToast('Failed to generate project plan. Please try again.', 'error');
             setDiscoveryStep('selection');
         }
     };
@@ -4109,7 +4372,7 @@ const App = () => {
 
     return (
         <div className="bg-gray-900 min-h-screen">
-            <ParticleSystem />
+            <ParticleSystem theme={theme} />
             {user ? (
                 discoveryMode ? (
                     // Discovery Path Flow
@@ -4148,16 +4411,25 @@ const App = () => {
                             />
                         )}
                     </>
-                ) : (
-                    <AppScreen user={user} onLogout={handleLogout} onDiscoveryMode={handleDiscoveryPath} />
-                )
+                ) : <AppScreen
+                    user={user}
+                    onLogout={handleLogout}
+                    onDiscoveryMode={handleDiscoveryPath}
+                    addToast={addToast}
+                    theme={theme}
+                    toggleTheme={toggleTheme}
+                />
             ) : (
                 <LoginScreen
                     onLogin={handleLogin}
                     onDiscoveryPath={handleDiscoveryPath}
                     isLoading={isLoading}
+                    addToast={addToast}
+                    theme={theme}
+                    toggleTheme={toggleTheme}
                 />
             )}
+            <ToastContainer toasts={toasts} removeToast={removeToast} />
         </div>
     );
 };

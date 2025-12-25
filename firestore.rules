@@ -1,0 +1,37 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Operations: Public read allowed (UUID serves as the secure token)
+    match /operations/{operationId} {
+      allow read: if true;
+    }
+
+    // Users: Users can access their own data; Admins can access all
+    match /users/{userId} {
+      allow read, write: if request.auth != null && (request.auth.uid == userId || request.auth.token.role == 'admin');
+    }
+
+    // Generated Ideas: Users access their own; Admins access all
+    match /generated_ideas/{ideaId} {
+      allow read, write: if request.auth != null && (
+        resource == null || resource.data.userId == request.auth.uid || request.auth.token.role == 'admin'
+      );
+    }
+    
+    // System Prompts (for Admin)
+    match /system_prompts/{promptId} {
+      allow read: if true; // Or authenticated
+      allow write: if request.auth != null && request.auth.token.role == 'admin';
+    }
+    
+    // Logs (Admin only)
+    match /logs/{logId} {
+        allow read: if request.auth != null && request.auth.token.role == 'admin';
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

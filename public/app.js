@@ -2241,7 +2241,7 @@ const SectionEditor = ({ section, onUpdate, onModify, isLoading }) => {
 };
 
 // Enhanced Project Idea Display Component with Modification System
-const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false, customHeaderActions = null, userProfile, onNavigate, onLogout, onDiscoveryMode, theme }) => {
+const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false, customHeaderActions = null, userProfile, onNavigate, onLogout, onDiscoveryMode, theme, updateUserStats }) => {
     const [sections, setSections] = useState([]);
     const [selectedSection, setSelectedSection] = useState(null);
     const [isModifying, setIsModifying] = useState(false);
@@ -2255,6 +2255,7 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false, custom
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [generationOperationId, setGenerationOperationId] = useState(null);
     const [codePreviewData, setCodePreviewData] = useState(null);
+    const [showShareModal, setShowShareModal] = useState(false);
 
     useEffect(() => {
         const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -2687,6 +2688,16 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false, custom
                                     )}
                                     <span>Export PDF</span>
                                 </button>
+                                <button
+                                    onClick={() => {
+                                        setShowShareModal(true);
+                                        if (updateUserStats) updateUserStats('SHARE_IDEA');
+                                    }}
+                                    className="bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 text-gray-300 px-3 py-1.5 rounded-lg text-sm transition-colors flex items-center gap-2"
+                                >
+                                    <span>🔗</span>
+                                    <span>Share</span>
+                                </button>
                             </div>
 
                             <button
@@ -2732,57 +2743,59 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false, custom
                             </button>
 
                             {/* User profile section */}
-                            <div className="relative flex items-center">
-                                <UserProfileIcon onClick={() => setShowProfileDropdown(!showProfileDropdown)} />
+                            {user && (
+                                <>
+                                    <div className="relative flex items-center">
+                                        <UserProfileIcon onClick={() => setShowProfileDropdown(!showProfileDropdown)} />
 
-                                {/* User profile dropdown */}
-                                {showProfileDropdown && ReactDOM.createPortal(
-                                    <div className="fixed inset-0 z-[9999]" style={{ pointerEvents: 'none' }}>
-                                        <div className="absolute right-0 top-[60px] mr-4" style={{ pointerEvents: 'auto' }}>
-                                            <UserProfileDropdown
+                                        {/* User profile dropdown */}
+                                        {showProfileDropdown && ReactDOM.createPortal(
+                                            <div className="fixed inset-0 z-[9999]" style={{ pointerEvents: 'none' }}>
+                                                <div className="absolute right-0 top-[60px] mr-4" style={{ pointerEvents: 'auto' }}>
+                                                    <UserProfileDropdown
+                                                        user={user}
+                                                        userProfile={userProfile || {}}
+                                                        onClose={() => setShowProfileDropdown(false)}
+                                                        onLogout={onLogout}
+                                                        onEditProfile={() => {
+                                                            setShowProfileDropdown(false);
+                                                            setShowProfileEditor(true);
+                                                        }}
+                                                    />
+                                                </div>
+                                            </div>,
+                                            document.body
+                                        )}
+
+                                        {showProfileEditor && ReactDOM.createPortal(
+                                            <ProfileEditor
                                                 user={user}
-                                                userProfile={userProfile || {}}
-                                                onClose={() => setShowProfileDropdown(false)}
-                                                onLogout={onLogout}
-                                                onEditProfile={() => {
-                                                    setShowProfileDropdown(false);
-                                                    setShowProfileEditor(true);
+                                                currentProfile={userProfile || {}}
+                                                onClose={() => setShowProfileEditor(false)}
+                                                onSave={async (updates) => {
+                                                    setShowProfileEditor(false);
+                                                    alert('Please update profile from main page for now.');
                                                 }}
-                                            />
-                                        </div>
-                                    </div>,
-                                    document.body
-                                )}
+                                                isLoading={false}
+                                            />,
+                                            document.body
+                                        )}
+                                    </div>
 
-                                {showProfileEditor && ReactDOM.createPortal(
-                                    <ProfileEditor
-                                        user={user}
-                                        currentProfile={userProfile || {}}
-                                        onClose={() => setShowProfileEditor(false)}
-                                        onSave={async (updates) => {
-                                            // Profile save logic would need to be passed down or handled here
-                                            // For now, simpler to just close
-                                            setShowProfileEditor(false);
-                                            alert('Please update profile from main page for now.');
+                                    <IconButton
+                                        iconType="logout"
+                                        tooltip="Logout"
+                                        onClick={() => {
+                                            if (onLogout) onLogout();
+                                            else if (typeof firebase !== 'undefined') {
+                                                firebase.auth().signOut();
+                                                window.location.reload();
+                                            }
                                         }}
-                                        isLoading={false}
-                                    />,
-                                    document.body
-                                )}
-                            </div>
-
-                            <IconButton
-                                iconType="logout"
-                                tooltip="Logout"
-                                onClick={() => {
-                                    if (onLogout) onLogout();
-                                    else if (typeof firebase !== 'undefined') {
-                                        firebase.auth().signOut();
-                                        window.location.reload();
-                                    }
-                                }}
-                                variant="default"
-                            />
+                                        variant="default"
+                                    />
+                                </>
+                            )}
                         </div>
                     </div>
                 </header>
@@ -2929,7 +2942,15 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false, custom
                     ))}
                 </div>
             </div>
-        </div >
+            {/* Share Modal */}
+            {showShareModal && (
+                <SocialShareModal
+                    idea={{ title: currentIdea.split('\n')[0].replace(/#+\**/g, '').trim() || "Project Idea", description: currentIdea, id: "current" }}
+                    onClose={() => setShowShareModal(false)}
+                    theme={theme}
+                />
+            )}
+        </div>
     );
 };
 
@@ -3534,7 +3555,7 @@ const UserProfileDropdown = ({ user, userProfile, userRole, onClose, onLogout, o
 };
 
 // Main App Screen Component
-const AppScreen = ({ user, onLogout, onDiscoveryMode, addToast, theme, toggleTheme }) => {
+const AppScreen = ({ user, onLogout, onDiscoveryMode, addToast, theme, toggleTheme, updateUserStats }) => {
     const [currentView, setCurrentView] = useState('welcome');
     const [query, setQuery] = useState('');
     const [gameSteps, setGameSteps] = useState([]);
@@ -4033,78 +4054,95 @@ const AppScreen = ({ user, onLogout, onDiscoveryMode, addToast, theme, toggleThe
                                 </div>
                             )}
                         </div>
-                    </div>
-                )}
-
-                {currentView === 'game' && gameSteps.length > 0 && (
-                    <GameStep
-                        step={gameSteps[currentStepIndex]}
-                        onAnswer={handleGameAnswer}
-                        currentScore={currentScore}
-                        totalSteps={gameSteps.length}
-                    />
-                )}
-
-                {currentView === 'generating' && (
-                    <div className="text-center">
-                        <div className="mb-8">
-                            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                            <h3 className="text-2xl font-semibold text-white mb-2">Generating Your Perfect Project Idea</h3>
-                            <p className="text-gray-400">Using your responses to create a personalized project...</p>
-                            <div className="mt-4 bg-gray-800/50 border border-gray-700 rounded-lg p-4 max-w-md mx-auto">
-                                <p className="text-green-400 font-medium">Final Score: {currentScore} points</p>
-                                <p className="text-gray-300 text-sm mt-1">{studentProfile.stream} • {studentProfile.skillLevel}</p>
-                            </div>
+                        {/* Gamification Section */}
+                        <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <BadgeCase userProfile={fullUserProfile} theme={theme} />
+                            <LeaderboardWidget theme={theme} />
                         </div>
                     </div>
-                )}
+                )} {
 
-                {currentView === 'result' && generatedIdea && (
-                    <ProjectIdeaDisplay
-                        idea={generatedIdea}
-                        onStartNew={startNewIdea}
-                        user={user}
-                        userProfile={fullUserProfile} // Pass profile for dropdown
-                        onNavigate={setCurrentView}   // Pass navigation handler
-                        onLogout={onLogout}           // Pass logout handler
-                        onDiscoveryMode={onDiscoveryMode} // Pass discovery handler
-                        theme={theme}
-                    />
-                )}
+                    currentView === 'game' && gameSteps.length > 0 && (
+                        <GameStep
+                            step={gameSteps[currentStepIndex]}
+                            onAnswer={handleGameAnswer}
+                            currentScore={currentScore}
+                            totalSteps={gameSteps.length}
+                        />
+                    )
+                }
 
-                {currentView === 'history' && (
-                    <HistoryView
-                        user={user}
-                        onBack={() => setCurrentView('welcome')}
-                        onViewIdea={(idea) => {
-                            setGeneratedIdea(idea);
-                            setCurrentView('result');
-                        }}
-                    />
-                )}
+                {
+                    currentView === 'generating' && (
+                        <div className="text-center">
+                            <div className="mb-8">
+                                <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                                <h3 className="text-2xl font-semibold text-white mb-2">Generating Your Perfect Project Idea</h3>
+                                <p className="text-gray-400">Using your responses to create a personalized project...</p>
+                                <div className="mt-4 bg-gray-800/50 border border-gray-700 rounded-lg p-4 max-w-md mx-auto">
+                                    <p className="text-green-400 font-medium">Final Score: {currentScore} points</p>
+                                    <p className="text-gray-300 text-sm mt-1">{studentProfile.stream} • {studentProfile.skillLevel}</p>
+                                </div>
+                            </div>
+                        </div>
+                    )
+                }
 
-                {currentView === 'admin' && (
-                    <AdminConsole
-                        user={user}
-                        onBack={() => setCurrentView('welcome')}
-                        theme={theme}
-                    />
-                )}
-            </main>
+                {
+                    currentView === 'result' && generatedIdea && (
+                        <ProjectIdeaDisplay
+                            idea={generatedIdea}
+                            onStartNew={startNewIdea}
+                            user={user}
+                            userProfile={fullUserProfile} // Pass profile for dropdown
+                            onNavigate={setCurrentView}   // Pass navigation handler
+                            onLogout={onLogout}           // Pass logout handler
+                            onDiscoveryMode={onDiscoveryMode} // Pass discovery handler
+                            theme={theme}
+                            updateUserStats={updateUserStats}
+                        />
+                    )
+                }
+
+                {
+                    currentView === 'history' && (
+                        <HistoryView
+                            user={user}
+                            onBack={() => setCurrentView('welcome')}
+                            onViewIdea={(idea) => {
+                                setGeneratedIdea(idea);
+                                setCurrentView('result');
+                            }}
+                        />
+                    )
+                }
+
+                {
+                    currentView === 'admin' && (
+                        <AdminConsole
+                            user={user}
+                            onBack={() => setCurrentView('welcome')}
+                            theme={theme}
+                        />
+                    )
+                }
+            </main >
 
             {/* Footer */}
-            {currentView !== 'result' && currentView !== 'admin' && (
-                <footer className="text-center py-6 text-gray-500 text-sm">
-                    <p>Powered by <span className="text-white font-medium">AI & Gamification</span></p>
-                    <div className="mt-2 space-x-4">
-                        <a href="#" className="hover:text-gray-300 transition-colors">Privacy Policy</a>
-                        <a href="#" className="hover:text-gray-300 transition-colors">Terms of Service</a>
-                        <a href="#" className="hover:text-gray-300 transition-colors">Contact</a>
-                    </div>
-                    <p className="mt-2">© 2024 Pideas. All rights reserved.</p>
-                </footer>
-            )}
-        </div>
+            {
+                currentView !== 'result' && currentView !== 'admin' && (
+                    <footer className="text-center py-6 text-gray-500 text-sm">
+                        <p>Powered by <span className="text-white font-medium">AI & Gamification</span></p>
+                        <div className="mt-2 space-x-4">
+                            <a href="#" className="hover:text-gray-300 transition-colors">Privacy Policy</a>
+                            <a href="#" className="hover:text-gray-300 transition-colors">Terms of Service</a>
+                            <a href="#" className="hover:text-gray-300 transition-colors">Contact</a>
+                        </div>
+                        <p className="mt-2">© 2024 Pideas. All rights reserved.</p>
+                    </footer>
+                )
+            }
+        </div >
     );
 };
 
@@ -4120,6 +4158,7 @@ const App = () => {
     const [discoveryStep, setDiscoveryStep] = useState('onboarding'); // 'onboarding', 'selection', 'generating'
     const [userProfile, setUserProfile] = useState(null);
     const [selectedIdea, setSelectedIdea] = useState(null);
+    const [sharedIdea, setSharedIdea] = useState(null);
     const [forceRender, setForceRender] = useState(0);
     const [toasts, setToasts] = useState([]);
     const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
@@ -4322,6 +4361,84 @@ const App = () => {
         }
     };
 
+    const updateUserStats = async (actionType) => {
+        if (!user) return;
+
+        try {
+            const userRef = firebase.firestore().collection('users').doc(user.uid);
+            await firebase.firestore().runTransaction(async (transaction) => {
+                const doc = await transaction.get(userRef);
+                if (!doc.exists) return;
+
+                const data = doc.data();
+                let xp = data.xp || 0;
+                let badges = data.badges || [];
+                let newBadges = [];
+
+                // XP Rules
+                const XP_TABLE = {
+                    'GENERATE_IDEA': 100,
+                    'SHARE_IDEA': 50,
+                    'DAILY_LOGIN': 10,
+                    'DISCOVERY_GAME': 20
+                };
+
+                xp += (XP_TABLE[actionType] || 0);
+
+                // Badge Logic
+                if (!badges.includes('first_step') && actionType === 'GENERATE_IDEA') {
+                    badges.push('first_step');
+                    newBadges.push('First Step');
+                }
+                if (!badges.includes('architect') && (data.ideasGenerated || 0) >= 4 && actionType === 'GENERATE_IDEA') {
+                    badges.push('architect');
+                    newBadges.push('Architect');
+                }
+                if (!badges.includes('social_butterfly') && actionType === 'SHARE_IDEA') {
+                    badges.push('social_butterfly');
+                    newBadges.push('Social Butterfly');
+                }
+
+                // Check time-based badges
+                const hour = new Date().getHours();
+                if (!badges.includes('night_owl') && hour >= 0 && hour < 4 && actionType === 'GENERATE_IDEA') {
+                    badges.push('night_owl');
+                    newBadges.push('Night Owl');
+                }
+
+                transaction.update(userRef, {
+                    xp,
+                    badges,
+                    ideasGenerated: actionType === 'GENERATE_IDEA' ? firebase.firestore.FieldValue.increment(1) : (data.ideasGenerated || 0)
+                });
+
+                // Notify user
+                if (newBadges.length > 0) {
+                    addToast(`🏆 New Badge Unlocked: ${newBadges.join(', ')}!`, 'success');
+                }
+            });
+        } catch (error) {
+            console.error("Error updating stats:", error);
+        }
+    };
+
+    // Shared Link Handling
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const shareId = params.get('shareId');
+        if (shareId && typeof firebase !== 'undefined') {
+            firebase.firestore().collection('generated_ideas').doc(shareId).get()
+                .then(doc => {
+                    if (doc.exists) {
+                        setSharedIdea({ id: doc.id, ...doc.data() });
+                        // Trigger stats if logged in? Maybe not on simple view.
+                        // We trigger 'SHARE_IDEA' on *sharing*, not viewing.
+                    }
+                })
+                .catch(err => console.error("Error loading shared idea:", err));
+        }
+    }, []);
+
     const handleBackToDiscovery = () => {
         setDiscoveryStep('onboarding');
         setUserProfile(null);
@@ -4338,6 +4455,50 @@ const App = () => {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-900">
                 <div className="text-white">Loading...</div>
+            </div>
+        );
+    }
+
+    if (sharedIdea) {
+        return (
+            <div className="min-h-screen bg-black flex flex-col">
+                <div className="bg-indigo-900/90 backdrop-blur text-white px-6 py-4 flex justify-between items-center sticky top-0 z-50 border-b border-indigo-700 shadow-lg">
+                    <div className="flex items-center gap-2">
+                        <span className="text-xl">👋</span>
+                        <span className="font-medium">You are viewing a shared Project Idea</span>
+                    </div>
+                    <div className="flex gap-4 items-center">
+                        {!user && (
+                            <button
+                                onClick={handleLogin}
+                                className="bg-white text-indigo-900 px-4 py-2 rounded-lg text-sm font-bold hover:bg-indigo-50 transition-colors shadow-sm"
+                            >
+                                Login to Create Your Own
+                            </button>
+                        )}
+                        <button
+                            onClick={() => {
+                                setSharedIdea(null);
+                                const url = new URL(window.location);
+                                url.searchParams.delete('shareId');
+                                window.history.replaceState({}, '', url);
+                            }}
+                            className="text-indigo-200 hover:text-white transition-colors"
+                        >
+                            ✕ Close
+                        </button>
+                    </div>
+                </div>
+                <div className="flex-1 overflow-hidden relative">
+                    <ProjectIdeaDisplay
+                        idea={sharedIdea.idea}
+                        user={user}
+                        hideHeader={false}
+                        customHeaderActions={null}
+                        theme={theme}
+                        updateUserStats={updateUserStats}
+                    />
+                </div>
             </div>
         );
     }
@@ -4418,6 +4579,7 @@ const App = () => {
                     addToast={addToast}
                     theme={theme}
                     toggleTheme={toggleTheme}
+                    updateUserStats={updateUserStats}
                 />
             ) : (
                 <LoginScreen

@@ -30,6 +30,7 @@ def distill_idea(project_idea_raw: str) -> str:
     3. Tech Stack (Recommended frontend, backend, database)
     4. Data Models (List of likely entities/schemas)
     5. Project Structure Hint (e.g. "React + Firebase", "Flask + HTML")
+    6. Documentation Requirements (Must include README.md and INSTALL.md)
     
     Do not include marketing text, intro or outro. Just the technical facts.
     """)

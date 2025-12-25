@@ -12,9 +12,11 @@ service cloud.firestore {
       allow read, write: if request.auth != null && (request.auth.uid == userId || request.auth.token.role == 'admin');
     }
 
-    // Generated Ideas: Users access their own; Admins access all
+    // Generated Ideas: Public GET allowed for sharing; List/Write restricted to owner/admin
     match /generated_ideas/{ideaId} {
-      allow read, write: if request.auth != null && (
+      allow get: if true;
+      allow list: if request.auth != null && (resource.data.userId == request.auth.uid || request.auth.token.role == 'admin');
+      allow write: if request.auth != null && (
         resource == null || resource.data.userId == request.auth.uid || request.auth.token.role == 'admin'
       );
     }

@@ -91,7 +91,8 @@ def generate_codebase(req: https_fn.CallableRequest):
             # 3. Distillation
             print("Distilling idea...")
             update_operation_status(operation_id, 'DISTILLING', "Analyzing requirements and distilling blueprint...")
-            blueprint = distill_idea(idea)
+            user_id = req.auth.uid if req.auth else None
+            blueprint = distill_idea(idea, user_id=user_id)
             print(f"Blueprint generated: {blueprint[:100]}...")
             update_operation_status(operation_id, 'AI_GENERATION', "Blueprint created. AI Crew starting...")
             
@@ -99,7 +100,7 @@ def generate_codebase(req: https_fn.CallableRequest):
             print("Starting CrewAI...")
             # We can't easily stream logs from inside CrewAI yet without custom callbacks, 
             # so we just update status before and after major chunks if possible.
-            crew = ProjectGeneratorCrew(output_dir=project_dir)
+            crew = ProjectGeneratorCrew(output_dir=project_dir, user_id=user_id)
             crew_result = crew.run(blueprint)
             print("CrewAI finished.")
             update_operation_status(operation_id, 'PROCESSING', "Code generation complete. Preparing files...")

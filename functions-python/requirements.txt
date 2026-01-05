@@ -10,3 +10,7 @@ google-generativeai
 python-dotenv
 flask
 google-cloud-storage
+requests
+langfuse
+openinference-instrumentation-crewai
+openinference-instrumentation-langchain

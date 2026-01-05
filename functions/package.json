@@ -21,7 +21,8 @@
     "express": "^5.1.0",
     "firebase-admin": "^12.6.0",
     "firebase-functions": "^6.0.1",
-    "genkit": "^1.14.1"
+    "genkit": "^1.14.1",
+    "langfuse": "^3.0.0"
   },
   "devDependencies": {
     "@types/firebase": "^2.4.32",

@@ -15,6 +15,19 @@ import * as admin from "firebase-admin";
 // Import genkit and googleAI plugin
 import { genkit } from 'genkit';
 import { googleAI } from '@genkit-ai/googleai';
+import { Langfuse } from 'langfuse';
+
+// Lazy-initialize Langfuse (env vars may not be available at module load time)
+let _langfuse: Langfuse | null = null;
+function getLangfuse(): Langfuse | null {
+  if (!_langfuse && process.env.LANGFUSE_SECRET_KEY) {
+    _langfuse = new Langfuse({
+      publicKey: process.env.LANGFUSE_PUBLIC_KEY,
+      secretKey: process.env.LANGFUSE_SECRET_KEY,
+    });
+  }
+  return _langfuse;
+}
 
 // Initialize Firebase admin
 admin.initializeApp();
@@ -507,7 +520,59 @@ export const generateIdea = onCall({ maxInstances: 5, timeoutSeconds: 300, invok
         model: googleAI.model('gemini-3-flash-preview'),
       });
 
-      const { text } = await ai.generate(contextPrompt);
+      // Create Langfuse trace for this generation (if available)
+      const langfuseClient = getLangfuse();
+      const trace = langfuseClient?.trace({
+        name: "generate_idea",
+        userId: request.auth?.uid,
+        metadata: {
+          promptType: isDiscoveryRequest ? 'discovery' : 'comprehensive',
+          hasProfile: !!studentProfile,
+        }
+      });
+
+      const generation = trace?.generation({
+        name: "gemini-idea-generation",
+        model: "gemini-3-flash-preview",
+        input: contextPrompt,
+      });
+
+      const startTime = Date.now();
+      const response = await ai.generate(contextPrompt);
+      const endTime = Date.now();
+
+      const text = response.text;
+
+      // Extract usage data from Genkit response - try multiple possible property names
+      const usage = response.usage || (response as any).usageMetadata || {};
+      const usageAny = usage as any; // For fallback property access
+
+      // Genkit uses inputTokens/outputTokens, but fallback to other common names
+      const inputTokens = usage?.inputTokens || usageAny?.promptTokenCount || usageAny?.promptTokens || 0;
+      const outputTokens = usage?.outputTokens || usageAny?.candidatesTokenCount || usageAny?.completionTokens || 0;
+      const totalTokens = usage?.totalTokens || usageAny?.totalTokenCount || (inputTokens + outputTokens);
+
+      // Log usage for debugging
+      logger.info("Genkit response usage:", JSON.stringify(usage));
+      logger.info(`Token counts - Input: ${inputTokens}, Output: ${outputTokens}, Total: ${totalTokens}`);
+
+      // End generation with output and usage data
+      generation?.end({
+        output: text,
+        usage: {
+          input: inputTokens,
+          output: outputTokens,
+          total: totalTokens,
+        },
+        metadata: {
+          latencyMs: endTime - startTime,
+          outputLength: text?.length || 0,
+          rawUsage: usage, // Store raw usage for debugging
+        }
+      });
+
+      // Flush to ensure trace is sent
+      await langfuseClient?.flushAsync();
 
       if (!text || text.trim().length === 0) {
         throw new Error("Generated text is empty");

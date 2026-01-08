@@ -14,6 +14,10 @@ class ProjectTasks:
                 1. A list of all necessary files (HTML, CSS, JS, Python, etc.)
                 2. A brief description of what each file does.
                 3. The chosen technology stack (e.g., React, plain JS, Flask, etc.).
+
+                MANDATORY: You MUST include the following documentation files:
+                - 'README.md': Comprehensive project documentation, features, and tech stack explaination.
+                - 'INSTALL.md': Detailed step-by-step setup, installation, and running instructions.
                 
                 Make sure the structure is complete and ready for a developer to start coding.
                 Output should be a clear, structured list of file paths."""),

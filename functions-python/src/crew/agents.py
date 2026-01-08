@@ -10,15 +10,17 @@ def get_gemini_model():
     if not api_key:
         raise ValueError("GEMINI_API_KEY not found in environment")
     
-    return ChatGoogleGenerativeAI(
+    llm = ChatGoogleGenerativeAI(
         model="gemini-2.5-flash",
         verbose=True,
         temperature=0.7,
         google_api_key=api_key
     )
+    return llm
 
 class ProjectAgents:
-    def __init__(self):
+    def __init__(self, user_id: str = None):
+        self.user_id = user_id
         self.llm = get_gemini_model()
 
     def architect_agent(self):

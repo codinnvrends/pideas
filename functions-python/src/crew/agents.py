@@ -1,27 +1,15 @@
-import os
+"""
+Project agents for CrewAI code generation.
+Uses LangfuseGeminiLLM wrapper for automatic token tracking.
+"""
+from .langfuse_llm import get_langfuse_gemini_model
 
-def get_gemini_model():
-    from langchain_google_genai import ChatGoogleGenerativeAI
-    # Use Gemini 1.5 Pro for complex reasoning, or Flash for speed if preferred.
-    # We'll default to Pro as requested in the plan unless env var overrides.
-    # Use Gemini 1.5 Pro for complex reasoning, or Flash for speed if preferred.
-    # We'll default to Pro as requested in the plan unless env var overrides.
-    api_key = os.environ.get("GEMINI_API_KEY")
-    if not api_key:
-        raise ValueError("GEMINI_API_KEY not found in environment")
-    
-    llm = ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash",
-        verbose=True,
-        temperature=0.7,
-        google_api_key=api_key
-    )
-    return llm
 
 class ProjectAgents:
-    def __init__(self, user_id: str = None):
+    def __init__(self, user_id: str = None, trace_id: str = None, parent_observation_id: str = None):
         self.user_id = user_id
-        self.llm = get_gemini_model()
+        # Use custom LLM wrapper that reports to Langfuse automatically
+        self.llm = get_langfuse_gemini_model(trace_id=trace_id, parent_observation_id=parent_observation_id)
 
     def architect_agent(self):
         from crewai import Agent
@@ -61,3 +49,4 @@ class ProjectAgents:
             tools=[file_tool],
             llm=self.llm
         )
+

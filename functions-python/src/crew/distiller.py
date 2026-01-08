@@ -2,7 +2,6 @@ import os
 
 def distill_idea(project_idea_raw: str, user_id: str = None) -> str:
     from langchain_google_genai import ChatGoogleGenerativeAI
-    from langchain_core.prompts import PromptTemplate
     from langchain_core.messages import HumanMessage
 
     """
@@ -12,7 +11,7 @@ def distill_idea(project_idea_raw: str, user_id: str = None) -> str:
     if not api_key:
         raise ValueError("GEMINI_API_KEY not found")
     
-    # Initialize Langfuse for manual tracing with token counts
+    # Initialize Langfuse for tracing
     langfuse = None
     try:
         from langfuse import get_client
@@ -44,52 +43,48 @@ def distill_idea(project_idea_raw: str, user_id: str = None) -> str:
     
     formatted_prompt = prompt_template.format(idea=project_idea_raw)
     
-    # Create trace and generation span if Langfuse is available
+    # Use Langfuse v3 API with context managers
     if langfuse:
-        trace = langfuse.trace(
+        from langfuse import propagate_attributes
+        
+        # Create a generation observation using v3 API
+        with langfuse.start_as_current_observation(
+            as_type="generation",
             name="blueprint-generation",
-            user_id=user_id,
-            session_id=f"distill_{user_id}" if user_id else None,
-            metadata={"idea_length": len(project_idea_raw)}
-        )
-        
-        generation = trace.generation(
-            name="gemini-blueprint-generation",
             model="gemini-2.5-flash",
-            input=formatted_prompt,
-        )
-        
-        # Invoke LLM directly to get full response with metadata
-        result = llm.invoke([HumanMessage(content=formatted_prompt)])
-        
-        # Extract token usage from response
-        input_tokens = 0
-        output_tokens = 0
-        total_tokens = 0
-        
-        # LangChain Google Genai returns usage in usage_metadata
-        if hasattr(result, 'usage_metadata') and result.usage_metadata:
-            usage = result.usage_metadata
-            input_tokens = usage.get('input_tokens', 0) or usage.get('prompt_tokens', 0) or 0
-            output_tokens = usage.get('output_tokens', 0) or usage.get('completion_tokens', 0) or 0
-            total_tokens = usage.get('total_tokens', 0) or (input_tokens + output_tokens)
-            print(f"Token usage - Input: {input_tokens}, Output: {output_tokens}, Total: {total_tokens}")
-        
-        # End generation with output and usage
-        generation.end(
-            output=result.content,
-            usage={
-                "input": input_tokens,
-                "output": output_tokens,
-                "total": total_tokens,
-            }
-        )
+            input=formatted_prompt[:500],  # Preview
+        ) as generation:
+            # Propagate user attributes
+            with propagate_attributes(
+                user_id=user_id,
+                session_id=f"distill_{user_id}" if user_id else None,
+                metadata={"idea_length": len(project_idea_raw)}
+            ):
+                # Invoke LLM
+                result = llm.invoke([HumanMessage(content=formatted_prompt)])
+                
+                # Extract token usage from response
+                input_tokens = 0
+                output_tokens = 0
+                
+                if hasattr(result, 'usage_metadata') and result.usage_metadata:
+                    usage = result.usage_metadata
+                    input_tokens = usage.get('input_tokens', 0) or usage.get('prompt_tokens', 0) or 0
+                    output_tokens = usage.get('output_tokens', 0) or usage.get('completion_tokens', 0) or 0
+                    print(f"Token usage - Input: {input_tokens}, Output: {output_tokens}")
+                
+                # Update generation with output and usage (Langfuse v3 uses usage_details)
+                generation.update(
+                    output=result.content[:500],  # Preview
+                    usage_details={
+                        "input": input_tokens,
+                        "output": output_tokens,
+                    }
+                )
         
         langfuse.flush()
         return result.content
     else:
         # Fallback without Langfuse
-        prompt = PromptTemplate.from_template(prompt_template)
-        chain = prompt | llm
-        result = chain.invoke({"idea": project_idea_raw})
+        result = llm.invoke([HumanMessage(content=formatted_prompt)])
         return result.content

@@ -556,13 +556,12 @@ export const generateIdea = onCall({ maxInstances: 5, timeoutSeconds: 300, invok
       logger.info("Genkit response usage:", JSON.stringify(usage));
       logger.info(`Token counts - Input: ${inputTokens}, Output: ${outputTokens}, Total: ${totalTokens}`);
 
-      // End generation with output and usage data
-      generation?.end({
+      // Update generation with output and usage data (Langfuse v3 uses usageDetails)
+      generation?.update({
         output: text,
-        usage: {
+        usageDetails: {
           input: inputTokens,
           output: outputTokens,
-          total: totalTokens,
         },
         metadata: {
           latencyMs: endTime - startTime,
@@ -570,6 +569,7 @@ export const generateIdea = onCall({ maxInstances: 5, timeoutSeconds: 300, invok
           rawUsage: usage, // Store raw usage for debugging
         }
       });
+      generation?.end();
 
       // Flush to ensure trace is sent
       await langfuseClient?.flushAsync();

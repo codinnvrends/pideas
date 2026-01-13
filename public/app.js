@@ -193,11 +193,11 @@ const IconButton = ({
     return (
         <button
             onClick={disabled ? undefined : onClick}
-            className={`${baseClasses} ${variantClasses[variant]} ${disabledClasses} ${className}`}
+            className={`${baseClasses} ${variantClasses[variant]} ${disabledClasses} ${className} glass-tooltip-btn`}
             disabled={disabled}
+            data-tooltip={tooltip}
         >
             {getIcon()}
-            <span className="tooltip-text">{tooltip}</span>
         </button>
     );
 };

@@ -1,187 +1,7 @@
 const { useState, useEffect, useRef, useCallback } = React;
 const { createPortal } = ReactDOM;
 
-// Add CSS animations and tooltip styles
-const styleSheet = document.createElement("style");
-styleSheet.textContent = `
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(-10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    @keyframes scroll {
-        0% { transform: translateX(0); }
-        100% { transform: translateX(-50%); }
-    }
-    
-    /* Tooltip styles */
-    .tooltip {
-        position: relative;
-        display: inline-block;
-    }
-    
-    .tooltip .tooltip-text {
-        visibility: hidden;
-        width: max-content;
-        max-width: 200px;
-        background-color: #1f2937;
-        color: #f9fafb;
-        text-align: center;
-        border-radius: 6px;
-        padding: 8px 12px;
-        position: absolute;
-        z-index: 10000;
-        bottom: 125%;
-        left: 50%;
-        margin-left: -60px;
-        opacity: 0;
-        transition: opacity 0.3s, visibility 0.3s;
-        font-size: 12px;
-        font-weight: 500;
-        border: 1px solid #374151;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        white-space: nowrap;
-    }
-    
-    .tooltip .tooltip-text::after {
-        content: "";
-        position: absolute;
-        top: 100%;
-        left: 50%;
-        margin-left: -5px;
-        border-width: 5px;
-        border-style: solid;
-        border-color: #1f2937 transparent transparent transparent;
-    }
-    
-    .tooltip:hover .tooltip-text {
-        visibility: visible;
-        opacity: 1;
-    }
-    
-    @keyframes fadeOut {
-        from { opacity: 1; }
-        to { opacity: 0; }
-    }
-    
-    .animate-fade-in {
-        animation: fadeIn 0.3s ease-out forwards;
-    }
-    
-    .animate-fade-out {
-        animation: fadeOut 0.3s ease-out forwards;
-    }
-    
-    .profile-dropdown-enter {
-        opacity: 0;
-        transform: translateY(-10px) scale(0.95);
-    }
-    
-    .profile-dropdown-enter-active {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-        transition: opacity 200ms, transform 200ms;
-    }
-    
-    .profile-dropdown-exit {
-        opacity: 1;
-    }
-    
-    .profile-dropdown-exit-active {
-        opacity: 0;
-        transform: translateY(-10px) scale(0.95);
-        transition: opacity 200ms, transform 200ms;
-    }
-    /* Light Mode Overrides */
-    body.light-mode {
-        background-color: #f8fafc !important; /* Slate 50 */
-        color: #0f172a !important; /* Slate 900 */
-    }
-    
-    /* Backgrounds */
-    body.light-mode .bg-black { background-color: #f1f5f9 !important; } /* Slate 100 as main refreshing bg */
-    body.light-mode .bg-gray-900 { background-color: #ffffff !important; border-color: #cbd5e1 !important; } /* White cards */
-    body.light-mode .bg-gray-800\/30, 
-    body.light-mode .bg-gray-800\/50,
-    body.light-mode .bg-gray-900\/50,
-    body.light-mode .bg-gray-900\/90 { 
-        background-color: rgba(255, 255, 255, 0.8) !important; 
-        backdrop-filter: blur(12px) !important;
-        border-color: #e2e8f0 !important; /* Slate 200 */
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
-    }
-
-    body.light-mode .bg-gray-800 { 
-        background-color: #ffffff !important; 
-        border-color: #e2e8f0 !important; 
-        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1) !important; 
-        color: #334155 !important;
-    }
-    
-    body.light-mode .bg-zinc-900 { 
-        background-color: #f1f5f9 !important; 
-        border-color: #e2e8f0 !important;
-        color: #334155 !important;
-    }
-    
-    /* Text Colors */
-    body.light-mode .text-white { color: #0f172a !important; } /* Slate 900 */
-    body.light-mode .text-gray-100 { color: #1e293b !important; } /* Slate 800 */
-    body.light-mode .text-gray-200 { color: #334155 !important; } /* Slate 700 */
-    body.light-mode .text-gray-300 { color: #475569 !important; } /* Slate 600 */
-    body.light-mode .text-gray-400 { color: #64748b !important; } /* Slate 500 */
-    body.light-mode .text-gray-500 { color: #94a3b8 !important; } /* Slate 400 */
-    
-    /* Borders */
-    body.light-mode .border-gray-700, 
-    body.light-mode .border-gray-800,
-    body.light-mode .border-zinc-700 { border-color: #e2e8f0 !important; } /* Slate 200 */
-
-    /* Buttons & Interactive */
-    body.light-mode button.bg-gray-800:hover { background-color: #f8fafc !important; }
-    
-    /* Specific Gradient/Header Fixes */
-    body.light-mode header {
-        background-color: rgba(255, 255, 255, 0.9) !important;
-        border-bottom-color: #e2e8f0 !important;
-    }
-    
-    /* Inputs */
-    body.light-mode textarea, 
-    body.light-mode input[type="text"] {
-        background-color: #ffffff !important;
-        border-color: #cbd5e1 !important;
-        color: #0f172a !important;
-        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
-    }
-    
-    /* Particles Canvas in Light mode needs to be behind but visible */
-    body.light-mode canvas#particles-canvas {
-        opacity: 0.6;
-    }
-
-
-    /* Toast Notifications */
-    .toast-enter {
-        transform: translateX(100%);
-        opacity: 0;
-    }
-    .toast-enter-active {
-        transform: translateX(0);
-        opacity: 1;
-        transition: all 300ms ease-out;
-    }
-    .toast-exit {
-        transform: translateX(0);
-        opacity: 1;
-    }
-    .toast-exit-active {
-        transform: translateX(100%);
-        opacity: 0;
-        transition: all 300ms ease-in;
-    }
-`;
-document.head.appendChild(styleSheet);
+// CSS animations and overrides are now in public/style.css
 
 // SVG Icon Components
 const HistoryIcon = ({ size = 20, className = "" }) => (
@@ -308,6 +128,33 @@ const GitHubIcon = ({ size = 20, className = "" }) => (
     </svg>
 );
 
+const CopyIcon = ({ size = 20, className = "" }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+    </svg>
+);
+
+const PDFIcon = ({ size = 20, className = "" }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+        <polyline points="14 2 14 8 20 8"></polyline>
+        <line x1="16" y1="13" x2="8" y2="13"></line>
+        <line x1="16" y1="17" x2="8" y2="17"></line>
+        <polyline points="10 9 9 9 8 9"></polyline>
+    </svg>
+);
+
+const ShareIcon = ({ size = 20, className = "" }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <circle cx="18" cy="5" r="3"></circle>
+        <circle cx="6" cy="12" r="3"></circle>
+        <circle cx="18" cy="19" r="3"></circle>
+        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+    </svg>
+);
+
 // IconButton Component - Reusable button with icon and tooltip
 const IconButton = ({
     iconType,
@@ -335,6 +182,9 @@ const IconButton = ({
             case 'idea': return <IdeaIcon size={20} />;
             case 'edit': return <EditIcon size={20} />;
             case 'reset': return <ResetIcon size={20} />;
+            case 'copy': return <CopyIcon size={20} />;
+            case 'pdf': return <PDFIcon size={20} />;
+            case 'share': return <ShareIcon size={20} />;
             case 'close': return <CloseIcon size={20} />;
             default: return <div className="w-5 h-5" />;
         }
@@ -713,15 +563,7 @@ const LoginScreen = ({ onLogin, onDiscoveryPath, isLoading, theme, toggleTheme }
                         </button>
                     </div>
 
-                    {/* Social Proof / Trusted By */}
-                    {/* <div className="absolute bottom-6 left-0 w-full text-center">
-                        <p className="text-gray-600 text-xs font-medium uppercase tracking-widest mb-4">Trusted by students from</p>
-                        <div className="flex justify-center gap-8 opacity-40 grayscale">
-                            <span className="text-gray-500 font-bold">MIT</span>
-                            <span className="text-gray-500 font-bold">STANFORD</span>
-                            <span className="text-gray-500 font-bold">IIT</span>
-                        </div>
-                    </div> */}
+
                 </main>
 
                 {/* Trending Ticker at Bottom */}
@@ -751,6 +593,78 @@ const DiscoveryOnboarding = ({ onComplete, user }) => {
     const [badges, setBadges] = useState([]);
     const [isTransitioning, setIsTransitioning] = useState(false);
     const [stepKey, setStepKey] = useState(0); // Force re-render of DiscoveryStep
+
+    // Destructure new components
+    const { DiscoveryStepCard, DiscoveryJourneyMap, DiscoveryShuffleButton } = window.DiscoveryComponents || {};
+
+    // Draft Logic: Load on Mount
+    useEffect(() => {
+        const saved = localStorage.getItem('pideas_discovery_draft');
+        if (saved && currentStep === 0) {
+            try {
+                const draft = JSON.parse(saved);
+                if (Date.now() - draft.ts < 24 * 60 * 60 * 1000) { // 24 hours validity
+                    // Ideally ask user, but for now auto-restore if fresh
+                    console.log("Restoring draft session");
+                    setUserProfile(draft.profile);
+                    setCurrentStep(draft.step);
+                }
+            } catch (e) { console.error("Draft load failed", e); }
+        }
+    }, []);
+
+    // Draft Logic: Save on Change
+    useEffect(() => {
+        if (currentStep > 0 || Object.keys(userProfile).length > 2) {
+            localStorage.setItem('pideas_discovery_draft', JSON.stringify({
+                step: currentStep,
+                profile: userProfile,
+                ts: Date.now()
+            }));
+        }
+    }, [currentStep, userProfile]);
+
+    const handleShuffle = () => {
+        if (!window.confirm("Feeling lucky? This will pick random options for the rest of the journey!")) return;
+
+        let tempProfile = { ...userProfile };
+        let tempBadges = [...badges];
+
+        // Iterate through all steps to ensure complete profile
+        discoverySteps.forEach((step) => {
+            if (step.type === 'single-choice') {
+                const randomOption = step.options[Math.floor(Math.random() * step.options.length)];
+                // Map same as handleStepComplete
+                if (step.id === 'stream') tempProfile.stream = randomOption.value;
+                else if (step.id === 'year') tempProfile.year = randomOption.value;
+                else if (step.id === 'skillLevel') tempProfile.skillLevel = randomOption.value;
+                else if (step.id === 'teamSize') tempProfile.teamSize = randomOption.value;
+                else if (step.id === 'projectDuration') tempProfile.projectDuration = randomOption.value;
+                else if (step.id === 'budgetRange') tempProfile.budgetRange = randomOption.value;
+                else if (step.id === 'engineeringDomain') tempProfile.engineeringDomain = randomOption.value;
+                else if (step.id === 'projectComplexity') tempProfile.projectComplexity = randomOption.value;
+                else if (step.id === 'priorExperience') tempProfile.priorExperience = randomOption.value;
+                else if (step.id === 'industryFocus') tempProfile.industryFocus = randomOption.value;
+                else tempProfile[step.id] = randomOption.value;
+            }
+            else if (step.type === 'multi-choice') {
+                // Pick 1-3 random options
+                const count = Math.floor(Math.random() * 2) + 1;
+                const shuffled = [...step.options].sort(() => 0.5 - Math.random());
+                const selected = shuffled.slice(0, count).map(o => o.value);
+
+                if (step.id === 'interests') tempProfile.interests = selected;
+                else if (step.id === 'learningGoals') tempProfile.learningGoals = selected;
+                else if (step.id === 'preferredTechnologies') tempProfile.preferredTechnologies = selected;
+                else tempProfile[step.id] = selected;
+            }
+        });
+
+        // Update state and finish
+        setUserProfile(tempProfile);
+        setBadges([...tempBadges, "🎲 Wildcard User"]);
+        setTimeout(() => onComplete(tempProfile), 1000);
+    };
 
     const discoverySteps = [
         {
@@ -1049,27 +963,35 @@ const DiscoveryOnboarding = ({ onComplete, user }) => {
         <div className="min-h-screen bg-black flex flex-col">
             {/* Progress Header */}
             <div className="bg-gray-900/80 border-b border-gray-800/60 p-4">
-                <div className="max-w-4xl mx-auto">
-                    <div className="flex items-center justify-between mb-4">
-                        <h1 className="text-xl font-semibold text-white">Project Discovery Journey</h1>
-                        <div className="text-sm text-gray-400">
-                            Step {currentStep + 1} of {discoverySteps.length}
+                <div className="max-w-6xl mx-auto">
+                    <div className="flex items-center justify-between mb-8">
+                        <div>
+                            <h1 className="text-2xl font-bold text-white mb-1">Project Discovery Journey</h1>
+                            <div className="text-sm text-gray-400">
+                                Step {currentStep + 1} of {discoverySteps.length}
+                            </div>
                         </div>
+                        {DiscoveryShuffleButton && <DiscoveryShuffleButton onShuffle={handleShuffle} theme="dark" />}
                     </div>
 
-                    {/* Progress Bar */}
-                    <div className="w-full bg-gray-800 rounded-full h-2">
-                        <div
-                            className="bg-gray-600 h-2 rounded-full transition-all duration-500 ease-out"
-                            style={{ width: `${progress}%` }}
-                        ></div>
-                    </div>
+                    {/* New Journey Map */}
+                    {DiscoveryJourneyMap ? (
+                        <DiscoveryJourneyMap steps={discoverySteps} currentStep={currentStep} theme="dark" />
+                    ) : (
+                        /* Fallback Progress Bar */
+                        <div className="w-full bg-gray-800 rounded-full h-2 mb-6">
+                            <div
+                                className="bg-gray-600 h-2 rounded-full transition-all duration-500 ease-out"
+                                style={{ width: `${progress}%` }}
+                            ></div>
+                        </div>
+                    )}
 
                     {/* Badges */}
                     {badges.length > 0 && (
-                        <div className="flex gap-2 mt-3">
+                        <div className="flex gap-2 mt-4 overflow-x-auto pb-2">
                             {badges.map((badge, index) => (
-                                <span key={index} className="text-xs bg-gray-800/60 text-gray-300 px-2 py-1 rounded-full">
+                                <span key={index} className="text-xs bg-purple-900/30 border border-purple-500/30 text-purple-200 px-3 py-1 rounded-full whitespace-nowrap">
                                     {badge}
                                 </span>
                             ))}
@@ -1100,6 +1022,10 @@ const DiscoveryStep = ({ step, onComplete, stepNumber, totalSteps, isTransitioni
     const [formData, setFormData] = useState({});
     const [showEncouragement, setShowEncouragement] = useState(false);
     const [hasCompleted, setHasCompleted] = useState(false);
+
+
+    // Destructure new components
+    const { DiscoveryStepCard } = window.DiscoveryComponents || {};
 
     // Reset state when step changes
     useEffect(() => {
@@ -1210,42 +1136,23 @@ const DiscoveryStep = ({ step, onComplete, stepNumber, totalSteps, isTransitioni
                         <h3 className="text-xl font-semibold text-white mb-6">{step.title}</h3>
                         <p className="text-gray-300 mb-6">{step.subtitle}</p>
 
-                        {/* Single Choice Options */}
+                        {/* Single Choice Options with CARDS */}
                         {step.type === 'single-choice' && (
-                            <div className="space-y-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                                 {step.options.map((option) => (
-                                    <button
-                                        key={option.value}
-                                        onClick={() => handleSingleChoice(option.value)}
-                                        className={`w-full text-left p-4 rounded-lg border transition-all duration-200 ${selectedValue === option.value
-                                            ? 'border-blue-500 bg-blue-500/20 text-blue-300'
-                                            : 'border-gray-600 bg-gray-700/50 text-gray-300 hover:border-gray-500 hover:bg-gray-700'
-                                            }`}
-                                        disabled={showEncouragement}
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <span className="text-2xl">{option.icon}</span>
-                                            <div>
-                                                <div className="font-medium">{option.label}</div>
-                                                {option.description && (
-                                                    <div className="text-gray-400 text-sm">{option.description}</div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-
-                        {/* Multi Choice Options */}
-                        {step.type === 'multi-choice' && (
-                            <>
-                                <div className="space-y-3">
-                                    {step.options.map((option) => (
+                                    DiscoveryStepCard ? (
+                                        <DiscoveryStepCard
+                                            key={option.value}
+                                            option={option}
+                                            isSelected={selectedValue === option.value}
+                                            onClick={() => handleSingleChoice(option.value)}
+                                            theme="dark"
+                                        />
+                                    ) : (
                                         <button
                                             key={option.value}
-                                            onClick={() => handleMultiChoice(option.value)}
-                                            className={`w-full text-left p-4 rounded-lg border transition-all duration-200 ${selectedValues.includes(option.value)
+                                            onClick={() => handleSingleChoice(option.value)}
+                                            className={`w-full text-left p-4 rounded-lg border transition-all duration-200 ${selectedValue === option.value
                                                 ? 'border-blue-500 bg-blue-500/20 text-blue-300'
                                                 : 'border-gray-600 bg-gray-700/50 text-gray-300 hover:border-gray-500 hover:bg-gray-700'
                                                 }`}
@@ -1253,9 +1160,48 @@ const DiscoveryStep = ({ step, onComplete, stepNumber, totalSteps, isTransitioni
                                         >
                                             <div className="flex items-center gap-3">
                                                 <span className="text-2xl">{option.icon}</span>
-                                                <div className="font-medium">{option.label}</div>
+                                                <div>
+                                                    <div className="font-medium">{option.label}</div>
+                                                    {option.description && (
+                                                        <div className="text-gray-400 text-sm">{option.description}</div>
+                                                    )}
+                                                </div>
                                             </div>
                                         </button>
+                                    )
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Multi Choice Options with CARDS */}
+                        {step.type === 'multi-choice' && (
+                            <>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                                    {step.options.map((option) => (
+                                        DiscoveryStepCard ? (
+                                            <DiscoveryStepCard
+                                                key={option.value}
+                                                option={option}
+                                                isSelected={selectedValues.includes(option.value)}
+                                                onClick={() => handleMultiChoice(option.value)}
+                                                theme="dark"
+                                            />
+                                        ) : (
+                                            <button
+                                                key={option.value}
+                                                onClick={() => handleMultiChoice(option.value)}
+                                                className={`w-full text-left p-4 rounded-lg border transition-all duration-200 ${selectedValues.includes(option.value)
+                                                    ? 'border-blue-500 bg-blue-500/20 text-blue-300'
+                                                    : 'border-gray-600 bg-gray-700/50 text-gray-300 hover:border-gray-500 hover:bg-gray-700'
+                                                    }`}
+                                                disabled={showEncouragement}
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <span className="text-2xl">{option.icon}</span>
+                                                    <div className="font-medium">{option.label}</div>
+                                                </div>
+                                            </button>
+                                        )
                                     ))}
                                 </div>
                                 <button
@@ -1679,7 +1625,7 @@ const PersonalizedIdeaSelection = ({ userProfile, onIdeaSelect, onBackToDiscover
 };
 
 // Discovery Result Component - Shows comprehensive project plan using ProjectIdeaDisplay
-const DiscoveryResult = ({ idea, userProfile, onBackToSelection, onExitDiscovery, user }) => {
+const DiscoveryResult = ({ idea, userProfile, onBackToSelection, onExitDiscovery, user, addToast }) => {
     if (!idea || !idea.comprehensivePlan) {
         return (
             <div className="min-h-screen bg-black flex items-center justify-center">
@@ -1728,6 +1674,7 @@ const DiscoveryResult = ({ idea, userProfile, onBackToSelection, onExitDiscovery
             {/* We pass customHeaderActions to replace standard nav buttons. */}
             <div className="relative z-10 h-screen">
                 <ProjectIdeaDisplay
+                    addToast={addToast}
                     idea={idea.comprehensivePlan}
                     onStartNew={onBackToSelection}
                     user={user}
@@ -1743,18 +1690,22 @@ const DiscoveryResult = ({ idea, userProfile, onBackToSelection, onExitDiscovery
 const GameStep = ({ step, onAnswer, currentScore, totalSteps }) => {
     const [selectedOption, setSelectedOption] = useState('');
     const [showResult, setShowResult] = useState(false);
+    const [animateIn, setAnimateIn] = useState(false);
+
+    // Destructure Discovery components or use similar styles
+    // Note: If DiscoveryComponents is not ready, we'll implement the look inline to be safe
+    const { DiscoveryStepCard } = window.DiscoveryComponents || {};
 
     // Reset state when step changes
     useEffect(() => {
         setSelectedOption('');
         setShowResult(false);
+        setAnimateIn(false);
+        setTimeout(() => setAnimateIn(true), 50);
     }, [step.stepId]);
 
     const handleSubmit = () => {
-        if (!selectedOption) {
-            console.log('No option selected, cannot submit');
-            return;
-        }
+        if (!selectedOption) return;
 
         console.log('Submitting answer:', selectedOption);
         setShowResult(true);
@@ -1770,49 +1721,100 @@ const GameStep = ({ step, onAnswer, currentScore, totalSteps }) => {
     };
 
     const handleOptionClick = (option) => {
-        console.log('Option clicked:', option);
         setSelectedOption(option);
     };
 
+    // Helper to get an icon based on option text (simple heuristic)
+    const getIconForOption = (text) => {
+        const lower = text.toLowerCase();
+        if (lower.includes('code') || lower.includes('tech')) return '💻';
+        if (lower.includes('design') || lower.includes('ui')) return '🎨';
+        if (lower.includes('data') || lower.includes('analysis')) return '📊';
+        if (lower.includes('team') || lower.includes('collab')) return '👥';
+        if (lower.includes('lead') || lower.includes('manage')) return '👔';
+        if (lower.includes('create') || lower.includes('build')) return '🛠️';
+        return '✨';
+    };
+
     return (
-        <div className="max-w-2xl mx-auto">
-            <div className="mb-6">
-                <div className="flex justify-between items-center mb-4">
-                    <span className="text-blue-400 font-medium">Step {step.stepId} of {totalSteps}</span>
-                    <span className="text-green-400 font-medium">Score: {currentScore}</span>
+        <div className={`max-w-4xl mx-auto transition-opacity duration-500 ${animateIn ? 'opacity-100' : 'opacity-0'}`}>
+            {/* Header / Progress */}
+            <div className="mb-8 text-center">
+                <div className="inline-block px-4 py-1 rounded-full bg-blue-900/30 border border-blue-500/30 text-blue-400 text-sm font-medium mb-4">
+                    Question {step.stepId} of {totalSteps}
                 </div>
-                <div className="w-full bg-gray-700 rounded-full h-2">
+
+                {/* Gradient Progress Bar */}
+                <div className="max-w-md mx-auto h-1.5 bg-gray-800 rounded-full overflow-hidden relative mb-6">
                     <div
-                        className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                        className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 transition-all duration-700 ease-out"
                         style={{ width: `${(step.stepId / totalSteps) * 100}%` }}
-                    ></div>
+                    >
+                        <div className="absolute top-0 right-0 h-full w-2 bg-white/50 blur-[2px]"></div>
+                    </div>
+                </div>
+
+                <div className="flex justify-center items-center gap-2">
+                    <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-emerald-500">
+                        Score: {currentScore}
+                    </span>
+                    <span className="text-xl">🔥</span>
                 </div>
             </div>
 
-            <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6">
-                <h3 className="text-xl font-semibold text-white mb-6">{step.question}</h3>
+            {/* Question Card */}
+            <div className="bg-gray-900/60 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl relative overflow-hidden">
+                {/* Background Decor */}
+                <div className="absolute -top-20 -right-20 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
-                <div className="space-y-3">
-                    {step.options.map((option, index) => (
-                        <button
-                            key={index}
-                            onClick={() => handleOptionClick(option)}
-                            className={`w-full text-left p-4 rounded-lg border transition-all duration-200 ${selectedOption === option
-                                ? 'border-blue-500 bg-blue-500/20 text-blue-300'
-                                : 'border-gray-600 bg-gray-700/50 text-gray-300 hover:border-gray-500 hover:bg-gray-700'
-                                }`}
-                            disabled={showResult}
-                        >
-                            {option}
-                        </button>
-                    ))}
+                <h3 className="text-3xl font-bold text-white mb-8 text-center relative z-10 leading-tight">
+                    {step.question}
+                </h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative z-10">
+                    {step.options.map((option, index) => {
+                        const isSelected = selectedOption === option;
+                        // Adapt string option to object for DiscoveryStepCard if available
+                        // Or render custom card matching the style
+                        return (
+                            <div
+                                key={index}
+                                onClick={() => !showResult && handleOptionClick(option)}
+                                className={`
+                                    relative p-6 rounded-xl cursor-pointer transition-all duration-300 transform hover:scale-[1.02]
+                                    border-2 flex flex-col items-center justify-center gap-3 text-center min-h-[120px] group
+                                    ${isSelected
+                                        ? 'bg-purple-900/40 border-purple-500 shadow-lg shadow-purple-900/20'
+                                        : 'bg-zinc-800/40 border-zinc-700/50 hover:border-purple-500/50 hover:bg-zinc-800/60'}
+                                    ${showResult && !isSelected ? 'opacity-50 grayscale' : ''}
+                                `}
+                            >
+                                {isSelected && (
+                                    <div className="absolute top-3 right-3 text-purple-400 animate-pulse">
+                                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                        </svg>
+                                    </div>
+                                )}
+
+                                <div className="text-4xl mb-1 transform transition-transform duration-300 group-hover:scale-110">
+                                    {getIconForOption(option)}
+                                </div>
+
+                                <div className="font-bold text-lg text-white">
+                                    {option}
+                                </div>
+                            </div>
+                        );
+                    })}
                 </div>
 
                 {showResult && (
-                    <div className="mt-6 text-center">
-                        <div className="inline-flex items-center gap-2 bg-green-500/20 border border-green-500 rounded-lg px-4 py-2">
-                            <span className="text-green-400">✓</span>
-                            <span className="text-green-300">+{step.points} points earned!</span>
+                    <div className="mt-8 text-center animate-fade-in-up">
+                        <div className="inline-flex items-center gap-3 bg-green-500/20 border border-green-500/50 rounded-xl px-6 py-3 backdrop-blur-md">
+                            <span className="text-2xl">🎉</span>
+                            <span className="text-green-300 font-bold text-lg">+{step.points} points earned!</span>
                         </div>
                     </div>
                 )}
@@ -1820,15 +1822,18 @@ const GameStep = ({ step, onAnswer, currentScore, totalSteps }) => {
                 <button
                     onClick={handleSubmit}
                     disabled={!selectedOption || showResult}
-                    className="w-full mt-6 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white py-3 rounded-lg font-medium transition-colors duration-200"
+                    className={`
+                        w-full mt-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 relative overflow-hidden
+                        ${!selectedOption || showResult
+                            ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
+                            : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white shadow-lg shadow-purple-900/30 hover:shadow-purple-900/50 transform hover:-translate-y-0.5'}
+                    `}
                 >
                     {showResult ? 'Moving to next step...' : 'Continue'}
                 </button>
 
-                {/* Debug info */}
-                <div className="mt-2 text-xs text-gray-500 text-center">
-                    Debug: Selected="{selectedOption}", ShowResult={showResult.toString()}, ButtonEnabled={(!selectedOption || showResult) ? 'false' : 'true'}
-                </div>
+                {/* Debug info - Optional, good for dev */}
+
             </div>
         </div>
     );
@@ -2240,12 +2245,310 @@ const SectionEditor = ({ section, onUpdate, onModify, isLoading }) => {
     );
 };
 
+// -----------------------------------------------------------------------------
+// Result Page Components (Merged for stability)
+// -----------------------------------------------------------------------------
+
+// 1. Roadmap View (Mermaid Gantt Chart)
+const RoadmapView = ({ idea, theme }) => {
+    const containerRef = React.useRef(null);
+    const [chartSyntax, setChartSyntax] = React.useState('');
+    const [error, setError] = React.useState(null);
+
+    React.useEffect(() => {
+        if (window.mermaid) {
+            window.mermaid.initialize({
+                startOnLoad: false,
+                theme: theme === 'light' ? 'default' : 'dark',
+                securityLevel: 'loose',
+                fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace'
+            });
+        }
+    }, [theme]);
+
+    React.useEffect(() => {
+        generateGanttChart(idea);
+    }, [idea]);
+
+    React.useEffect(() => {
+        if (chartSyntax && containerRef.current && window.mermaid) {
+            renderChart();
+        }
+    }, [chartSyntax]);
+
+    const generateGanttChart = (ideaText) => {
+        try {
+            // 1. Try to parse strict "Implementation Roadmap" format first (Backend Guided)
+            // Format: * [Phase X]: Task Name (Duration)
+            const strictRegex = /[\*\-]\s*\[Phase\s*(\S+)\]:\s*(.*?)\s*\((.*?)\)/gi;
+            const tasks = [];
+            let match;
+            while ((match = strictRegex.exec(ideaText)) !== null) {
+                tasks.push({
+                    section: `Phase ${match[1]}`,
+                    task: match[2].trim(),
+                    duration: match[3].trim()
+                });
+            }
+
+            // 2. Fallback: Old parsing logic if strict format yields nothing
+            if (tasks.length === 0) {
+                const lines = ideaText.split('\n');
+                lines.forEach(line => {
+                    const phaseMatch = line.match(/^(Phase|Week)\s*(\d+)[:\.]\s*(.+)/i);
+                    if (phaseMatch) {
+                        const phaseNum = phaseMatch[2];
+                        const phaseTitle = phaseMatch[3].trim();
+                        tasks.push({
+                            section: `Phase ${phaseNum}`,
+                            task: phaseTitle.substring(0, 30) + (phaseTitle.length > 30 ? '...' : ''),
+                            duration: '1w'
+                        });
+                    }
+                });
+            }
+
+            if (tasks.length === 0) {
+                // Fallback for demo purposes if no clear phases found
+                tasks.push(
+                    { section: 'Planning', task: 'Project Setup', duration: '2d' },
+                    { section: 'Dev', task: 'Core Implementation', duration: '1w' },
+                    { section: 'Final', task: 'Testing & Polish', duration: '3d' }
+                );
+            }
+
+            // Build Mermaid Syntax
+            let mermaidCode = `gantt\n    title Project Implementation Roadmap\n    dateFormat  YYYY-MM-DD\n    axisFormat  %W\n    excludes    weekends\n\n`;
+
+            let startDate = new Date();
+            let lastSection = '';
+
+            tasks.forEach((t, i) => {
+                const sectionHeader = t.section !== lastSection ? `    section ${t.section}\n` : '';
+                lastSection = t.section;
+
+                // Sanitize task name to remove colons and other special chars that break Mermaid
+                // Also escape quote marks
+                let cleanTask = t.task.replace(/[:#]/g, '').replace(/"/g, "'").trim();
+                if (!cleanTask) cleanTask = "Task";
+
+                // For the very first task, anchor it to start date to prevent "undefined start/end time" errors
+                // Subsequent tasks will flow naturally
+                if (i === 0) {
+                    const dateStr = startDate.toISOString().split('T')[0];
+                    mermaidCode += `${sectionHeader}    ${cleanTask} :${dateStr}, ${t.duration}\n`;
+                } else {
+                    mermaidCode += `${sectionHeader}    ${cleanTask} :${t.duration}\n`;
+                }
+            });
+
+            setChartSyntax(mermaidCode);
+            setError(null);
+        } catch (err) {
+            console.error("Error generating roadmap:", err);
+            setError("Could not generate a visual roadmap from this project plan.");
+        }
+    };
+
+    const renderChart = async () => {
+        try {
+            if (containerRef.current) {
+                containerRef.current.innerHTML = '';
+                const { svg } = await window.mermaid.render('mermaid-chart-' + Date.now(), chartSyntax);
+                containerRef.current.innerHTML = svg;
+            }
+        } catch (err) {
+            console.error("Mermaid render error:", err);
+            setError("Failed to render roadmap visualization.");
+        }
+    };
+
+    return (
+        <div className={`p-6 rounded-xl border ${theme === 'light' ? 'bg-white border-gray-200' : 'bg-gray-800/40 border-gray-700/50'}`}>
+            <div className="flex justify-between items-center mb-6">
+                <h3 className={`text-xl font-bold ${theme === 'light' ? 'text-gray-900' : 'text-white'}`}>
+                    🚀 Interactive Roadmap
+                </h3>
+                <span className="text-xs px-2 py-1 rounded bg-blue-100 text-blue-800">Auto-Generated</span>
+            </div>
+
+            {error ? (
+                <div className="text-center py-12 text-gray-500">
+                    <p>{error}</p>
+                    <p className="text-xs mt-2">Try clarifying the "Implementation Plan" section in your idea.</p>
+                </div>
+            ) : (
+                <div className="overflow-x-auto">
+                    <div ref={containerRef} className="min-w-[600px] flex justify-center"></div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+
+// 2. Resource Hub
+const ResourceHub = ({ idea, theme }) => {
+    const [resources, setResources] = React.useState([]);
+
+    React.useEffect(() => {
+        extractResources(idea);
+    }, [idea]);
+
+    const extractResources = (ideaText) => {
+        // Expanded keyword database
+        const keywords = [
+            // Languages & Runtimes
+            'React', 'Node.js', 'Python', 'Firebase', 'Django', 'Flask', 'Vue.js', 'Angular',
+            'Swift', 'Kotlin', 'TensorFlow', 'PyTorch', 'AWS', 'Docker', 'Kubernetes', 'SQL',
+            'MongoDB', 'Redis', 'GraphQL', 'TypeScript', 'Tailwind CSS', 'Bootstrap', 'Next.js',
+            'Go', 'Redux', 'Pandas', 'Scikit-learn', 'Unity', 'C#', '.NET', 'PostgreSQL',
+            // Concepts & Domains
+            'Machine Learning', 'Artificial Intelligence', 'Data Science', 'Blockchain', 'IoT',
+            'Game Development', 'Mobile App', 'Web Scraping', 'API', 'REST', 'Microservices',
+            'Cybersecurity', 'DevOps', 'Cloud Computing', 'Computer Vision', 'NLP',
+            // Tools & Libraries
+            'Git', 'GitHub', 'VS Code', 'Heroku', 'Netlify', 'Vercel', 'OpenCV', 'Numpy'
+        ];
+
+        const foundResources = [];
+
+        keywords.forEach(tech => {
+            if (ideaText.includes(tech)) {
+                foundResources.push({
+                    name: tech,
+                    type: 'Topic',
+                    links: [
+                        { label: 'Official Docs', url: `https://www.google.com/search?q=${tech}+documentation&btnI=1` },
+                        { label: 'YouTube Tutorials', url: `https://www.youtube.com/results?search_query=${tech}+tutorial` },
+                        { label: 'Best Practices', url: `https://www.google.com/search?q=${tech}+best+practices` }
+                    ],
+                    icon: '📚'
+                });
+            }
+        });
+
+        // Smart Fallback
+        if (foundResources.length === 0) {
+            foundResources.push({
+                name: 'Software Development',
+                type: 'General',
+                links: [
+                    { label: 'System Design Primer', url: 'https://github.com/donnemartin/system-design-primer' },
+                    { label: 'FreeCodeCamp', url: 'https://www.freecodecamp.org/' },
+                    { label: 'Developer Roadmaps', url: 'https://roadmap.sh/' }
+                ],
+                icon: '🛠️'
+            });
+        }
+
+        // Dedup and set
+        setResources(foundResources);
+    };
+
+    return (
+        <div className="space-y-6">
+            <div className="flex justify-between items-center">
+                <h3 className={`text-xl font-bold ${theme === 'light' ? 'text-gray-900' : 'text-white'}`}>
+                    📚 Learning Resources
+                </h3>
+                <a
+                    href={`https://www.google.com/search?q=${encodeURIComponent(idea.split('\n')[0])}+tutorial`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition-colors flex items-center gap-2"
+                >
+                    🔍 Search Web
+                </a>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {resources.map((res, idx) => (
+                    <div key={idx} className={`p-4 rounded-xl border transition-all hover:shadow-lg ${theme === 'light'
+                        ? 'bg-white border-gray-200 hover:border-blue-300'
+                        : 'bg-gray-800/60 border-gray-700 hover:border-blue-500/50'
+                        }`}>
+                        <div className="flex items-center gap-3 mb-3">
+                            <span className="text-2xl">{res.icon}</span>
+                            <h4 className={`font-bold ${theme === 'light' ? 'text-gray-800' : 'text-white'}`}>{res.name}</h4>
+                        </div>
+                        <div className="space-y-2">
+                            {res.links.map((link, lIdx) => (
+                                <a
+                                    key={lIdx}
+                                    href={link.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className={`block text-sm px-3 py-2 rounded-lg transition-colors flex items-center justify-between group ${theme === 'light'
+                                        ? 'bg-gray-50 text-gray-600 hover:bg-blue-50 hover:text-blue-600'
+                                        : 'bg-gray-900/50 text-gray-400 hover:bg-gray-700 hover:text-blue-400'
+                                        }`}
+                                >
+                                    <span>{link.label}</span>
+                                    <span className="opacity-0 group-hover:opacity-100 transition-opacity">↗</span>
+                                </a>
+                            ))}
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
+
+
+
+// 3. Simple Tab Navigation
+const ResultTabNav = ({ activeTab, onTabChange, theme }) => {
+    const tabs = [
+        { id: 'plan', label: '📋 Project Plan' },
+        { id: 'roadmap', label: '🚀 Roadmap' },
+        { id: 'resources', label: '📚 Resources' },
+        { id: 'report', label: '🎓 Project Thesis' }
+
+    ];
+
+    return (
+        <div className={`flex border-b mb-6 ${theme === 'light' ? 'border-gray-200' : 'border-gray-800'}`}>
+            {tabs.map(tab => (
+                <button
+                    key={tab.id}
+                    onClick={() => onTabChange(tab.id)}
+                    className={`px-6 py-3 font-medium text-sm transition-all relative ${activeTab === tab.id
+                        ? (theme === 'light' ? 'text-blue-600' : 'text-blue-400')
+                        : (theme === 'light' ? 'text-gray-500 hover:text-gray-700' : 'text-gray-400 hover:text-gray-200')
+                        }`}
+                >
+                    {tab.label}
+                    {activeTab === tab.id && (
+                        <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-500"></div>
+                    )}
+                </button>
+            ))}
+        </div>
+    );
+};
+
 // Enhanced Project Idea Display Component with Modification System
-const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false, customHeaderActions = null, userProfile, onNavigate, onLogout, onDiscoveryMode, theme, updateUserStats }) => {
+const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false, customHeaderActions = null, userProfile, onNavigate, onLogout, onDiscoveryMode, theme, updateUserStats, addToast }) => {
     const [sections, setSections] = useState([]);
     const [selectedSection, setSelectedSection] = useState(null);
     const [isModifying, setIsModifying] = useState(false);
-    const [currentIdea, setCurrentIdea] = useState(idea);
+
+    // Handle idea prop being string or object
+    const getIdeaText = (i) => {
+        if (!i) return '';
+        if (typeof i === 'string') return i;
+        if (typeof i === 'object') {
+            return i.idea || ''; // Fallback to empty string if idea missing
+        }
+        return String(i);
+    };
+    const getHistoryId = (i) => typeof i === 'object' && i ? i.historyId : null;
+
+    const [currentIdea, setCurrentIdea] = useState(getIdeaText(idea));
+    const [currentHistoryId, setCurrentHistoryId] = useState(getHistoryId(idea));
+
     const [modificationHistory, setModificationHistory] = useState([]);
     const [isGeneratingCode, setIsGeneratingCode] = useState(false);
     const [exportLoading, setExportLoading] = useState(false);
@@ -2256,6 +2559,16 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false, custom
     const [generationOperationId, setGenerationOperationId] = useState(null);
     const [codePreviewData, setCodePreviewData] = useState(null);
     const [showShareModal, setShowShareModal] = useState(false);
+    const [activeTab, setActiveTab] = useState('plan'); // 'plan', 'roadmap', 'resources'
+
+    // Update state when idea prop changes
+    useEffect(() => {
+        setCurrentIdea(getIdeaText(idea));
+        setCurrentHistoryId(getHistoryId(idea));
+    }, [idea]);
+
+
+    // Components are now defined in file scope above
 
     useEffect(() => {
         const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -2276,7 +2589,7 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false, custom
 
     // Export PDF Handler
     const handleExportPDF = async () => {
-        if (!window.html2pdf) return;
+        if (!window.html2pdf || !currentIdea) return;
         setExportLoading(true);
         // Target the hidden full-content container
         const element = document.getElementById('project-idea-pdf-export');
@@ -2287,7 +2600,7 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false, custom
 
         const opt = {
             margin: 0.5,
-            filename: `pideas-${currentIdea.substring(0, 20).trim()}.pdf`,
+            filename: `pideas-${(typeof currentIdea === 'string' ? currentIdea : '').substring(0, 20).trim()}.pdf`,
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: {
                 scale: 2,
@@ -2307,14 +2620,15 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false, custom
 
     // Copy Markdown Handler
     const handleCopyMarkdown = () => {
+        if (!currentIdea) return;
         navigator.clipboard.writeText(currentIdea).then(() => {
-            alert('Project Idea copied to clipboard!');
+            addToast('Project Idea copied to clipboard!', 'success');
         });
     };
 
     // Parse the idea text into sections
     useEffect(() => {
-        if (!currentIdea) return;
+        if (!currentIdea || typeof currentIdea !== 'string') return;
 
         const lines = currentIdea.split('\n');
         const parsedSections = [];
@@ -2461,7 +2775,7 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false, custom
     // Handle section modification
     const handleSectionModify = async (sectionId, modificationPrompt) => {
         if (!user) {
-            alert('Please log in to modify ideas.');
+            addToast('Please log in to modify ideas.', 'error');
             return;
         }
 
@@ -2512,7 +2826,7 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false, custom
             }
         } catch (error) {
             console.error('Error modifying section:', error);
-            alert('Failed to modify section. Please try again.');
+            addToast('Failed to modify section. Please try again.', 'error');
         } finally {
             setIsModifying(false);
         }
@@ -2533,6 +2847,8 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false, custom
             setModificationHistory([]);
         }
     };
+
+
 
     // Handle overall idea modification via chat
     const handleOverallIdeaModify = async (modificationPrompt) => {
@@ -2668,36 +2984,32 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false, custom
                             )}
 
                             {/* Export Buttons (Desktop) */}
-                            <div className="hidden md:flex gap-2 border-l border-gray-800 pl-4 ml-4">
-                                <button
+                            <div className="flex gap-1 border-l border-gray-800 pl-2 ml-2">
+                                <IconButton
+                                    iconType="copy"
+                                    tooltip="Copy Markdown"
                                     onClick={handleCopyMarkdown}
-                                    className="bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 text-gray-300 px-3 py-1.5 rounded-lg text-sm transition-colors flex items-center gap-2"
-                                >
-                                    <span>📋</span>
-                                    <span>Copy MD</span>
-                                </button>
-                                <button
+                                    variant="default"
+                                    className="bg-zinc-900 border border-zinc-700 text-gray-300"
+                                />
+                                <IconButton
+                                    iconType="pdf"
+                                    tooltip="Export PDF"
                                     onClick={handleExportPDF}
                                     disabled={exportLoading}
-                                    className="bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 text-gray-300 px-3 py-1.5 rounded-lg text-sm transition-colors flex items-center gap-2 disabled:opacity-50"
-                                >
-                                    {exportLoading ? (
-                                        <div className="w-3 h-3 border-2 border-gray-500 border-t-white rounded-full animate-spin"></div>
-                                    ) : (
-                                        <span>📄</span>
-                                    )}
-                                    <span>Export PDF</span>
-                                </button>
-                                <button
+                                    variant="default"
+                                    className="bg-zinc-900 border border-zinc-700 text-gray-300"
+                                />
+                                <IconButton
+                                    iconType="share"
+                                    tooltip="Share Project"
                                     onClick={() => {
                                         setShowShareModal(true);
                                         if (updateUserStats) updateUserStats('SHARE_IDEA');
                                     }}
-                                    className="bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 text-gray-300 px-3 py-1.5 rounded-lg text-sm transition-colors flex items-center gap-2"
-                                >
-                                    <span>🔗</span>
-                                    <span>Share</span>
-                                </button>
+                                    variant="default"
+                                    className="bg-zinc-900 border border-zinc-700 text-gray-300"
+                                />
                             </div>
 
                             <button
@@ -2709,7 +3021,11 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false, custom
 
                                     try {
                                         const generateCodebase = firebase.functions().httpsCallable('generate_codebase', { timeout: 540000 });
-                                        const result = await generateCodebase({ idea: currentIdea, operationId: opId });
+                                        const result = await generateCodebase({
+                                            idea: currentIdea,
+                                            operationId: opId,
+                                            historyId: currentHistoryId // Pass historyId for persistence
+                                        });
 
                                         if (result.data.success) {
                                             setCodePreviewData({
@@ -2717,11 +3033,11 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false, custom
                                                 downloadUrl: result.data.downloadUrl
                                             });
                                         } else {
-                                            alert("Error generating codebase: " + result.data.error);
+                                            addToast("Error generating codebase: " + result.data.error, 'error');
                                         }
                                     } catch (e) {
                                         console.error(e);
-                                        alert("Failed to call generation function.");
+                                        addToast("Failed to call generation function.", 'error');
                                     } finally {
                                         setIsGeneratingCode(false);
                                         setGenerationOperationId(null);
@@ -2769,12 +3085,13 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false, custom
 
                                         {showProfileEditor && ReactDOM.createPortal(
                                             <ProfileEditor
+                                                addToast={addToast}
                                                 user={user}
                                                 currentProfile={userProfile || {}}
                                                 onClose={() => setShowProfileEditor(false)}
                                                 onSave={async (updates) => {
                                                     setShowProfileEditor(false);
-                                                    alert('Please update profile from main page for now.');
+                                                    addToast('Please update profile from main page for now.', 'info');
                                                 }}
                                                 isLoading={false}
                                             />,
@@ -2802,97 +3119,135 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false, custom
             )
             }
 
-            {/* Main Content */}
-            <div className="relative z-10 flex-1 flex overflow-hidden">
-                {/* Sidebar - Fixed width with dark theme */}
-                <div className="w-64 bg-black border-r border-gray-800/60 flex-shrink-0">
-                    <SidebarNavigation
-                        sections={sections}
-                        selectedSection={selectedSection}
-                        onSectionSelect={handleSectionSelect}
-                        isModifying={isModifying}
-                    />
-                </div>
+            {/* Tab Navigation Area */}
+            <div className="bg-black border-b border-gray-800 px-6 pt-2 z-20">
+                <ResultTabNav activeTab={activeTab} onTabChange={setActiveTab} theme={theme} />
+            </div>
 
-                {/* Main Content Area with Chat */}
-                <div className="flex-1 flex flex-col bg-black relative" id="project-idea-content">
-                    {/* Content Display Area - scrollbar-gutter prevents layout shift */}
-                    <div className="flex-1 overflow-y-auto [scrollbar-gutter:stable] pb-40">
-                        {selectedSectionData ? (
-                            <div>
-                                <SectionEditor
-                                    section={selectedSectionData}
-                                    onModify={handleSectionModify}
-                                    isLoading={isModifying}
-                                />
-                            </div>
-                        ) : (
-                            <div className="flex items-center justify-center h-full">
-                                <div className="text-center">
-                                    <div className="w-20 h-20 mx-auto mb-5 bg-black rounded-full flex items-center justify-center border border-gray-800/60">
-                                        <div className="text-3xl opacity-60">📋</div>
+            {/* Tab Content: Plan (Existing Sidebar + Editor Layout) */}
+            {activeTab === 'plan' && (
+                <div className="relative z-10 flex-1 flex overflow-hidden">
+                    {/* Sidebar - Fixed width with dark theme */}
+                    <div className="w-64 bg-black border-r border-gray-800/60 flex-shrink-0">
+                        <SidebarNavigation
+                            sections={sections}
+                            selectedSection={selectedSection}
+                            onSectionSelect={handleSectionSelect}
+                            isModifying={isModifying}
+                        />
+                    </div>
+
+                    {/* Main Content Area with Chat */}
+                    <div className="flex-1 flex flex-col bg-black relative" id="project-idea-content">
+                        {/* Content Display Area - scrollbar-gutter prevents layout shift */}
+                        <div className="flex-1 overflow-y-auto [scrollbar-gutter:stable] pb-40">
+                            {selectedSectionData ? (
+                                <div>
+                                    <SectionEditor
+                                        section={selectedSectionData}
+                                        onModify={handleSectionModify}
+                                        isLoading={isModifying}
+                                    />
+
+                                </div>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center h-full text-gray-500 gap-4">
+                                    <div className="w-16 h-16 rounded-2xl bg-gray-900 flex items-center justify-center text-3xl">
+                                        👈
                                     </div>
-                                    <h3 className="text-xl font-bold text-white mb-2">Select a Section</h3>
-                                    <p className="text-gray-500 max-w-md">Choose a section from the sidebar to view and modify</p>
+                                    <p>Select a section from the sidebar to view details</p>
+                                </div>
+                            )}
+                        </div>
+
+
+                    </div>
+                </div>
+            )}
+
+            {/* Tab Content: Roadmap */}
+            {activeTab === 'roadmap' && (
+                <div className="flex-1 overflow-auto p-8 bg-black">
+                    <div className="max-w-6xl mx-auto">
+                        <RoadmapView idea={currentIdea} theme={theme} />
+                    </div>
+                </div>
+            )}
+
+            {/* Tab Content: Resources */}
+            {activeTab === 'resources' && (
+                <div className="flex-1 overflow-auto p-8 bg-black">
+                    <div className="max-w-6xl mx-auto">
+                        <ResourceHub idea={currentIdea} theme={theme} />
+                    </div>
+                </div>
+            )}
+
+            {/* Tab Content: Comprehensive Report (Thesis) */}
+            {activeTab === 'report' && (
+                <ProjectReportView
+                    idea={currentIdea}
+                    theme={theme}
+                    userProfile={userProfile}
+                    historyId={(typeof idea === 'object' && idea.historyId) ? idea.historyId : null}
+                    initialReport={(typeof idea === 'object' && idea.report) ? idea.report : null}
+                    user={user}
+                />
+            )}
+
+
+            {/* Global Chat Interface (Mobile Drawer / Desktop Floating) */}
+            {activeTab !== 'report' && (
+                isMobile ? (
+                    <>
+                        {/* Mobile Sticky Bar */}
+                        {!isDrawerOpen && (
+                            <div
+                                className="fixed bottom-0 left-0 right-0 p-4 bg-gray-900 border-t border-gray-800 z-30 cursor-pointer safe-area-bottom shadow-[0_-5px_20px_rgba(0,0,0,0.5)]"
+                                onClick={() => setIsDrawerOpen(true)}
+                            >
+                                <div className="bg-gray-800 rounded-full px-4 py-3 text-gray-400 flex items-center justify-between border border-gray-700 shadow-lg">
+                                    <span>💬 Modify this project...</span>
+                                    <span className="bg-purple-600 text-white rounded-full p-1 w-6 h-6 flex items-center justify-center text-xs shadow-lg shadow-purple-900/50">↑</span>
                                 </div>
                             </div>
                         )}
-                    </div>
 
-                    {/* Check if user has explicit 'admin' role or is owner */}
-                    {/* Floating Chat Interface */}
-                    {/* Responsive Chat Interface */}
-                    {isMobile ? (
-                        <>
-                            {/* Mobile Sticky Bar */}
-                            {!isDrawerOpen && (
-                                <div
-                                    className="fixed bottom-0 left-0 right-0 p-4 bg-gray-900 border-t border-gray-800 z-30 cursor-pointer safe-area-bottom shadow-[0_-5px_20px_rgba(0,0,0,0.5)]"
-                                    onClick={() => setIsDrawerOpen(true)}
-                                >
-                                    <div className="bg-gray-800 rounded-full px-4 py-3 text-gray-400 flex items-center justify-between border border-gray-700 shadow-lg">
-                                        <span>💬 Modify this project...</span>
-                                        <span className="bg-purple-600 text-white rounded-full p-1 w-6 h-6 flex items-center justify-center text-xs shadow-lg shadow-purple-900/50">↑</span>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Mobile Drawer */}
-                            <div className={`fixed inset-x-0 bottom-0 bg-gray-900 border-t border-gray-800 z-[9999] transition-transform duration-300 ease-out transform ${isDrawerOpen ? 'translate-y-0' : 'translate-y-full'} rounded-t-2xl shadow-[0_-10px_40px_rgba(0,0,0,0.5)] flex flex-col`} style={{ height: '70vh' }}>
-                                {/* Drawer Handle/Header */}
-                                <div className="p-3 border-b border-gray-800 flex justify-between items-center bg-gray-800/50 rounded-t-2xl cursor-pointer" onClick={() => setIsDrawerOpen(false)}>
-                                    <div className="w-12 h-1.5 bg-gray-600 rounded-full mx-auto" />
-                                </div>
-                                <div className="flex-1 overflow-hidden p-0 relative">
-                                    <ChatModificationInterface
-                                        onModifyIdea={handleOverallIdeaModify}
-                                        isLoading={isModifying}
-                                        user={user}
-                                    />
-                                </div>
+                        {/* Mobile Drawer */}
+                        <div className={`fixed inset-x-0 bottom-0 bg-gray-900 border-t border-gray-800 z-[9999] transition-transform duration-300 ease-out transform ${isDrawerOpen ? 'translate-y-0' : 'translate-y-full'} rounded-t-2xl shadow-[0_-10px_40px_rgba(0,0,0,0.5)] flex flex-col`} style={{ height: '70vh' }}>
+                            {/* Drawer Handle/Header */}
+                            <div className="p-3 border-b border-gray-800 flex justify-between items-center bg-gray-800/50 rounded-t-2xl cursor-pointer" onClick={() => setIsDrawerOpen(false)}>
+                                <div className="w-12 h-1.5 bg-gray-600 rounded-full mx-auto" />
                             </div>
-
-                            {/* Drawer Backdrop */}
-                            {isDrawerOpen && (
-                                <div className="fixed inset-0 bg-black/80 z-[9990] backdrop-blur-sm" onClick={() => setIsDrawerOpen(false)} />
-                            )}
-                        </>
-                    ) : (
-                        /* Desktop Floating Interface */
-                        <div className="absolute bottom-6 left-0 right-0 px-6 flex justify-center pointer-events-none z-20">
-                            <div className="w-full max-w-3xl pointer-events-auto shadow-2xl shadow-blue-900/10">
-                                <div className="bg-gray-900/90 backdrop-blur-md border border-gray-700/50 rounded-2xl overflow-hidden ring-1 ring-white/10">
-                                    <ChatModificationInterface
-                                        onModifyIdea={handleOverallIdeaModify}
-                                        isLoading={isModifying}
-                                        user={user}
-                                    />
-                                </div>
+                            <div className="flex-1 overflow-hidden p-0 relative">
+                                <ChatModificationInterface
+                                    onModifyIdea={handleOverallIdeaModify}
+                                    isLoading={isModifying}
+                                    user={user}
+                                />
                             </div>
                         </div>
-                    )}
-                </div>
-            </div>
+
+                        {/* Drawer Backdrop */}
+                        {isDrawerOpen && (
+                            <div className="fixed inset-0 bg-black/80 z-[9990] backdrop-blur-sm" onClick={() => setIsDrawerOpen(false)} />
+                        )}
+                    </>
+                ) : (
+                    /* Desktop Floating Interface */
+                    <div className="absolute bottom-6 left-0 right-0 px-6 flex justify-center pointer-events-none z-20">
+                        <div className="w-full max-w-3xl pointer-events-auto shadow-2xl shadow-blue-900/10">
+                            <div className="bg-gray-900/90 backdrop-blur-md border border-gray-700/50 rounded-2xl overflow-hidden ring-1 ring-white/10">
+                                <ChatModificationInterface
+                                    onModifyIdea={handleOverallIdeaModify}
+                                    isLoading={isModifying}
+                                    user={user}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                )
+            )}
 
             {/* Modification History Panel (if any modifications) */}
             {
@@ -2918,6 +3273,7 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false, custom
                     </div>
                 )
             }
+
             {/* Hidden container for PDF Export - Renders all sections */}
             <div id="project-idea-pdf-export" className="absolute top-0 left-[-9999px] width-[800px] bg-white text-black p-8">
                 <h1 className="text-3xl font-bold mb-2">Project Idea: {currentIdea.split('\n')[0].replace('#', '').trim() || 'Custom Project'}</h1>
@@ -2942,211 +3298,22 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false, custom
                     ))}
                 </div>
             </div>
+
             {/* Share Modal */}
-            {showShareModal && (
-                <SocialShareModal
-                    idea={{ title: currentIdea.split('\n')[0].replace(/#+\**/g, '').trim() || "Project Idea", description: currentIdea, id: "current" }}
-                    onClose={() => setShowShareModal(false)}
-                    theme={theme}
-                />
-            )}
-        </div>
+            {
+                showShareModal && (
+                    <SocialShareModal
+                        idea={{ title: currentIdea.split('\n')[0].replace(/#+\**/g, '').trim() || "Project Idea", description: currentIdea, id: "current" }}
+                        onClose={() => setShowShareModal(false)}
+                        theme={theme}
+                    />
+                )
+            }
+        </div >
     );
 };
 
-// History Component with Redesigned Glassmorphism UI
-const HistoryView = ({ user, onBack, onViewIdea }) => {
-    const [history, setHistory] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
 
-    useEffect(() => {
-        const loadHistory = async () => {
-            if (typeof firebase === 'undefined') {
-                setIsLoading(false);
-                return;
-            }
-
-            try {
-                const functions = firebase.functions();
-                const getUserHistory = functions.httpsCallable('getUserHistory');
-                const result = await getUserHistory({ userId: user.uid });
-
-                if (result.data.success) {
-                    setHistory(result.data.history);
-                }
-            } catch (error) {
-                console.error('Error loading history:', error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        loadHistory();
-    }, [user]);
-
-    // Helper to extract a clean title from the raw text
-    const getProjectTitle = (item) => {
-        if (!item.idea || typeof item.idea !== 'string') {
-            // Fallback to query
-            const titleMatch = item.query.match(/for:\s*["']([^"']+)["']/i);
-            if (titleMatch) return titleMatch[1];
-            return item.query.length > 50 ? item.query.substring(0, 50) + '...' : item.query;
-        }
-
-        const lines = item.idea.split('\n').map(line => line.trim()).filter(line => line.length > 0);
-
-        // Strategy 1: Look for "## PROJECT TITLE" followed by a bold line
-        for (let i = 0; i < lines.length; i++) {
-            const line = lines[i];
-
-            // Check if this line is a generic header
-            if (line.toUpperCase().includes('PROJECT TITLE') && line.startsWith('#')) {
-                // Look at the next non-empty line
-                if (i + 1 < lines.length) {
-                    const nextLine = lines[i + 1];
-                    const boldMatch = nextLine.match(/\*\*(.*?)\*\*/); // Look for bold text anywhere in the line
-                    if (boldMatch) {
-                        return boldMatch[1].replace(/:$/, '').trim();
-                    }
-                    // If not bold, maybe just the text itself?
-                    return nextLine.replace(/:$/, '').trim();
-                }
-            }
-        }
-
-        // Strategy 2: Look for the first H1 header that ISN'T generic
-        for (const line of lines) {
-            if (line.startsWith('#')) {
-                const headerText = line.replace(/^#+\s*/, '').trim();
-                if (headerText.toUpperCase() !== 'PROJECT TITLE') {
-                    return headerText;
-                }
-            }
-        }
-
-        // Strategy 3: Just find the first bold text that isn't "PROJECT TITLE"
-        const boldMatch = item.idea.match(/\*\*(.*?)\*\*/);
-        if (boldMatch) {
-            const extracted = boldMatch[1].replace(/:$/, '').trim();
-            if (extracted.toUpperCase() !== 'PROJECT TITLE') {
-                return extracted;
-            }
-        }
-
-        // Fallback: Query analysis
-        const titleMatch = item.query.match(/for:\s*["']([^"']+)["']/i);
-        if (titleMatch) return titleMatch[1];
-
-        return item.query.length > 50 ? item.query.substring(0, 50) + '...' : item.query;
-    };
-
-    // Helper to get a short preview text
-    const getPreviewText = (item) => {
-        if (item.idea && typeof item.idea === 'string') {
-            // Remove headers and extra whitespace
-            const text = item.idea.replace(/#+\s.*$/mg, '').replace(/\n+/g, ' ').trim();
-            return text.substring(0, 120) + '...';
-        }
-        return "Click to view project details.";
-    };
-
-    if (isLoading) {
-        return (
-            <div className="flex h-[50vh] items-center justify-center">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                    <div className="text-gray-400">Loading your journey...</div>
-                </div>
-            </div>
-        );
-    }
-
-    return (
-        <div className="max-w-7xl mx-auto px-4 py-8">
-            <div className="flex justify-between items-center mb-10">
-                <div>
-                    <h2 className="text-3xl font-bold text-white mb-2">Your Project History</h2>
-                    <p className="text-gray-400">Review your past generated ideas and plans</p>
-                </div>
-                <button
-                    onClick={onBack}
-                    className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium transition-all hover:scale-105 border border-gray-700/50"
-                >
-                    <span>←</span>
-                    <span>Back to Generator</span>
-                </button>
-            </div>
-
-            {history.length === 0 ? (
-                <div className="text-center py-20 bg-gray-900/40 backdrop-blur-sm border border-gray-800 rounded-2xl">
-                    <div className="w-20 h-20 mx-auto mb-6 bg-gray-800 rounded-full flex items-center justify-center">
-                        <span className="text-3xl">🌱</span>
-                    </div>
-                    <h3 className="text-xl font-semibold text-white mb-2">No projects yet</h3>
-                    <p className="text-gray-400 max-w-md mx-auto mb-8">
-                        Start your journey by generating your first personalized project idea!
-                    </p>
-                    <button
-                        onClick={onBack}
-                        className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-medium shadow-lg shadow-blue-500/20 transition-all hover:scale-105"
-                    >
-                        Generate New Idea
-                    </button>
-                </div>
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {history.map((item) => (
-                        <div
-                            key={item.id}
-                            onClick={() => onViewIdea(item.idea)}
-                            className="group relative bg-gray-900/40 backdrop-blur-md border border-gray-800/60 hover:border-blue-500/50 rounded-2xl p-6 transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/10 hover:-translate-y-1 cursor-pointer overflow-hidden"
-                        >
-                            {/* Gradient Overlay on Hover */}
-                            <div className="absolute inset-0 bg-gradient-to-br from-blue-600/5 to-purple-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-
-                            {/* Header: Score & Date */}
-                            <div className="flex justify-between items-start mb-4 relative z-10">
-                                <div className="flex items-center gap-2 bg-black/40 px-3 py-1 rounded-full border border-gray-800">
-                                    <span className="text-xs text-gray-400">Score</span>
-                                    <span className="text-sm font-bold text-green-400">{item.gameScore}</span>
-                                </div>
-                                <div className="text-xs text-gray-500 font-mono">
-                                    {new Date(item.generatedAt).toLocaleDateString()}
-                                </div>
-                            </div>
-
-                            {/* Title */}
-                            <h3 className="text-xl font-bold text-white mb-3 line-clamp-2 relative z-10 group-hover:text-blue-400 transition-colors">
-                                {getProjectTitle(item)}
-                            </h3>
-
-                            {/* Badges */}
-                            <div className="flex flex-wrap gap-2 mb-4 relative z-10">
-                                <span className="text-xs px-2 py-1 rounded-md bg-purple-500/10 text-purple-300 border border-purple-500/20">
-                                    {item.studentProfile?.stream || 'General'}
-                                </span>
-                                <span className="text-xs px-2 py-1 rounded-md bg-blue-500/10 text-blue-300 border border-blue-500/20">
-                                    {item.studentProfile?.skillLevel || 'Beginner'}
-                                </span>
-                            </div>
-
-                            {/* Preview Text */}
-                            <p className="text-sm text-gray-400 line-clamp-3 mb-6 relative z-10">
-                                {getPreviewText(item)}
-                            </p>
-
-                            {/* Footer Action */}
-                            <div className="flex items-center text-blue-400 text-sm font-medium group-hover:translate-x-1 transition-transform relative z-10">
-                                View Full Plan
-                                <span className="ml-1 transition-transform group-hover:ml-2">→</span>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
-        </div>
-    );
-};
 
 // User Profile Icon Component
 const UserProfileIcon = ({ onClick }) => {
@@ -3181,7 +3348,7 @@ const UserProfileIcon = ({ onClick }) => {
 };
 
 // Profile Editor Modal Component
-const ProfileEditor = ({ user, currentProfile, onClose, onSave, isLoading }) => {
+const ProfileEditor = ({ user, currentProfile, onClose, onSave, isLoading, addToast }) => {
     const [name, setName] = useState(user.displayName || '');
     const [bio, setBio] = useState(currentProfile?.bio || '');
     const [location, setLocation] = useState(currentProfile?.location || '');
@@ -3199,7 +3366,7 @@ const ProfileEditor = ({ user, currentProfile, onClose, onSave, isLoading }) => 
             onClose();
         } catch (error) {
             console.error("Error saving profile:", error);
-            alert("Failed to save profile");
+            addToast("Failed to save profile", 'error');
         } finally {
             setIsSaving(false);
         }
@@ -3510,7 +3677,9 @@ const UserProfileDropdown = ({ user, userProfile, userRole, onClose, onLogout, o
                         <div className="mb-6 grid grid-cols-2 gap-3">
                             <div className="bg-zinc-800/40 rounded-lg p-3 text-center border border-zinc-700/30">
                                 <div className="text-xs text-zinc-500 font-mono mb-1">Level</div>
-                                <div className="text-xl font-bold text-purple-400 font-mono">{userProfile.level || 1}</div>
+                                <div className="text-xl font-bold text-purple-400 font-mono">
+                                    {Math.floor(Math.sqrt((userProfile.xp || 0) / 100)) + 1}
+                                </div>
                             </div>
                             <div className="bg-zinc-800/40 rounded-lg p-3 text-center border border-zinc-700/30">
                                 <div className="text-xs text-zinc-500 font-mono mb-1">XP</div>
@@ -3571,6 +3740,9 @@ const AppScreen = ({ user, onLogout, onDiscoveryMode, addToast, theme, toggleThe
     const [isLoadingRole, setIsLoadingRole] = useState(true);
     const [fullUserProfile, setFullUserProfile] = useState({});
     const [showProfileEditor, setShowProfileEditor] = useState(false);
+
+    // Destructure new Landing Components
+    const { TypingHero, SocialProofTicker, FeaturedProjects, QuickResume } = window.LandingComponents || {};
 
     // User profile states
     const [showWelcome, setShowWelcome] = useState(true);
@@ -3670,6 +3842,7 @@ const AppScreen = ({ user, onLogout, onDiscoveryMode, addToast, theme, toggleThe
         loadUserRole();
         loadUserHistory();
         loadUserProfile();
+        checkGamification();
 
         // Set timer to hide welcome message after 4 seconds
         const welcomeTimer = setTimeout(() => {
@@ -3679,9 +3852,29 @@ const AppScreen = ({ user, onLogout, onDiscoveryMode, addToast, theme, toggleThe
         return () => clearTimeout(welcomeTimer);
     }, [user]);
 
+    // Check Daily Gamification Status
+    const checkGamification = async () => {
+        if (!functions || !user) return;
+        try {
+            const checkDaily = functions.httpsCallable('checkDailyProgress');
+            const result = await checkDaily({ userId: user.uid });
+            if (result.data.success) {
+                // Merge data into profile state
+                setFullUserProfile(prev => ({
+                    ...prev,
+                    streak: result.data.data.streak,
+                    dailyQuests: result.data.data.dailyQuests
+                }));
+                if (result.data.data.message) addToast('info', result.data.data.message);
+            }
+        } catch (e) {
+            console.error("Gamification check failed", e);
+        }
+    };
+
     const startGameFlow = async () => {
         if (!functions) {
-            alert('Firebase functions not available. Please run from Firebase hosting.');
+            addToast('Firebase functions not available.', 'error');
             return;
         }
 
@@ -3699,7 +3892,7 @@ const AppScreen = ({ user, onLogout, onDiscoveryMode, addToast, theme, toggleThe
             }
         } catch (error) {
             console.error('Error starting game flow:', error);
-            alert('Error starting the gamified flow. Please try again.');
+            addToast('Error starting the gamified flow. Please try again.', 'error');
         }
     };
 
@@ -3737,7 +3930,7 @@ const AppScreen = ({ user, onLogout, onDiscoveryMode, addToast, theme, toggleThe
 
     const generatePersonalizedIdea = async (profile, responses, finalScore = currentScore) => {
         if (!query.trim()) {
-            alert('Please enter your project idea query first.');
+            addToast('Please enter your project idea query first.', 'warning');
             setCurrentView('welcome');
             return;
         }
@@ -3756,6 +3949,12 @@ const AppScreen = ({ user, onLogout, onDiscoveryMode, addToast, theme, toggleThe
             if (result.data.success) {
                 setGeneratedIdea(result.data.idea);
                 setCurrentView('result');
+
+                // Update gamification stats and refresh profile
+                if (updateUserStats) {
+                    await updateUserStats('GENERATE_IDEA');
+                    await loadUserProfile();
+                }
 
                 // Automatically save to history
                 try {
@@ -3782,6 +3981,12 @@ const AppScreen = ({ user, onLogout, onDiscoveryMode, addToast, theme, toggleThe
 
                     console.log('Idea automatically saved to history with result:', saveResult.data);
 
+                    // Update local state with historyId
+                    setGeneratedIdea({
+                        idea: result.data.idea,
+                        historyId: saveResult.data.historyId
+                    });
+
                     // Refresh history after saving
                     console.log('Refreshing history data...');
                     await loadUserHistory();
@@ -3804,7 +4009,7 @@ const AppScreen = ({ user, onLogout, onDiscoveryMode, addToast, theme, toggleThe
             }
         } catch (error) {
             console.error('Error generating personalized idea:', error);
-            alert('Error generating your personalized idea. Please try again.');
+            addToast('Error generating your personalized idea. Please try again.', 'error');
             setCurrentView('welcome');
         } finally {
             setIsGenerating(false);
@@ -3826,10 +4031,10 @@ const AppScreen = ({ user, onLogout, onDiscoveryMode, addToast, theme, toggleThe
                 },
                 gameSteps: gameResponses
             });
-            alert('Project idea saved to your history!');
+            addToast('Project idea saved to your history!', 'success');
         } catch (error) {
             console.error('Error saving to history:', error);
-            alert('Error saving to history. Please try again.');
+            addToast('Error saving to history. Please try again.', 'error');
         }
     };
 
@@ -3872,6 +4077,7 @@ const AppScreen = ({ user, onLogout, onDiscoveryMode, addToast, theme, toggleThe
                                     </svg>
                                 )}
                             </button>
+                            <StreakCounter streak={fullUserProfile?.streak} theme={theme} />
                             <IconButton
                                 iconType="history"
                                 tooltip="History"
@@ -3928,6 +4134,7 @@ const AppScreen = ({ user, onLogout, onDiscoveryMode, addToast, theme, toggleThe
 
                                 {showProfileEditor && createPortal(
                                     <ProfileEditor
+                                        addToast={addToast}
                                         user={user}
                                         currentProfile={fullUserProfile}
                                         onClose={() => setShowProfileEditor(false)}
@@ -3950,18 +4157,26 @@ const AppScreen = ({ user, onLogout, onDiscoveryMode, addToast, theme, toggleThe
             )}
 
             {/* Main Content */}
-            <main className={`flex-1 flex flex-col relative z-10 ${currentView === 'result' || currentView === 'admin'
-                ? 'overflow-hidden' // Full screen views
-                : 'items-center justify-center p-8' // Centered views (welcome, history)
+            <main className={`flex-1 flex flex-col relative z-10 ${currentView === 'result'
+                ? 'overflow-hidden' // Full screen view (result handles its own scroll)
+                : currentView === 'admin'
+                    ? 'overflow-y-auto' // Admin view needs scrolling
+                    : 'items-center justify-center p-8' // Centered views (welcome, history)
                 }`}>
                 {currentView === 'welcome' && (
-                    <div className="w-full max-w-4xl">
-                        <div className="text-center mb-8">
-                            <h2 className="text-4xl md:text-6xl font-bold text-white mb-4">
-                                Smart Project Ideas for Students
-                            </h2>
-                            <p className="text-gray-400 text-lg mb-8">
-                                Get personalized project ideas through our gamified context-gathering system
+                    <div className="w-full max-w-6xl">
+                        <div className="text-center mb-12">
+                            {TypingHero ? <TypingHero /> : (
+                                <h2 className="text-4xl md:text-6xl font-bold text-white mb-4">
+                                    Smart Project Ideas for Students
+                                </h2>
+                            )}
+
+                            {SocialProofTicker && <SocialProofTicker />}
+
+                            <p className="text-gray-400 text-lg mb-8 max-w-2xl mx-auto">
+                                Get personalized project ideas through our gamified context-gathering system.
+                                We analyze your interests to suggest the perfect portfolio project.
                             </p>
                         </div>
 
@@ -3999,8 +4214,40 @@ const AppScreen = ({ user, onLogout, onDiscoveryMode, addToast, theme, toggleThe
                             </div>
                         </div>
 
-                        {/* History Section */}
+
+                        {/* Gamification Section */}
                         <div className="mt-12">
+                            <h3 className="text-2xl font-bold text-white mb-6">Your Progress</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <DailyQuestWidget user={fullUserProfile} onUpdate={loadUserProfile} theme={theme} />
+                                <BadgeCase userProfile={fullUserProfile} theme={theme} />
+                                <SkillTree user={fullUserProfile} theme={theme} />
+                                <LeaderboardWidget theme={theme} />
+                            </div>
+                        </div>
+
+
+                        {/* Featured Projects Carousel */}
+                        {FeaturedProjects && (
+                            <div className="mt-16 mb-8">
+                                <FeaturedProjects
+                                    onViewIdea={(idea) => {
+                                        setGeneratedIdea({
+                                            title: idea.title,
+                                            description: idea.description,
+                                            technologies: idea.tags.join(', '),
+                                            learning: "Check out this featured project!",
+                                            difficulty: "Intermediate",
+                                            overview: idea.description
+                                        });
+                                        setCurrentView('result');
+                                    }}
+                                />
+                            </div>
+                        )}
+
+                        {/* History Section - Moved Below Featured */}
+                        <div className="mt-16 mb-8">
                             <div className="flex justify-between items-center mb-6">
                                 <h3 className="text-2xl font-bold text-white">Your Recent Project Ideas</h3>
                                 <span className="text-gray-400 text-sm">{userHistory.length} ideas generated</span>
@@ -4054,13 +4301,19 @@ const AppScreen = ({ user, onLogout, onDiscoveryMode, addToast, theme, toggleThe
                                 </div>
                             )}
                         </div>
-                        {/* Gamification Section */}
-                        <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <BadgeCase userProfile={fullUserProfile} theme={theme} />
-                            <LeaderboardWidget theme={theme} />
-                        </div>
+
+                        {/* Quick Resume Button */}
+                        {QuickResume && (
+                            <QuickResume
+                                onResume={(idea) => {
+                                    setGeneratedIdea(idea);
+                                    setCurrentView('result');
+                                }}
+                            />
+                        )}
                     </div>
-                )} {
+                )
+                } {
 
                     currentView === 'game' && gameSteps.length > 0 && (
                         <GameStep
@@ -4091,6 +4344,7 @@ const AppScreen = ({ user, onLogout, onDiscoveryMode, addToast, theme, toggleThe
                 {
                     currentView === 'result' && generatedIdea && (
                         <ProjectIdeaDisplay
+                            addToast={addToast}
                             idea={generatedIdea}
                             onStartNew={startNewIdea}
                             user={user}
@@ -4109,8 +4363,12 @@ const AppScreen = ({ user, onLogout, onDiscoveryMode, addToast, theme, toggleThe
                         <HistoryView
                             user={user}
                             onBack={() => setCurrentView('welcome')}
-                            onViewIdea={(idea) => {
-                                setGeneratedIdea(idea);
+                            onViewIdea={(item) => {
+                                setGeneratedIdea({
+                                    idea: item.idea,
+                                    historyId: item.id,
+                                    report: item.report
+                                });
                                 setCurrentView('result');
                             }}
                         />
@@ -4336,7 +4594,7 @@ const App = () => {
                         gameSteps: []
                     });
 
-                    await saveIdeaToHistory({
+                    const historyResult = await saveIdeaToHistory({
                         userId: user.uid,
                         ideaData: {
                             query: prompt,
@@ -4347,7 +4605,13 @@ const App = () => {
                         },
                         gameSteps: []
                     });
-                    console.log('Successfully saved discovery idea to history');
+                    console.log('Successfully saved discovery idea to history', historyResult.data.historyId);
+
+                    // Update state with the new history ID so we can update it later
+                    setSelectedIdea(prev => ({
+                        ...prev,
+                        historyId: historyResult.data.historyId
+                    }));
                 } catch (saveError) {
                     console.error('Error saving to history:', saveError);
                 }
@@ -4406,8 +4670,12 @@ const App = () => {
                     newBadges.push('Night Owl');
                 }
 
+                // Calculate new level
+                const level = Math.floor(Math.sqrt(xp / 100)) + 1;
+
                 transaction.update(userRef, {
                     xp,
+                    level,
                     badges,
                     ideasGenerated: actionType === 'GENERATE_IDEA' ? firebase.firestore.FieldValue.increment(1) : (data.ideasGenerated || 0)
                 });
@@ -4491,6 +4759,7 @@ const App = () => {
                 </div>
                 <div className="flex-1 overflow-hidden relative">
                     <ProjectIdeaDisplay
+                        addToast={addToast}
                         idea={sharedIdea.idea}
                         user={user}
                         hideHeader={false}
@@ -4569,6 +4838,7 @@ const App = () => {
                                 onBackToSelection={() => setDiscoveryStep('selection')}
                                 onExitDiscovery={handleExitDiscovery}
                                 user={user}
+                                addToast={addToast}
                             />
                         )}
                     </>

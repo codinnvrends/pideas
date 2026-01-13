@@ -313,6 +313,13 @@ Generate a comprehensive project idea that follows this EXACT structure:
 ### Phase 3: Testing & Refinement (Final Week)
 [Testing, debugging, documentation tasks]
 
+## IMPLEMENTATION ROADMAP
+[Provide a list of 5-8 high-level tasks in this EXACT format for visualization]
+* [Phase 1]: [Task Name] ([Duration])
+* [Phase 1]: [Task Name] ([Duration])
+* [Phase 2]: [Task Name] ([Duration])
+...
+
 ## KEY DELIVERABLES
 [List of specific outputs/artifacts the student will create]
 
@@ -786,10 +793,19 @@ export const getAllUsers = onCall({ maxInstances: 3, invoker: 'public' }, async 
  */
 export const getUserRole = onCall({ maxInstances: 5, invoker: 'public' }, async (request: any) => {
   try {
-    const { userId } = request.data;
+    // Defensive check for data
+    const data = request.data || {};
+    const userId = data.userId; // Don't destructure in case data is null/undefined
 
     if (!userId) {
-      throw new Error("User ID is required");
+      logger.warn("getUserRole called without userId");
+      // Instead of throwing 500, return a safe default for anonymous/missing ID
+      return {
+        success: true,
+        role: 'user',
+        status: 'guest',
+        isAdmin: false
+      };
     }
 
     const db = admin.firestore();
@@ -797,6 +813,7 @@ export const getUserRole = onCall({ maxInstances: 5, invoker: 'public' }, async 
 
     if (!userDoc.exists) {
       // Return default user role
+      logger.info(`No userRole found for ${userId}, defaulting to user`);
       return {
         success: true,
         role: 'user',
@@ -809,13 +826,19 @@ export const getUserRole = onCall({ maxInstances: 5, invoker: 'public' }, async 
 
     return {
       success: true,
-      role: userData.role,
-      status: userData.status,
+      role: userData.role || 'user',
+      status: userData.status || 'active',
       isAdmin: userData.role === 'admin' && userData.status === 'active'
     };
   } catch (error) {
     logger.error("Error getting user role:", error);
-    throw new Error(`Failed to get user role: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    // Return a safe fallback rather than throwing to prevent frontend crashes
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      role: 'user',
+      isAdmin: false
+    };
   }
 });
 
@@ -1250,5 +1273,379 @@ export const checkSystemHealth = onCall({ maxInstances: 3, invoker: 'public' }, 
       status: 'outage',
       error: error instanceof Error ? error.message : 'Unknown error'
     };
+  }
+});
+
+/**
+ * Interface for Report Generation
+ */
+interface ReportGenerationRequest {
+  projectTitle: string;
+  projectOverview: string;
+  studentProfile?: StudentProfile;
+}
+
+// Prompt for the "Academic Architect" persona
+function createReportPrompt(title: string, overview: string, profile: StudentProfile): string {
+  return `
+You are an expert Academic Project Advisor and Technical Writer. Your task is to write a comprehensive, professional Project Report (Mini-Thesis) for the following student project.
+
+STUDENT PROFILE:
+- Stream: ${profile.stream || 'Computer Science'}
+- Level: ${profile.skillLevel || 'Intermediate'}
+- Interests: ${profile.interests?.join(', ') || 'Technology'}
+
+PROJECT CONTEXT:
+Title: ${title}
+Overview: ${overview}
+
+INSTRUCTIONS:
+Write a detailed, structured academic report (approx. 1500-2000 words) using the following EXACT chapter structure.
+You must "extrapolate" and "invent" plausible technical details, system architectures, and synthetic result metrics based on standard industry practices for this type of project.
+
+OUTPUT FORMAT (Markdown):
+
+# ${title}
+## Abstract
+[150-200 words summary of the entire project, including problem, solution, and key results]
+
+## Chapter 1: Introduction
+### 1.1 Background
+[Context about the domain]
+### 1.2 Problem Statement
+[Clear definition of the problem]
+### 1.3 Objectives
+[Bulleted list of technical and functional objectives]
+### 1.4 Scope of the Project
+[What is included and what is out of scope]
+
+## Chapter 2: Literature Review & Theoretical Framework
+[Cite 3-4 *real-world* technologies, papers, or standard algorithms relevant to this project. E.g., "Smith et al. proposed..."]
+### 2.1 Existing Systems
+### 2.2 Proposed System Improvements
+
+## Chapter 3: Methodology
+### 3.1 Software Development Life Cycle (SDLC)
+[Justify usage of Agile/Scrum/Waterfall]
+### 3.2 System Architecture
+[Describe the high-level architecture: Client-Server, Microservices, etc.]
+### 3.3 Tools & Technologies
+[List the likely stack based on the project overview: React, Node, Firebase, etc.]
+
+## Chapter 4: Implementation Details
+### 4.1 Key Algorithms
+[Describe *plausible* algorithms used, e.g., "A* Pathfinding" or "Collaborative Filtering". Provide pseudo-code if applicable.]
+### 4.2 Database Design
+[Describe a plausible schema: Users, Products, Transactions, etc.]
+### 4.3 Challenges Faced & Solutions
+
+## Chapter 5: Results & Performance Analysis
+### 5.1 Experimental Setup
+### 5.2 Performance Metrics (Synthetic Data)
+[INVENT plausible data tables or metrics. E.g., "API Latency: 45ms", "Accuracy: 94%". Present this as if the project was successfully tested.]
+### 5.3 Comparative Analysis
+
+## Chapter 6: Conclusion & Future Scope
+### 6.1 Conclusion
+### 6.2 Future Enhancements
+
+## References
+[List 4-5 plausibly relevant citations in IEEE format]
+`;
+}
+
+/**
+ * Generate a detailed academic report (Thesis)
+ */
+export const generate_detailed_report = onCall({ maxInstances: 3, timeoutSeconds: 540, invoker: 'public' }, async (request: any) => {
+  try {
+    const { projectTitle, projectOverview, studentProfile }: ReportGenerationRequest = request.data;
+
+    if (!projectTitle || !projectOverview) {
+      throw new Error("Project Title and Overview are required");
+    }
+
+    // Default profile if missing
+    const profile = studentProfile || {
+      stream: 'Computer Science',
+      year: 'Final Year',
+      interests: ['Software Development'],
+      skillLevel: 'Intermediate',
+      preferredTechnologies: [],
+      teamSize: 'Individual',
+      projectDuration: '3 months'
+    };
+
+    logger.info(`Generating thesis for: ${projectTitle}`);
+
+    const contextPrompt = createReportPrompt(projectTitle, projectOverview, profile);
+
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) throw new Error("Gemini API Key missing");
+
+    const ai = genkit({
+      plugins: [googleAI({ apiKey })],
+      model: googleAI.model('gemini-2.5-flash'), // Higher context window model preferable
+    });
+
+    const response = await ai.generate(contextPrompt);
+    const reportText = response.text;
+
+    return {
+      success: true,
+      report: reportText,
+      metadata: {
+        generatedAt: new Date().toISOString(),
+        wordCount: reportText.length / 5 // Approx
+      }
+    };
+
+  } catch (error) {
+    logger.error("Error generating report:", error);
+    throw new Error(`Failed to generate report: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+});
+
+/**
+ * Update a project history item (e.g. save generated report)
+ */
+export const updateProjectHistory = onCall({ maxInstances: 5, invoker: 'public' }, async (request: any) => {
+  try {
+    const { userId, historyId, data } = request.data;
+
+    if (!userId || !historyId || !data) {
+      throw new Error("Missing required parameters: userId, historyId, data");
+    }
+
+    const db = admin.firestore();
+    const docRef = db.collection('projectHistory').doc(historyId);
+    const doc = await docRef.get();
+
+    if (!doc.exists) {
+      throw new Error("History item not found");
+    }
+
+    const existingData = doc.data();
+    if (existingData?.userId !== userId) {
+      throw new Error("Unauthorized: You can only update your own history");
+    }
+
+    // Allow updating specific fields
+    const updates: any = {};
+    if (data.report) updates.report = data.report;
+    if (data.pinned !== undefined) updates.pinned = data.pinned;
+    if (data.status) updates.status = data.status;
+
+    await docRef.update(updates);
+
+    return { success: true, message: "Project history updated" };
+
+  } catch (error) {
+    logger.error("Error updating project history:", error);
+    throw new Error(`Failed to update history: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+});
+
+/**
+ * Get detailed analytics for Admin Console
+ * Includes Retention, Engagement, and Stack Popularity
+ */
+export const getDetailedAnalytics = onCall({ maxInstances: 3, invoker: 'public' }, async (request: any) => {
+  try {
+    const { adminUserId } = request.data;
+    if (!adminUserId) throw new Error("Admin ID required");
+    if (!(await isUserAdmin(adminUserId))) throw new Error("Admin access denied");
+
+    const db = admin.firestore();
+
+    // 1. Fetch Users Data for Retention
+    const usersSnap = await db.collection('userRoles').get();
+    const users = usersSnap.docs.map(doc => doc.data() as UserRole);
+
+    const now = new Date();
+    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+    const activeUsers = users.filter(u => u.lastLogin && new Date(u.lastLogin) > oneWeekAgo).length;
+    const dailyActiveUsers = users.filter(u => u.lastLogin && new Date(u.lastLogin) > oneDayAgo).length;
+    const totalUsers = users.length;
+
+    // Retention Rate (Weekly Active / Total)
+    const retentionRate = totalUsers > 0 ? (activeUsers / totalUsers) * 100 : 0;
+
+    // 2. Fetch Ideas for Stack Popularity
+    // Note: In production, use aggregation queries. Here we limit to recent 500 for perf.
+    const historySnap = await db.collection('projectHistory')
+      .orderBy('generatedAt', 'desc')
+      .limit(500)
+      .get();
+
+    const stackCounts: Record<string, number> = {};
+    let totalIdeasAnalyzed = 0;
+
+    historySnap.forEach(doc => {
+      const data = doc.data();
+      const tech = data.studentProfile?.preferredTechnologies || [];
+      tech.forEach((t: string) => {
+        // Normalize tech string (simple)
+        const key = t.split('/')[0].trim(); // e.g. "Python/Django" -> "Python"
+        stackCounts[key] = (stackCounts[key] || 0) + 1;
+      });
+      totalIdeasAnalyzed++;
+    });
+
+    const popularStacks = Object.entries(stackCounts)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 10)
+      .map(([name, count]) => ({ name, count }));
+
+    return {
+      success: true,
+      analytics: {
+        retentionRate,
+        dailyActiveUsers,
+        totalUsers,
+        popularStacks,
+        avgIdeasPerUser: totalUsers > 0 ? (totalIdeasAnalyzed / totalUsers) : 0 // Rough estimate based on sample
+      }
+    };
+  } catch (error) {
+    logger.error("Error getting detailed analytics:", error);
+    throw new Error(`Analytics failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+});
+
+/**
+ * Handle Gamification: Daily Quests & Streaks
+ * Should be called on app launch
+ */
+export const checkDailyProgress = onCall({ maxInstances: 5, invoker: 'public' }, async (request: any) => {
+  try {
+    const { userId } = request.data;
+    if (!userId) throw new Error("User ID required");
+
+    const db = admin.firestore();
+    const userRef = db.collection('users').doc(userId);
+    const userDoc = await userRef.get();
+
+    if (!userDoc.exists) {
+      // Initialize basic user gamification data if user doesn't exist
+      const initialData = {
+        xp: 0,
+        level: 1,
+        streak: 0,
+        lastLoginDate: new Date().toISOString().split('T')[0]
+      };
+      await userRef.set(initialData);
+      // We'll continue to generate quests based on this new data
+    }
+
+    const userData = (await userRef.get()).data() || {};
+    const lastLoginRaw = userData.lastLoginDate;
+    const currentStreak = userData.streak || 0;
+
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+
+    let newStreak = currentStreak;
+    let message = '';
+
+    // Streak Logic
+    if (lastLoginRaw !== todayStr) {
+      const yesterday = new Date(now);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+      if (lastLoginRaw === yesterdayStr) {
+        newStreak++;
+        message = "Streak continued! 🔥";
+      } else if (!lastLoginRaw || lastLoginRaw < yesterdayStr) { // If last login was strictly before yesterday
+        newStreak = 1;
+        if (!lastLoginRaw) message = "Welcome! Started your first streak! 🔥";
+        else message = "Streak reset. Start fresh! 🔥";
+      }
+    }
+
+    // Daily Quests Logic
+    let dailyQuests = userData.dailyQuests || [];
+    const questDate = userData.questDate;
+
+    if (questDate !== todayStr) {
+      // Generate new quests
+      const questPool = [
+        { id: 'gen_1_idea', text: 'Generate 1 Project Idea', xp: 50, completed: false },
+        { id: 'share_idea', text: 'Share an Idea', xp: 30, completed: false },
+        { id: 'view_history', text: 'Review a Past Project', xp: 20, completed: false },
+        { id: 'export_code', text: 'Export a Codebase', xp: 100, completed: false },
+        { id: 'read_report', text: 'Generate a Project Report', xp: 40, completed: false }
+      ];
+
+      // Shuffle and pick 3
+      dailyQuests = questPool.sort(() => 0.5 - Math.random()).slice(0, 3);
+    }
+
+    // Update User
+    await userRef.set({
+      lastLoginDate: todayStr,
+      streak: newStreak,
+      dailyQuests: dailyQuests,
+      questDate: todayStr
+    }, { merge: true });
+
+    return {
+      success: true,
+      data: {
+        streak: newStreak,
+        dailyQuests,
+        message
+      }
+    };
+  } catch (error) {
+    logger.error("Error checking daily progress:", error);
+    throw new Error(`Gamification failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+});
+
+/**
+ * Update Quest Progress (Helper to mark quest as done)
+ * Can be called when specific actions happen
+ */
+export const updateQuestProgress = onCall({ maxInstances: 5, invoker: 'public' }, async (request: any) => {
+  try {
+    const { userId, questId } = request.data;
+    if (!userId || !questId) throw new Error("Invalid params");
+
+    const db = admin.firestore();
+    const userRef = db.collection('users').doc(userId);
+    const userDoc = await userRef.get();
+    const userData = userDoc.data();
+
+    if (!userData || !userData.dailyQuests) return { success: false, message: "No quests found" };
+
+    let questCompleted = false;
+    let xpGained = 0;
+
+    const updatedQuests = userData.dailyQuests.map((q: any) => {
+      if (q.id === questId && !q.completed) {
+        q.completed = true;
+        questCompleted = true;
+        xpGained = q.xp;
+      }
+      return q;
+    });
+
+    if (questCompleted) {
+      await userRef.update({
+        dailyQuests: updatedQuests,
+        xp: admin.firestore.FieldValue.increment(xpGained)
+      });
+      return { success: true, xpGained, message: "Quest Completed!" };
+    }
+
+    return { success: false, message: "Quest already completed or not found" };
+
+  } catch (error) {
+    logger.error("Error updating quest:", error);
+    return { success: false, error: "Failed to update quest" };
   }
 });

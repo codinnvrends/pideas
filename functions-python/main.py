@@ -13,7 +13,7 @@ initialize_app(options={
     'storageBucket': 'pideas'
 })
 
-def update_operation_status(op_id, status, message=None):
+def update_operation_status(op_id, status, message=None, user_id=None):
     if not op_id:
         return
     db = firestore.client()
@@ -22,6 +22,9 @@ def update_operation_status(op_id, status, message=None):
         'status': status,
         'updatedAt': firestore.SERVER_TIMESTAMP
     }
+    if user_id:
+        data['userId'] = user_id
+        
     if message:
         doc_ref.set({
             'logs': firestore.ArrayUnion([{
@@ -75,12 +78,15 @@ def generate_codebase(req: https_fn.CallableRequest):
         data = req.data
         idea = data.get("idea")
         operation_id = data.get("operationId")
+        history_id = data.get("historyId")
+        user_id = data.get("userId") or (req.auth.uid if req.auth else None)
         
         if not idea:
             return {"success": False, "error": "Missing 'idea' field"}
             
         print(f"Received idea: {idea[:100]}...")
-        update_operation_status(operation_id, 'STARTING', f"Received request for: {idea[:50]}...")
+        # Save userId to the operation doc so we can secure reading logic
+        update_operation_status(operation_id, 'STARTING', f"Received request for: {idea[:50]}...", user_id=user_id)
         
         # 2. Preparation
         # Create a unique temp directory for this request
@@ -139,6 +145,32 @@ def generate_codebase(req: https_fn.CallableRequest):
             json_blob.upload_from_filename(json_preview_path)
             json_blob.make_public()
             
+            # 7. Persist to Firestore History
+            if history_id and user_id:
+                try:
+                    print(f"Persisting artifacts to history: {history_id} for user {user_id}")
+                    db = firestore.client()
+                    
+                    # Try both collection paths as structure might vary
+                    # 1. Root projectHistory
+                    history_ref = db.collection('projectHistory').document(history_id)
+                    history_doc = history_ref.get()
+                    
+                    if not history_doc.exists:
+                        # 2. Subcollection users/{userId}/history
+                        history_ref = db.collection('users').document(user_id).collection('history').document(history_id)
+                        
+                    history_ref.set({
+                        'codebaseDownloadUrl': zip_blob.public_url,
+                        'codebasePreviewUrl': json_blob.public_url,
+                        'codebaseGeneratedAt': firestore.SERVER_TIMESTAMP,
+                        'codebaseStatus': 'COMPLETED'
+                    }, merge=True)
+                    print("Successfully updated history document.")
+                except Exception as db_err:
+                    print(f"Warning: Failed to persist to history: {db_err}")
+                    # Don't fail the whole function, just log it
+            
             update_operation_status(operation_id, 'COMPLETED', "Ready for download.")
             
             return {
@@ -154,4 +186,28 @@ def generate_codebase(req: https_fn.CallableRequest):
              update_operation_status(operation_id, 'ERROR', f"Error: {str(e)}")
         import traceback
         traceback.print_exc()
+        return {"success": False, "error": str(e)}
+
+@https_fn.on_call(memory=1024, timeout_sec=120)
+def generate_project_theory(req: https_fn.CallableRequest):
+    """
+    Cloud Function to generate a comprehensive theoretical report for a project.
+    """
+    from src.features.theory_generator import generate_project_theory as gen_theory
+
+    try:
+        data = req.data
+        project_title = data.get("projectTitle")
+        project_overview = data.get("projectOverview")
+        tech_stack = data.get("techStack")
+
+        if not project_title or not project_overview:
+            return {"success": False, "error": "Missing 'projectTitle' or 'projectOverview'"}
+
+        report = gen_theory(project_title, project_overview, tech_stack)
+        
+        return {"success": True, "report": report}
+
+    except Exception as e:
+        print(f"Error in generate_project_theory: {str(e)}")
         return {"success": False, "error": str(e)}

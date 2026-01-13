@@ -24,8 +24,8 @@ const BadgeCase = ({ userProfile, theme }) => {
                     return (
                         <div key={id} className="relative group items-center flex flex-col gap-2 p-2 rounded-lg hover:bg-white/5 transition-colors">
                             <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl border ${isUnlocked
-                                    ? 'bg-yellow-500/20 border-yellow-500/50 grayscale-0'
-                                    : 'bg-gray-800 border-gray-700 grayscale opacity-40'
+                                ? 'bg-yellow-500/20 border-yellow-500/50 grayscale-0'
+                                : 'bg-gray-800 border-gray-700 grayscale opacity-40'
                                 }`}>
                                 {badge.icon}
                             </div>
@@ -85,9 +85,9 @@ const LeaderboardWidget = ({ theme }) => {
                 {leaders.map((user, index) => (
                     <div key={user.id} className="flex items-center gap-3">
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${index === 0 ? 'bg-yellow-500 text-black' :
-                                index === 1 ? 'bg-gray-400 text-black' :
-                                    index === 2 ? 'bg-orange-600 text-white' :
-                                        'bg-gray-700 text-gray-400'
+                            index === 1 ? 'bg-gray-400 text-black' :
+                                index === 2 ? 'bg-orange-600 text-white' :
+                                    'bg-gray-700 text-gray-400'
                             }`}>
                             {index + 1}
                         </div>
@@ -145,15 +145,15 @@ const SocialShareModal = ({ idea, onClose, theme }) => {
                                 readOnly
                                 value={shareUrl}
                                 className={`flex-1 px-3 py-2 rounded-lg text-sm border ${theme === 'light'
-                                        ? 'bg-gray-50 border-gray-200 text-gray-700'
-                                        : 'bg-black/30 border-gray-700 text-gray-300'
+                                    ? 'bg-gray-50 border-gray-200 text-gray-700'
+                                    : 'bg-black/30 border-gray-700 text-gray-300'
                                     }`}
                             />
                             <button
                                 onClick={handleCopy}
                                 className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${copied
-                                        ? 'bg-green-500 text-white'
-                                        : 'bg-blue-600 hover:bg-blue-700 text-white'
+                                    ? 'bg-green-500 text-white'
+                                    : 'bg-blue-600 hover:bg-blue-700 text-white'
                                     }`}
                             >
                                 {copied ? 'Copied!' : 'Copy'}
@@ -189,3 +189,116 @@ const SocialShareModal = ({ idea, onClose, theme }) => {
 window.BadgeCase = BadgeCase;
 window.LeaderboardWidget = LeaderboardWidget;
 window.SocialShareModal = SocialShareModal;
+
+// Daily Quest Widget
+const DailyQuestWidget = ({ user, onUpdate, theme }) => {
+    const quests = user?.dailyQuests || [];
+    const [updating, setUpdating] = React.useState(null);
+
+    const handleQuestClick = async (questId) => {
+        if (updating) return;
+        setUpdating(questId);
+        try {
+            const updateQuest = firebase.functions().httpsCallable('updateQuestProgress');
+            const res = await updateQuest({ userId: user.uid, questId });
+            if (res.data.success) {
+                if (onUpdate) onUpdate(); // Refresh user data
+            }
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setUpdating(null);
+        }
+    };
+
+    return (
+        <div className={`p-6 rounded-xl border ${theme === 'light' ? 'bg-white border-gray-200' : 'bg-gray-800/40 border-gray-700/50'}`}>
+            <h3 className={`text-lg font-bold mb-4 flex items-center gap-2 ${theme === 'light' ? 'text-gray-800' : 'text-white'}`}>
+                <span>⚔️</span> Daily Quests
+            </h3>
+            <div className="space-y-3">
+                {quests.length === 0 ? (
+                    <p className="text-gray-500 text-sm">No quests available today.</p>
+                ) : (
+                    quests.map(quest => (
+                        <div
+                            key={quest.id}
+                            onClick={() => !quest.completed && handleQuestClick(quest.id)}
+                            className={`flex items-center gap-3 p-3 rounded-lg border transition-all cursor-pointer ${quest.completed
+                                    ? 'bg-green-900/20 border-green-500/30 opacity-70'
+                                    : `${theme === 'light' ? 'bg-gray-50 hover:bg-gray-100 border-gray-200' : 'bg-gray-700/30 hover:bg-gray-700/50 border-gray-600'}`
+                                }`}
+                        >
+                            <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${quest.completed ? 'bg-green-500 border-green-500' : 'border-gray-400'
+                                }`}>
+                                {quest.completed && <span className="text-white text-xs">✓</span>}
+                            </div>
+                            <div className="flex-1">
+                                <p className={`text-sm font-medium ${quest.completed ? 'text-gray-400 line-through' : (theme === 'light' ? 'text-gray-800' : 'text-gray-200')}`}>
+                                    {quest.text}
+                                </p>
+                                <p className="text-xs text-yellow-500 font-bold">+{quest.xp} XP</p>
+                            </div>
+                            {updating === quest.id && <div className="animate-spin text-blue-500">⏳</div>}
+                        </div>
+                    ))
+                )}
+            </div>
+        </div>
+    );
+};
+
+// Streak Counter Component
+const StreakCounter = ({ streak, theme }) => {
+    return (
+        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border ${theme === 'light' ? 'bg-orange-50 border-orange-200' : 'bg-orange-900/20 border-orange-500/30'
+            }`}>
+            <span className="text-lg">🔥</span>
+            <span className={`font-bold ${theme === 'light' ? 'text-orange-600' : 'text-orange-400'}`}>
+                {streak || 0}
+            </span>
+        </div>
+    );
+};
+
+// Skill Tree Component
+const SkillTree = ({ user, theme }) => {
+    // Simple mock skill tree for now
+    const skills = [
+        { id: 'web', label: 'Web Dev', icon: '🌐', level: 1, unlocked: true },
+        { id: 'backend', label: 'Backend', icon: '⚙️', level: 1, unlocked: true },
+        { id: 'ai', label: 'AI/ML', icon: '🤖', level: 0, unlocked: false },
+        { id: 'cloud', label: 'Cloud', icon: '☁️', level: 0, unlocked: false },
+    ];
+
+    return (
+        <div className={`p-6 rounded-xl border ${theme === 'light' ? 'bg-white border-gray-200' : 'bg-gray-800/40 border-gray-700/50'}`}>
+            <h3 className={`text-lg font-bold mb-4 flex items-center gap-2 ${theme === 'light' ? 'text-gray-800' : 'text-white'}`}>
+                <span>🌳</span> Skill Tree
+            </h3>
+            <div className="flex justify-around relative">
+                {/* Connecting Lines (Mock) */}
+                <div className="absolute top-1/2 left-10 right-10 h-1 bg-gray-700 -z-10"></div>
+
+                {skills.map(skill => (
+                    <div key={skill.id} className="flex flex-col items-center gap-2 bg-gray-900 p-2 rounded-lg z-10">
+                        <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl border-2 transition-all ${skill.unlocked
+                                ? 'bg-blue-600 border-blue-400 text-white shadow-lg shadow-blue-500/50'
+                                : 'bg-gray-800 border-gray-600 text-gray-500 grayscale'
+                            }`}>
+                            {skill.icon}
+                        </div>
+                        <span className={`text-xs font-bold ${skill.unlocked ? 'text-blue-300' : 'text-gray-600'}`}>
+                            {skill.label}
+                        </span>
+                    </div>
+                ))}
+            </div>
+            <p className="text-center text-xs text-gray-500 mt-4">Generate diverse ideas to unlock branches!</p>
+        </div>
+    );
+};
+
+window.DailyQuestWidget = DailyQuestWidget;
+window.StreakCounter = StreakCounter;
+window.SkillTree = SkillTree;

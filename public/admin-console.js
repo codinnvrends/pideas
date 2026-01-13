@@ -144,111 +144,90 @@ const SystemHealthWidget = ({ theme }) => {
         </div>
     );
 };
-// Analytics Dashboard Component (Chart.js Version)
-const AnalyticsDashboard = ({ users, ideas, isLoading }) => {
+// Enhanced Analytics Dashboard
+const AnalyticsDashboard = ({ users, ideas, isLoading: initialLoading, user }) => {
+    const [stats, setStats] = useState(null);
+    const [isLoading, setIsLoading] = useState(initialLoading);
+
+    // Canvas Refs
     const streamChartRef = useRef(null);
     const skillChartRef = useRef(null);
     const growthChartRef = useRef(null);
-    const chartsRef = useRef({}); // Store chart instances to destroy them on cleanup
+    const chartsRef = useRef({});
 
     useEffect(() => {
-        if (!isLoading && users.length > 0 && ideas.length > 0) {
+        fetchDetailedAnalytics();
+    }, []);
+
+    useEffect(() => {
+        if (stats && !isLoading) {
             initCharts();
         }
-        return () => {
-            // Cleanup charts
-            Object.values(chartsRef.current).forEach(chart => chart.destroy());
-        };
-    }, [isLoading, users, ideas]);
+        return () => Object.values(chartsRef.current).forEach(c => c.destroy());
+    }, [stats, isLoading]);
+
+    const fetchDetailedAnalytics = async () => {
+        setIsLoading(true);
+        try {
+            const getAnalytics = firebase.functions().httpsCallable('getDetailedAnalytics');
+            const result = await getAnalytics({ adminUserId: user.uid });
+            if (result.data.success) {
+                setStats(result.data.analytics);
+            }
+        } catch (error) {
+            console.error("Analytics Fetch Failed:", error);
+            // Fallback to basic props-based stats if backend fails
+            setStats({
+                retentionRate: 0,
+                dailyActiveUsers: users.length,
+                totalUsers: users.length,
+                popularStacks: [],
+                avgIdeasPerUser: ideas.length / (users.length || 1)
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const initCharts = () => {
-        // DATA PROCESSING
-        // 1. Ideas by Stream
-        const streamCounts = {};
-        ideas.forEach(idea => {
-            const stream = idea.studentProfile?.stream || 'Unknown';
-            streamCounts[stream] = (streamCounts[stream] || 0) + 1;
-        });
-        const streamLabels = Object.keys(streamCounts);
-        const streamData = Object.values(streamCounts);
+        if (!stats) return;
 
-        // 2. Skill Levels
-        const skillCounts = {};
-        ideas.forEach(idea => {
-            const skill = idea.studentProfile?.skillLevel?.split(' ')[0] || 'Unknown';
-            skillCounts[skill] = (skillCounts[skill] || 0) + 1;
-        });
-        const skillLabels = Object.keys(skillCounts);
-        const skillData = Object.values(skillCounts);
-
-        // 3. User Growth
-        const dates = {};
-        users.forEach(user => {
-            const date = new Date(user.createdAt).toLocaleDateString();
-            dates[date] = (dates[date] || 0) + 1;
-        });
-        // Sort dates
-        const sortedDates = Object.keys(dates).sort((a, b) => new Date(a) - new Date(b));
-        const growthData = sortedDates.map(date => dates[date]);
-
-
-        // CHART INITIALIZATION
-
-        // Destroy existing charts if any
+        // Cleanup
         if (chartsRef.current.stream) chartsRef.current.stream.destroy();
         if (chartsRef.current.skill) chartsRef.current.skill.destroy();
         if (chartsRef.current.growth) chartsRef.current.growth.destroy();
 
-        // 1. Pie Chart
+        // 1. Stacks Pie (Replaces Stream for now, or add distinct)
+        // Using Stream data from props for now as fallback
+        const streamCounts = {};
+        ideas.forEach(idea => {
+            const s = idea.studentProfile?.stream || 'Unknown';
+            streamCounts[s] = (streamCounts[s] || 0) + 1;
+        });
+
         const ctxStream = streamChartRef.current.getContext('2d');
         chartsRef.current.stream = new Chart(ctxStream, {
-            type: 'pie',
+            type: 'doughnut',
             data: {
-                labels: streamLabels,
+                labels: Object.keys(streamCounts),
                 datasets: [{
-                    data: streamData,
-                    backgroundColor: ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'],
+                    data: Object.values(streamCounts),
+                    backgroundColor: ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'],
                     borderWidth: 0
                 }]
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { position: 'right', labels: { color: '#fff' } },
-                    title: { display: false }
-                }
-            }
+            options: { plugins: { legend: { position: 'right', labels: { color: '#9CA3AF' } } }, maintainAspectRatio: false }
         });
 
-        // 2. Bar Chart
-        const ctxSkill = skillChartRef.current.getContext('2d');
-        chartsRef.current.skill = new Chart(ctxSkill, {
-            type: 'bar',
-            data: {
-                labels: skillLabels,
-                datasets: [{
-                    label: 'Users',
-                    data: skillData,
-                    backgroundColor: '#8b5cf6',
-                    borderRadius: 4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    title: { display: false }
-                },
-                scales: {
-                    y: { grid: { color: '#374151' }, ticks: { color: '#9CA3AF' } },
-                    x: { grid: { display: false }, ticks: { color: '#9CA3AF' } }
-                }
-            }
+        // 2. Growth Line
+        // ... (Similar logic to old chart, using props users for history)
+        const dates = {};
+        users.forEach(u => {
+            const d = new Date(u.createdAt).toLocaleDateString();
+            dates[d] = (dates[d] || 0) + 1;
         });
+        const sortedDates = Object.keys(dates).sort((a, b) => new Date(a) - new Date(b));
 
-        // 3. Line Chart
         const ctxGrowth = growthChartRef.current.getContext('2d');
         chartsRef.current.growth = new Chart(ctxGrowth, {
             type: 'line',
@@ -256,61 +235,152 @@ const AnalyticsDashboard = ({ users, ideas, isLoading }) => {
                 labels: sortedDates,
                 datasets: [{
                     label: 'New Users',
-                    data: growthData,
+                    data: sortedDates.map(d => dates[d]),
                     borderColor: '#10B981',
-                    backgroundColor: '#10B981',
                     tension: 0.4
                 }]
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    title: { display: false }
-                },
-                scales: {
-                    y: { grid: { color: '#374151' }, ticks: { color: '#9CA3AF' } },
-                    x: { grid: { color: '#374151' }, ticks: { color: '#9CA3AF' } }
-                }
-            }
+            options: { plugins: { legend: { display: false } }, maintainAspectRatio: false, scales: { x: { display: false } } }
         });
     };
 
-    if (isLoading) {
-        return (
-            <div className="text-center p-12">
-                <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
-                <p className="text-gray-400 mt-4 font-medium">Crunching numbers...</p>
-            </div>
-        );
+    if (isLoading || !stats) {
+        return <div className="p-12 text-center text-gray-400"><i className="fas fa-circle-notch fa-spin text-2xl"></i> Loading Deep Analytics...</div>;
     }
 
     return (
         <div className="space-y-6">
+            {/* KPI Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <StatsCard title="Retention Rate" value={`${stats.retentionRate.toFixed(1)}%`} subtitle="Active > 7 days" color="purple" icon="🔁" theme="dark" />
+                <StatsCard title="Daily Active" value={stats.dailyActiveUsers} subtitle="Last 24h" color="green" icon="⚡" theme="dark" />
+                <StatsCard title="Avg Engagement" value={stats.avgIdeasPerUser.toFixed(1)} subtitle="Ideas / User" color="blue" icon="🎯" theme="dark" />
+                <StatsCard title="Total Users" value={stats.totalUsers} subtitle="Registered" color="orange" icon="👥" theme="dark" />
+            </div>
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Stream Distribution Pie Chart */}
-                <div className="bg-gray-900/50 backdrop-blur-sm border border-blue-500/30 rounded-xl p-6 shadow-xl">
-                    <h3 className="text-xl font-bold text-white mb-4">📚 Ideas by Stream</h3>
-                    <div className="h-64 relative">
-                        <canvas ref={streamChartRef}></canvas>
+                {/* Popular Stacks List */}
+                <div className="bg-gray-900/50 border border-blue-500/30 rounded-xl p-6">
+                    <h3 className="text-xl font-bold text-white mb-4">🔥 Trending Tech Stacks</h3>
+                    <div className="space-y-3">
+                        {stats.popularStacks.map((stack, i) => (
+                            <div key={stack.name} className="flex justify-between items-center p-2 hover:bg-white/5 rounded">
+                                <span className="text-gray-300 flex items-center gap-2">
+                                    <span className="text-xs font-bold bg-gray-700 px-2 py-1 rounded text-white">{i + 1}</span>
+                                    {stack.name}
+                                </span>
+                                <span className="text-blue-400 font-bold">{stack.count} Ideas</span>
+                            </div>
+                        ))}
                     </div>
                 </div>
 
-                {/* Skill Level Bar Chart */}
-                <div className="bg-gray-900/50 backdrop-blur-sm border border-purple-500/30 rounded-xl p-6 shadow-xl">
-                    <h3 className="text-xl font-bold text-white mb-4">⚡ User Skill Levels</h3>
-                    <div className="h-64 relative">
-                        <canvas ref={skillChartRef}></canvas>
-                    </div>
+                {/* Growth Chart */}
+                <div className="bg-gray-900/50 border border-green-500/30 rounded-xl p-6">
+                    <h3 className="text-xl font-bold text-white mb-4">📈 Growth Trend</h3>
+                    <div className="h-64"><canvas ref={growthChartRef}></canvas></div>
                 </div>
+            </div>
 
-                {/* User Growth Line Chart */}
-                <div className="bg-gray-900/50 backdrop-blur-sm border border-green-500/30 rounded-xl p-6 shadow-xl lg:col-span-2">
-                    <h3 className="text-xl font-bold text-white mb-4">📈 User Growth Trend</h3>
-                    <div className="h-64 relative">
-                        <canvas ref={growthChartRef}></canvas>
-                    </div>
+            {/* Distribution Chart */}
+            <div className="bg-gray-900/50 border border-purple-500/30 rounded-xl p-6">
+                <h3 className="text-xl font-bold text-white mb-4">📚 Stream Distribution</h3>
+                <div className="h-64"><canvas ref={streamChartRef}></canvas></div>
+            </div>
+        </div>
+    );
+};
+
+// Moderation Queue Component
+const ModerationQueue = ({ user, theme }) => {
+    const [flaggedIdeas, setFlaggedIdeas] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        loadFlagged();
+    }, []);
+
+    const loadFlagged = async () => {
+        try {
+            const snap = await firebase.firestore().collection('generated_ideas')
+                .where('flags.isInappropriate', '==', true)
+                .get();
+            setFlaggedIdeas(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+        } catch (err) { console.error(err); }
+        finally { setIsLoading(false); }
+    };
+
+    const handleAction = async (id, action) => {
+        try {
+            const moderateIdea = firebase.functions().httpsCallable('moderateIdea');
+            await moderateIdea({ adminUserId: user.uid, ideaId: id, action });
+            setFlaggedIdeas(prev => prev.filter(i => i.id !== id)); // Optimistic remove
+        } catch (err) { alert(err.message); }
+    };
+
+    if (isLoading) return <div>Loading Queue...</div>;
+
+    return (
+        <div className={`p-6 rounded-xl border ${theme === 'light' ? 'bg-white' : 'bg-gray-900 border-red-500/30'}`}>
+            <h3 className="text-xl font-bold text-red-400 mb-4">🛡️ Moderation Queue ({flaggedIdeas.length})</h3>
+            {flaggedIdeas.length === 0 ? (
+                <p className="text-gray-500">All clean! No flagged ideas.</p>
+            ) : (
+                <div className="space-y-4">
+                    {flaggedIdeas.map(idea => (
+                        <div key={idea.id} className="p-4 border border-red-500/20 rounded-lg bg-red-900/10">
+                            <p className="font-bold text-white">{idea.query}</p>
+                            <p className="text-sm text-gray-400 mt-1 line-clamp-2">{idea.idea}</p>
+                            <div className="flex gap-2 mt-3">
+                                <button onClick={() => handleAction(idea.id, 'dismiss')} className="px-3 py-1 bg-gray-700 text-white rounded hover:bg-gray-600">Dismiss</button>
+                                <button onClick={() => handleAction(idea.id, 'delete')} className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700">Delete Permanently</button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
+// Announcement Manager Component
+const AnnouncementManager = ({ user, theme }) => {
+    const [message, setMessage] = useState('');
+    const [type, setType] = useState('info');
+    const [isSending, setIsSending] = useState(false);
+
+    const handleSend = async () => {
+        if (!message.trim()) return;
+        setIsSending(true);
+        try {
+            await firebase.firestore().collection('system_alerts').add({
+                message, type, createdBy: user.uid, createdAt: new Date().toISOString(), active: true
+            });
+            setMessage('');
+            alert('Announcement Sent!');
+        } catch (err) { alert('Failed to send'); }
+        finally { setIsSending(false); }
+    };
+
+    return (
+        <div className={`p-6 rounded-xl border ${theme === 'light' ? 'bg-white' : 'bg-gray-900 border-yellow-500/30'}`}>
+            <h3 className="text-xl font-bold text-yellow-500 mb-4">📢 Global Announcement</h3>
+            <div className="space-y-4">
+                <textarea
+                    value={message}
+                    onChange={e => setMessage(e.target.value)}
+                    placeholder="Type message to all users..."
+                    className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white"
+                />
+                <div className="flex justify-between">
+                    <select value={type} onChange={e => setType(e.target.value)} className="bg-gray-800 text-white p-2 rounded">
+                        <option value="info">Info (Blue)</option>
+                        <option value="warning">Warning (Yellow)</option>
+                        <option value="alert">Alert (Red)</option>
+                    </select>
+                    <button onClick={handleSend} disabled={isSending} className="px-6 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700 font-bold">
+                        {isSending ? 'Sending...' : 'Broadcast'}
+                    </button>
                 </div>
             </div>
         </div>
@@ -1295,6 +1365,8 @@ const AdminConsole = ({ user, onBack, theme }) => {
                     { id: 'analytics', label: 'Dashboard', count: 0, icon: '📊', color: 'indigo' },
                     { id: 'users', label: 'Users', count: users.length, icon: '👥', color: 'purple' },
                     { id: 'ideas', label: 'Ideas', count: ideas.length, icon: '💡', color: 'blue' },
+                    { id: 'moderation', label: 'Moderation', count: 0, icon: '🛡️', color: 'red' },
+                    { id: 'alerts', label: 'Alerts', count: 0, icon: '📢', color: 'yellow' },
                     { id: 'prompt-studio', label: 'Prompt Studio', count: 0, icon: '🎨', color: 'pink' },
                     { id: 'logs', label: 'Logs', count: logs.length, icon: '📝', color: 'green' }
                 ].map((tab) => (
@@ -1326,6 +1398,7 @@ const AdminConsole = ({ user, onBack, theme }) => {
                     users={users}
                     ideas={ideas}
                     isLoading={isLoading}
+                    user={user}
                 />
             )}
 
@@ -1344,6 +1417,20 @@ const AdminConsole = ({ user, onBack, theme }) => {
                     onSearch={handleSearchIdeas}
                     isLoading={isLoading}
                     user={user}
+                />
+            )}
+
+            {activeTab === 'moderation' && (
+                <ModerationQueue
+                    user={user}
+                    theme={theme}
+                />
+            )}
+
+            {activeTab === 'alerts' && (
+                <AnnouncementManager
+                    user={user}
+                    theme={theme}
                 />
             )}
 

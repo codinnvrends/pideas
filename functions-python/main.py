@@ -188,26 +188,4 @@ def generate_codebase(req: https_fn.CallableRequest):
         traceback.print_exc()
         return {"success": False, "error": str(e)}
 
-@https_fn.on_call(memory=1024, timeout_sec=120)
-def generate_project_theory(req: https_fn.CallableRequest):
-    """
-    Cloud Function to generate a comprehensive theoretical report for a project.
-    """
-    from src.features.theory_generator import generate_project_theory as gen_theory
 
-    try:
-        data = req.data
-        project_title = data.get("projectTitle")
-        project_overview = data.get("projectOverview")
-        tech_stack = data.get("techStack")
-
-        if not project_title or not project_overview:
-            return {"success": False, "error": "Missing 'projectTitle' or 'projectOverview'"}
-
-        report = gen_theory(project_title, project_overview, tech_stack)
-        
-        return {"success": True, "report": report}
-
-    except Exception as e:
-        print(f"Error in generate_project_theory: {str(e)}")
-        return {"success": False, "error": str(e)}

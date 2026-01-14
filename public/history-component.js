@@ -230,7 +230,7 @@ const HistoryView = ({ user, onBack, onViewIdea }) => {
                     return (
                         <div
                             key={item.id}
-                            onClick={() => compareMode ? toggleCompareSelection(null, item.id) : onViewIdea(item)}
+                            onClick={(e) => compareMode ? toggleCompareSelection(e, item.id) : onViewIdea(item)}
                             className={`group relative bg-gray-900/40 backdrop-blur-sm border rounded-xl overflow-hidden cursor-pointer transition-all duration-300 hover:transform hover:-translate-y-1 hover:shadow-xl
                                 ${isSelected ? 'ring-2 ring-blue-500 border-blue-500' : 'border-gray-800/50 hover:border-gray-700'}
                             `}

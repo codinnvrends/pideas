@@ -68,18 +68,47 @@ const ProjectReportView = ({ idea, theme, userProfile, historyId, user, initialR
                 const generatedReport = result.data.report;
                 setReport(generatedReport);
 
-                // Auto-save to history if we have an ID
-                if (historyId && user) {
+                // Auto-save: Create history entry if missing, then save report
+                if (user) {
                     setSaveStatus('Saving to history...');
                     try {
-                        const updateHistory = firebase.functions().httpsCallable('updateProjectHistory');
-                        await updateHistory({
-                            userId: user.uid,
-                            historyId: historyId,
-                            data: { report: generatedReport }
-                        });
-                        setSaveStatus('Saved to history');
-                        setTimeout(() => setSaveStatus(''), 3000);
+                        let targetHistoryId = historyId;
+
+                        // 1. If we don't have a history ID, create a new entry first
+                        if (!targetHistoryId) {
+                            console.log("No history ID found, creating new entry for report...");
+                            const saveIdeaToHistory = firebase.functions().httpsCallable('saveIdeaToHistory');
+
+                            const saveResult = await saveIdeaToHistory({
+                                userId: user.uid,
+                                ideaData: {
+                                    query: "Report Generation (Manual)",
+                                    idea: idea, // The full idea text
+                                    studentProfile: userProfile || {},
+                                    gameScore: 0
+                                },
+                                gameSteps: []
+                            });
+
+                            if (saveResult.data.success) {
+                                targetHistoryId = saveResult.data.historyId;
+                                console.log("Created new history entry:", targetHistoryId);
+                            }
+                        }
+
+                        // 2. Save the report to the history item
+                        if (targetHistoryId) {
+                            const updateHistory = firebase.functions().httpsCallable('updateProjectHistory');
+                            await updateHistory({
+                                userId: user.uid,
+                                historyId: targetHistoryId,
+                                data: { report: generatedReport }
+                            });
+                            setSaveStatus('Saved to history');
+                            setTimeout(() => setSaveStatus(''), 3000);
+                        } else {
+                            throw new Error("Could not establish history ID");
+                        }
                     } catch (saveErr) {
                         console.error("Failed to save report:", saveErr);
                         setSaveStatus('Failed to save');

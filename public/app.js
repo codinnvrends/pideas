@@ -460,22 +460,7 @@ const LoginScreen = ({ onLogin, onDiscoveryPath, isLoading, theme, toggleTheme }
             <div className="relative z-10 min-h-screen flex flex-col">
                 {/* Header */}
                 <header className="w-full h-32 flex items-center justify-center relative pt-8">
-                    <div className="absolute top-8 right-8 z-50">
-                        <button
-                            onClick={toggleTheme}
-                            className={`p-2 transition-colors rounded-lg ${theme === 'light' ? 'text-gray-600 hover:bg-gray-100 hover:text-black' : 'text-gray-400 hover:bg-white/10 hover:text-white'}`}
-                        >
-                            {theme === 'light' ? (
-                                <svg className="w-6 h-6 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
-                                </svg>
-                            ) : (
-                                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                                </svg>
-                            )}
-                        </button>
-                    </div>
+
                     <div className="w-full h-full relative z-10 transform hover:scale-105 transition-transform duration-500">
                         <InteractiveLogo theme={theme} />
                     </div>
@@ -2553,6 +2538,29 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false, custom
     const [isGeneratingCode, setIsGeneratingCode] = useState(false);
     const [exportLoading, setExportLoading] = useState(false);
     const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+
+    // Helper to extract clean project title
+    const getProjectTitle = () => {
+        if (!currentIdea) return "Project Idea";
+        const content = typeof currentIdea === 'string' ? currentIdea : "";
+
+        // 1. Try "Title: <name>" pattern
+        const titleMatch = content.match(/(?:Project Title|Title)\s*:\s*(.+)/i);
+        if (titleMatch && titleMatch[1]) {
+            return titleMatch[1].replace(/[*_#]/g, '').trim();
+        }
+
+        // 2. Scan lines for first non-generic header
+        const lines = content.split('\n');
+        for (const line of lines) {
+            const clean = line.replace(/^[#\*\-\s]+/, '').replace(/[*_]/g, '').trim();
+            // Skip empty or generic "Project Title" lines
+            if (clean && !clean.toLowerCase().match(/^project title$/)) {
+                return clean;
+            }
+        }
+        return "Project Idea";
+    };
     const [showProfileEditor, setShowProfileEditor] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -2560,6 +2568,28 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false, custom
     const [codePreviewData, setCodePreviewData] = useState(null);
     const [showShareModal, setShowShareModal] = useState(false);
     const [activeTab, setActiveTab] = useState('plan'); // 'plan', 'roadmap', 'resources'
+
+    // Sync state with props when they update (e.g. after auto-save adds historyId)
+    useEffect(() => {
+        if (idea) {
+            const newIdeaText = getIdeaText(idea);
+            const newHistoryId = getHistoryId(idea);
+
+            // Only update if changed to avoid loops/resets during editing
+            // Note: We prioritize the prop *if* it has an ID and we don't, 
+            // OR if the text is significantly different (new idea loaded).
+            // But if user is modifying 'currentIdea' locally, we should be careful.
+            // For now, let's assume if 'idea' prop changes reference, it's a new load or save.
+
+            if (newHistoryId && newHistoryId !== currentHistoryId) {
+                setCurrentHistoryId(newHistoryId);
+            }
+            // Optional: Update text if it's a fresh load (simplistic check)
+            if (newIdeaText && newIdeaText !== currentIdea && !isModifying) {
+                setCurrentIdea(newIdeaText);
+            }
+        }
+    }, [idea]);
 
     // Update state when idea prop changes
     useEffect(() => {
@@ -2613,6 +2643,7 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false, custom
 
         try {
             await window.html2pdf().set(opt).from(element).save();
+            if (updateUserStats) updateUserStats('EXPORT_CODE');
         } finally {
             setExportLoading(false);
         }
@@ -3192,6 +3223,7 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false, custom
                     historyId={(typeof idea === 'object' && idea.historyId) ? idea.historyId : null}
                     initialReport={(typeof idea === 'object' && idea.report) ? idea.report : null}
                     user={user}
+                    onReportGenerated={() => updateUserStats && updateUserStats('READ_REPORT')}
                 />
             )}
 
@@ -3303,9 +3335,14 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false, custom
             {
                 showShareModal && (
                     <SocialShareModal
-                        idea={{ title: currentIdea.split('\n')[0].replace(/#+\**/g, '').trim() || "Project Idea", description: currentIdea, id: "current" }}
+                        idea={{
+                            title: getProjectTitle(),
+                            description: typeof currentIdea === 'string' ? currentIdea : "",
+                            id: currentHistoryId
+                        }}
                         onClose={() => setShowShareModal(false)}
                         theme={theme}
+                        onShare={() => updateUserStats && updateUserStats('SHARE_IDEA')}
                     />
                 )
             }
@@ -3740,6 +3777,21 @@ const AppScreen = ({ user, onLogout, onDiscoveryMode, addToast, theme, toggleThe
     const [isLoadingRole, setIsLoadingRole] = useState(true);
     const [fullUserProfile, setFullUserProfile] = useState({});
     const [showProfileEditor, setShowProfileEditor] = useState(false);
+
+    // Wrapper for updateUserStats to update local state immediately
+    const handleStatsUpdate = async (action) => {
+        if (!updateUserStats) return;
+        const res = await updateUserStats(action);
+        if (res) {
+            setFullUserProfile(prev => ({
+                ...prev,
+                xp: res.xp,
+                level: res.level,
+                badges: res.badges,
+                dailyQuests: res.dailyQuests
+            }));
+        }
+    };
 
     // Destructure new Landing Components
     const { TypingHero, SocialProofTicker, FeaturedProjects, QuickResume } = window.LandingComponents || {};
@@ -4353,7 +4405,7 @@ const AppScreen = ({ user, onLogout, onDiscoveryMode, addToast, theme, toggleThe
                             onLogout={onLogout}           // Pass logout handler
                             onDiscoveryMode={onDiscoveryMode} // Pass discovery handler
                             theme={theme}
-                            updateUserStats={updateUserStats}
+                            updateUserStats={handleStatsUpdate}
                         />
                     )
                 }
@@ -4370,6 +4422,7 @@ const AppScreen = ({ user, onLogout, onDiscoveryMode, addToast, theme, toggleThe
                                     report: item.report
                                 });
                                 setCurrentView('result');
+                                handleStatsUpdate('VIEW_HISTORY');
                             }}
                         />
                     )
@@ -4419,23 +4472,14 @@ const App = () => {
     const [sharedIdea, setSharedIdea] = useState(null);
     const [forceRender, setForceRender] = useState(0);
     const [toasts, setToasts] = useState([]);
-    const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+    // Force Dark Mode - Light mode removed per user request
+    const theme = 'dark';
+    const toggleTheme = () => { }; // No-op
 
-    const toggleTheme = () => {
-        setTheme(prev => {
-            const newTheme = prev === 'dark' ? 'light' : 'dark';
-            localStorage.setItem('theme', newTheme);
-            return newTheme;
-        });
-    };
-
+    // Remove light-mode class effect
     useEffect(() => {
-        if (theme === 'light') {
-            document.body.classList.add('light-mode');
-        } else {
-            document.body.classList.remove('light-mode');
-        }
-    }, [theme]);
+        document.body.classList.remove('light-mode');
+    }, []);
 
     const addToast = (message, type = 'info') => {
         const id = Date.now();
@@ -4630,7 +4674,7 @@ const App = () => {
 
         try {
             const userRef = firebase.firestore().collection('users').doc(user.uid);
-            await firebase.firestore().runTransaction(async (transaction) => {
+            const res = await firebase.firestore().runTransaction(async (transaction) => {
                 const doc = await transaction.get(userRef);
                 if (!doc.exists) return;
 
@@ -4649,7 +4693,30 @@ const App = () => {
 
                 xp += (XP_TABLE[actionType] || 0);
 
-                // Badge Logic
+                // Daily Quest Logic
+                let dailyQuests = data.dailyQuests || [];
+                const QUEST_MAP = {
+                    'GENERATE_IDEA': 'gen_1_idea',
+                    'SHARE_IDEA': 'share_idea',
+                    'VIEW_HISTORY': 'view_history',
+                    'EXPORT_CODE': 'export_code',
+                    'read_report': 'read_report', // Handling lower case just in case
+                    'READ_REPORT': 'read_report'
+                };
+
+                const targetQuestId = QUEST_MAP[actionType];
+                let questCompletedInfo = null;
+
+                if (targetQuestId) {
+                    dailyQuests = dailyQuests.map(q => {
+                        if (q.id === targetQuestId && !q.completed) {
+                            q.completed = true;
+                            xp += (q.xp || 0);
+                            questCompletedInfo = { text: q.text, xp: q.xp };
+                        }
+                        return q;
+                    });
+                }
                 if (!badges.includes('first_step') && actionType === 'GENERATE_IDEA') {
                     badges.push('first_step');
                     newBadges.push('First Step');
@@ -4677,14 +4744,25 @@ const App = () => {
                     xp,
                     level,
                     badges,
+                    dailyQuests, // Update quests
                     ideasGenerated: actionType === 'GENERATE_IDEA' ? firebase.firestore.FieldValue.increment(1) : (data.ideasGenerated || 0)
                 });
 
-                // Notify user
-                if (newBadges.length > 0) {
-                    addToast(`🏆 New Badge Unlocked: ${newBadges.join(', ')}!`, 'success');
-                }
+                return { newBadges, xp, questCompletedInfo, dailyQuests, level, badges };
             });
+
+            // Notify user
+            if (!res) return;
+
+            if (res.questCompletedInfo) {
+                addToast(`Quest Completed: ${res.questCompletedInfo.text} (+${res.questCompletedInfo.xp} XP)`, 'success');
+            }
+
+            if (res.newBadges.length > 0) {
+                res.newBadges.forEach(badge => {
+                    addToast(`Achievement Unlocked: ${badge} 🏆`, 'success');
+                });
+            }
         } catch (error) {
             console.error("Error updating stats:", error);
         }
@@ -4695,7 +4773,8 @@ const App = () => {
         const params = new URLSearchParams(window.location.search);
         const shareId = params.get('shareId');
         if (shareId && typeof firebase !== 'undefined') {
-            firebase.firestore().collection('generated_ideas').doc(shareId).get()
+            // Note: History items are stored in 'projectHistory' collection
+            firebase.firestore().collection('projectHistory').doc(shareId).get()
                 .then(doc => {
                     if (doc.exists) {
                         setSharedIdea({ id: doc.id, ...doc.data() });
@@ -4799,6 +4878,54 @@ const App = () => {
         );
     }
 
+    if (sharedIdea) {
+        return (
+            <div className="bg-gray-900 min-h-screen">
+                <ParticleSystem theme={theme} />
+                <div className="relative z-10">
+                    {/* Public Shared Header */}
+                    <div className="px-6 py-4 flex justify-between items-center bg-gray-900/90 backdrop-blur-sm border-b border-gray-800 sticky top-0 z-50">
+                        <div className="flex items-center gap-2">
+                            <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-2 rounded-lg">
+                                <span className="text-xl">🚀</span>
+                            </div>
+                            <span className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">
+                                Pideas Shared
+                            </span>
+                        </div>
+                        <button
+                            onClick={() => {
+                                setSharedIdea(null);
+                                // Clear URL param
+                                const url = new URL(window.location);
+                                url.searchParams.delete('shareId');
+                                window.history.pushState({}, '', url);
+                            }}
+                            className="text-gray-400 hover:text-white transition-colors flex items-center gap-2"
+                        >
+                            <span>Back to Home</span>
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    {/* Re-use Display Component */}
+                    <ProjectIdeaDisplay
+                        idea={sharedIdea.idea || sharedIdea} // Handle both object and string formats
+                        theme={theme}
+                        hideHeader={false}
+                        user={user} // Pass user if they happen to be logged in, otherwise null is fine
+                        addToast={addToast}
+                    // Disable modifying for public view if not owner?
+                    // ProjectIdeaDisplay doesn't strictly enforce ownership for modifying locally yet, 
+                    // but saving requires user. We can keep it as is for now.
+                    />
+                </div>
+                <ToastContainer toasts={toasts} removeToast={removeToast} />
+            </div>
+        );
+    }
 
     return (
         <div className="bg-gray-900 min-h-screen">

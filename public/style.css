@@ -151,35 +151,7 @@ body {
     transition: opacity 200ms, transform 200ms;
 }
 
-/* Light Mode Overrides */
-body.light-mode {
-    background-color: #f8fafc !important;
-    /* Slate 50 */
-    color: #0f172a !important;
-    /* Slate 900 */
-}
 
-/* Backgrounds */
-body.light-mode .bg-black {
-    background-color: #f1f5f9 !important;
-}
-
-/* Slate 100 as main refreshing bg */
-body.light-mode .bg-gray-900 {
-    background-color: #ffffff !important;
-    border-color: #cbd5e1 !important;
-}
-
-/* White cards */
-body.light-mode .bg-gray-800\/30,
-body.light-mode .bg-gray-800\/50,
-body.light-mode .bg-gray-900\/50,
-body.light-mode .bg-gray-900\/90 {
-    background-color: rgba(255, 255, 255, 0.8) !important;
-    backdrop-filter: blur(12px) !important;
-    border-color: #e2e8f0 !important;
-    /* Slate 200 */
-}
 
 /* Glassmorphism Tooltip Styles */
 .glass-tooltip-btn {

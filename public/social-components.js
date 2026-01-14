@@ -108,13 +108,14 @@ const LeaderboardWidget = ({ theme }) => {
     );
 };
 
-const SocialShareModal = ({ idea, onClose, theme }) => {
+const SocialShareModal = ({ idea, onClose, theme, onShare }) => {
     const [copied, setCopied] = React.useState(false);
     const shareUrl = `${window.location.origin}?shareId=${idea.id}`; // Assuming idea.id corresponds to a generated_ideas doc ID
 
     const handleCopy = () => {
         navigator.clipboard.writeText(shareUrl);
         setCopied(true);
+        if (onShare) onShare();
         setTimeout(() => setCopied(false), 2000);
     };
 
@@ -166,6 +167,7 @@ const SocialShareModal = ({ idea, onClose, theme }) => {
                             href={twitterUrl}
                             target="_blank"
                             rel="noopener noreferrer"
+                            onClick={() => onShare && onShare()}
                             className="flex items-center justify-center gap-2 px-4 py-2.5 bg-[#1DA1F2] hover:bg-[#1a91da] text-white rounded-xl font-medium transition-colors"
                         >
                             <span>Twitter</span>
@@ -174,6 +176,7 @@ const SocialShareModal = ({ idea, onClose, theme }) => {
                             href={linkedinUrl}
                             target="_blank"
                             rel="noopener noreferrer"
+                            onClick={() => onShare && onShare()}
                             className="flex items-center justify-center gap-2 px-4 py-2.5 bg-[#0A66C2] hover:bg-[#004182] text-white rounded-xl font-medium transition-colors"
                         >
                             <span>LinkedIn</span>
@@ -223,10 +226,9 @@ const DailyQuestWidget = ({ user, onUpdate, theme }) => {
                     quests.map(quest => (
                         <div
                             key={quest.id}
-                            onClick={() => !quest.completed && handleQuestClick(quest.id)}
-                            className={`flex items-center gap-3 p-3 rounded-lg border transition-all cursor-pointer ${quest.completed
-                                    ? 'bg-green-900/20 border-green-500/30 opacity-70'
-                                    : `${theme === 'light' ? 'bg-gray-50 hover:bg-gray-100 border-gray-200' : 'bg-gray-700/30 hover:bg-gray-700/50 border-gray-600'}`
+                            className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${quest.completed
+                                ? 'bg-green-900/20 border-green-500/30 opacity-70'
+                                : `${theme === 'light' ? 'bg-gray-50 border-gray-200' : 'bg-gray-700/30 border-gray-600'}`
                                 }`}
                         >
                             <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${quest.completed ? 'bg-green-500 border-green-500' : 'border-gray-400'
@@ -283,8 +285,8 @@ const SkillTree = ({ user, theme }) => {
                 {skills.map(skill => (
                     <div key={skill.id} className="flex flex-col items-center gap-2 bg-gray-900 p-2 rounded-lg z-10">
                         <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl border-2 transition-all ${skill.unlocked
-                                ? 'bg-blue-600 border-blue-400 text-white shadow-lg shadow-blue-500/50'
-                                : 'bg-gray-800 border-gray-600 text-gray-500 grayscale'
+                            ? 'bg-blue-600 border-blue-400 text-white shadow-lg shadow-blue-500/50'
+                            : 'bg-gray-800 border-gray-600 text-gray-500 grayscale'
                             }`}>
                             {skill.icon}
                         </div>

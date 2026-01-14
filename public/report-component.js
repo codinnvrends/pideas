@@ -15,7 +15,7 @@ const sanitizeMarkdown = (text) => {
 
 // Project Report Component (Thesis Generator)
 
-const ProjectReportView = ({ idea, theme, userProfile, historyId, user, initialReport }) => {
+const ProjectReportView = ({ idea, theme, userProfile, historyId, user, initialReport, onReportGenerated }) => {
     const [report, setReport] = React.useState(initialReport || null);
     const [isLoading, setIsLoading] = React.useState(false);
     const [error, setError] = React.useState(null);
@@ -67,6 +67,7 @@ const ProjectReportView = ({ idea, theme, userProfile, historyId, user, initialR
             if (result.data.success) {
                 const generatedReport = result.data.report;
                 setReport(generatedReport);
+                if (onReportGenerated) onReportGenerated();
 
                 // Auto-save: Create history entry if missing, then save report
                 if (user) {

@@ -2,6 +2,176 @@
 // History Component with Advanced Management Features
 // Features: Filtering, Pinning, Status Tracking, Comparison
 
+// Helper: Parse Project Idea into Structured Data
+const parseProjectData = (ideaText, query) => {
+    if (!ideaText) return null;
+
+    // 1. Title
+    let title = "Untitled Project";
+    const titleMatch = query.match(/for:\s*["']([^"']+)["']/i);
+    if (titleMatch) title = titleMatch[1];
+    else {
+        const lines = ideaText.split('\n').filter(l => l.trim());
+        const firstHeader = lines.find(l => l.match(/^#+\s/));
+        if (firstHeader) title = firstHeader.replace(/^#+\s/, '').replace(/\*\*/g, '').trim();
+    }
+
+    // 2. Overview (first paragraph)
+    let overview = "";
+    const sections = ideaText.split(/#+\s/);
+    if (sections.length > 1) {
+        overview = sections.find(s => s.toLowerCase().includes('overview') || s.toLowerCase().includes('introduction')) || sections[0];
+        overview = overview.replace(/overview|introduction/i, '').trim().substring(0, 150) + "...";
+    }
+
+    // 3. Tech Stack
+    let techStack = [];
+    const techSection = sections.find(s => s.toLowerCase().includes('technolog') || s.toLowerCase().includes('stack'));
+    if (techSection) {
+        techStack = techSection.split('\n')
+            .filter(l => l.trim().match(/^[-*]\s/))
+            .map(l => l.replace(/^[-*]\s/, '').trim())
+            .slice(0, 5);
+    }
+
+    // 4. Features
+    let features = [];
+    const featureSection = sections.find(s => s.toLowerCase().includes('feature') || s.toLowerCase().includes('functionality'));
+    if (featureSection) {
+        features = featureSection.split('\n')
+            .filter(l => l.trim().match(/^[-*]\s/))
+            .map(l => l.replace(/^[-*]\s/, '').trim())
+            .slice(0, 4);
+    }
+
+    // 5. Complexity (Heuristic)
+    let complexity = "Medium";
+    if (ideaText.length > 5000) complexity = "High";
+    if (ideaText.match(/microservices|distributed|AI model/i)) complexity = "Very High";
+    if (ideaText.match(/static site|landing page|simple/i)) complexity = "Low";
+
+    return { title, overview, techStack, features, complexity };
+};
+
+// Component: Comparison Modal
+const ComparisonModal = ({ project1, project2, onClose }) => {
+    const data1 = parseProjectData(project1.idea, project1.query);
+    const data2 = parseProjectData(project2.idea, project2.query);
+
+    if (!data1 || !data2) return null;
+
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
+            <div className="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-6xl h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+                {/* Header */}
+                <div className="p-6 border-b border-gray-800 flex justify-between items-center bg-gray-900/50">
+                    <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+                        <span className="text-3xl">⚖️</span> Project Comparison
+                    </h2>
+                    <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors bg-gray-800 hover:bg-gray-700 p-2 rounded-full">
+                        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                {/* Content - Scrollable */}
+                <div className="flex-1 overflow-auto p-0 grid grid-cols-2 divide-x divide-gray-800">
+                    {/* Project A */}
+                    <div className="p-8 space-y-8 bg-gradient-to-b from-gray-900 via-gray-900 to-gray-800/20">
+                        <div>
+                            <div className="text-sm font-bold text-blue-500 mb-2 uppercase tracking-wide">Project A</div>
+                            <h3 className="text-3xl font-bold text-white mb-4">{data1.title}</h3>
+                            <p className="text-gray-400 leading-relaxed text-sm">{data1.overview}</p>
+                        </div>
+
+                        <div className="p-4 bg-gray-800/40 rounded-xl border border-gray-700/50">
+                            <div className="text-xs font-bold text-gray-500 uppercase mb-3">Complexity Estimate</div>
+                            <div className={`inline-block px-3 py-1 rounded-full text-sm font-bold 
+                                ${data1.complexity === 'High' || data1.complexity === 'Very High' ? 'bg-red-900/30 text-red-400' :
+                                    data1.complexity === 'Low' ? 'bg-green-900/30 text-green-400' : 'bg-yellow-900/30 text-yellow-400'}`}>
+                                {data1.complexity}
+                            </div>
+                        </div>
+
+                        <div>
+                            <h4 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                                <span>🛠️</span> Tech Stack
+                            </h4>
+                            <div className="flex flex-wrap gap-2">
+                                {data1.techStack.length > 0 ? data1.techStack.map((tech, i) => (
+                                    <span key={i} className="px-3 py-1 bg-blue-900/20 border border-blue-800/50 text-blue-300 rounded-lg text-sm">
+                                        {tech}
+                                    </span>
+                                )) : <span className="text-gray-500 italic">No specific logic found.</span>}
+                            </div>
+                        </div>
+
+                        <div>
+                            <h4 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                                <span>✨</span> Key Features
+                            </h4>
+                            <ul className="space-y-2">
+                                {data1.features.length > 0 ? data1.features.map((feat, i) => (
+                                    <li key={i} className="flex items-start gap-3 text-gray-300 text-sm">
+                                        <span className="text-green-500 mt-1">✓</span>
+                                        {feat}
+                                    </li>
+                                )) : <span className="text-gray-500 italic">Standard features apply.</span>}
+                            </ul>
+                        </div>
+                    </div>
+
+                    {/* Project B */}
+                    <div className="p-8 space-y-8 bg-gradient-to-b from-gray-900 via-gray-900 to-gray-800/20">
+                        <div>
+                            <div className="text-sm font-bold text-purple-500 mb-2 uppercase tracking-wide">Project B</div>
+                            <h3 className="text-3xl font-bold text-white mb-4">{data2.title}</h3>
+                            <p className="text-gray-400 leading-relaxed text-sm">{data2.overview}</p>
+                        </div>
+
+                        <div className="p-4 bg-gray-800/40 rounded-xl border border-gray-700/50">
+                            <div className="text-xs font-bold text-gray-500 uppercase mb-3">Complexity Estimate</div>
+                            <div className={`inline-block px-3 py-1 rounded-full text-sm font-bold 
+                                ${data2.complexity === 'High' || data2.complexity === 'Very High' ? 'bg-red-900/30 text-red-400' :
+                                    data2.complexity === 'Low' ? 'bg-green-900/30 text-green-400' : 'bg-yellow-900/30 text-yellow-400'}`}>
+                                {data2.complexity}
+                            </div>
+                        </div>
+
+                        <div>
+                            <h4 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                                <span>🛠️</span> Tech Stack
+                            </h4>
+                            <div className="flex flex-wrap gap-2">
+                                {data2.techStack.length > 0 ? data2.techStack.map((tech, i) => (
+                                    <span key={i} className="px-3 py-1 bg-purple-900/20 border border-purple-800/50 text-purple-300 rounded-lg text-sm">
+                                        {tech}
+                                    </span>
+                                )) : <span className="text-gray-500 italic">No specific logic found.</span>}
+                            </div>
+                        </div>
+
+                        <div>
+                            <h4 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                                <span>✨</span> Key Features
+                            </h4>
+                            <ul className="space-y-2">
+                                {data2.features.length > 0 ? data2.features.map((feat, i) => (
+                                    <li key={i} className="flex items-start gap-3 text-gray-300 text-sm">
+                                        <span className="text-green-500 mt-1">✓</span>
+                                        {feat}
+                                    </li>
+                                )) : <span className="text-gray-500 italic">Standard features apply.</span>}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 const HistoryView = ({ user, onBack, onViewIdea }) => {
     const [history, setHistory] = React.useState([]);
     const [filteredHistory, setFilteredHistory] = React.useState([]);
@@ -14,6 +184,7 @@ const HistoryView = ({ user, onBack, onViewIdea }) => {
     const [projectStatuses, setProjectStatuses] = React.useState({}); // { ideaId: 'todo' | 'in-progress' | 'done' }
     const [compareMode, setCompareMode] = React.useState(false);
     const [selectedForCompare, setSelectedForCompare] = React.useState([]);
+    const [showComparisonModal, setShowComparisonModal] = React.useState(false);
 
     // Load Data
     React.useEffect(() => {
@@ -213,11 +384,20 @@ const HistoryView = ({ user, onBack, onViewIdea }) => {
                 <div className="fixed bottom-8 right-8 z-50 animate-bounce">
                     <button
                         className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-6 rounded-full shadow-2xl flex items-center gap-2"
-                        onClick={() => alert("Comparison Feature Prototype - Coming Soon!")}
+                        onClick={() => setShowComparisonModal(true)}
                     >
                         ⚖️ Compare Selected (2)
                     </button>
                 </div>
+            )}
+
+            {/* Comparison Modal */}
+            {showComparisonModal && selectedForCompare.length === 2 && (
+                <ComparisonModal
+                    project1={history.find(h => h.id === selectedForCompare[0])}
+                    project2={history.find(h => h.id === selectedForCompare[1])}
+                    onClose={() => setShowComparisonModal(false)}
+                />
             )}
 
             {/* Grid */}

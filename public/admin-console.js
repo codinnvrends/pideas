@@ -1107,7 +1107,7 @@ const AdminLogs = ({ logs, isLoading, theme }) => {
 
 // Main Admin Console Component
 const AdminConsole = ({ user, onBack, theme }) => {
-    const [activeTab, setActiveTab] = useState('dashboard'); // Default to Dashboard for impact
+    const [activeTab, setActiveTab] = useState('analytics'); // Default to Dashboard (analytics)
     const [users, setUsers] = useState([]);
     const [ideas, setIdeas] = useState([]);
     const [logs, setLogs] = useState([]);
@@ -1145,7 +1145,7 @@ const AdminConsole = ({ user, onBack, theme }) => {
     useEffect(() => {
         if (userRole?.isAdmin) {
             // Load ALL data for analytics initially
-            if (activeTab === 'dashboard') {
+            if (activeTab === 'analytics') {
                 loadData();
             } else if (activeTab === 'users') {
                 loadUsers();

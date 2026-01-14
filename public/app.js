@@ -3760,6 +3760,51 @@ const UserProfileDropdown = ({ user, userProfile, userRole, onClose, onLogout, o
     );
 };
 
+// System Alert Banner Component
+const SystemAlertBanner = ({ theme }) => {
+    const [alert, setAlert] = useState(null);
+
+    useEffect(() => {
+        if (typeof firebase === 'undefined') return;
+        const unsubscribe = firebase.firestore().collection('system_alerts')
+            .where('active', '==', true)
+            .orderBy('createdAt', 'desc')
+            .limit(1)
+            .onSnapshot(snapshot => {
+                if (!snapshot.empty) {
+                    setAlert({ id: snapshot.docs[0].id, ...snapshot.docs[0].data() });
+                } else {
+                    setAlert(null);
+                }
+            });
+        return () => unsubscribe();
+    }, []);
+
+    if (!alert) return null;
+
+    const colors = {
+        info: 'bg-blue-600 text-white',
+        warning: 'bg-yellow-600 text-white',
+        alert: 'bg-red-600 text-white'
+    };
+
+    return (
+        <div className={`${colors[alert.type] || colors.info} px-4 py-3 text-center font-medium shadow-md flex justify-between items-center relative z-50 animate-fade-in`}>
+            <span className="flex-1 text-sm font-bold tracking-wide flex items-center justify-center gap-2">
+                📢 {alert.message}
+            </span>
+            <button
+                onClick={() => setAlert(null)}
+                className="ml-4 text-white/80 hover:text-white hover:bg-white/20 rounded-full p-1 transition-colors"
+            >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+    );
+};
+
 // Main App Screen Component
 const AppScreen = ({ user, onLogout, onDiscoveryMode, addToast, theme, toggleTheme, updateUserStats }) => {
     const [currentView, setCurrentView] = useState('welcome');
@@ -4103,6 +4148,8 @@ const AppScreen = ({ user, onLogout, onDiscoveryMode, addToast, theme, toggleThe
         <div className={`${currentView === 'result' || currentView === 'admin' ? 'h-screen overflow-hidden' : 'min-h-screen'} flex flex-col bg-black relative`}>
             {/* Add particle system background */}
             <ParticleSystem />
+
+            <SystemAlertBanner theme={theme} />
 
             {/* Header */}
             {currentView !== 'result' && (

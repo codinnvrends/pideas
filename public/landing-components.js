@@ -71,7 +71,47 @@ const SocialProofTicker = () => {
     );
 };
 
-// 3. Featured Projects Carousel
+// 3. How It Works Component
+const HowItWorks = () => {
+    const steps = [
+        {
+            icon: "🎯",
+            title: "Describe",
+            desc: "Tell us your interests and skills."
+        },
+        {
+            icon: "🎮",
+            title: "Play",
+            desc: "Answer gamified questions."
+        },
+        {
+            icon: "🚀",
+            title: "Build",
+            desc: "Get a complete project roadmap."
+        }
+    ];
+
+    return (
+        <div className="w-full max-w-5xl mx-auto px-4 mt-8 mb-16 animate-fade-in delay-200">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
+                {/* Connection Line (Desktop) */}
+                <div className="hidden md:block absolute top-1/2 left-0 w-full h-0.5 bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-blue-500/20 -translate-y-1/2 z-0"></div>
+
+                {steps.map((step, idx) => (
+                    <div key={idx} className="relative z-10 bg-gray-900/80 border border-gray-700/50 backdrop-blur-md rounded-xl p-6 text-center hover:border-blue-500/30 transition-all duration-300 group shadow-lg">
+                        <div className="w-12 h-12 mx-auto bg-gray-800 rounded-full flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform duration-300 border border-gray-700 group-hover:border-blue-500/50 shadow-inner">
+                            {step.icon}
+                        </div>
+                        <h3 className="text-lg font-bold text-white mb-1 group-hover:text-blue-400 transition-colors">{step.title}</h3>
+                        <p className="text-gray-400 text-sm leading-relaxed">{step.desc}</p>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
+
+// 4. Featured Projects Carousel
 const FeaturedProjects = ({ onViewIdea }) => {
     const projects = [
         {
@@ -108,7 +148,7 @@ const FeaturedProjects = ({ onViewIdea }) => {
                     <div
                         key={idx}
                         onClick={() => onViewIdea && onViewIdea(project)} // Placeholder action
-                        className="group relative bg-gray-800/30 border border-gray-700/50 rounded-xl p-6 hover:bg-gray-800/50 transition-all duration-300 hover:-translate-y-1 cursor-pointer overflow-hidden"
+                        className="group relative bg-gray-800/30 border border-gray-700/50 rounded-xl p-6 hover:bg-gray-800/50 transition-all duration-300 hover:-translate-y-1 active:scale-95 cursor-pointer overflow-hidden"
                     >
                         <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-${project.color}-500 to-${project.color}-400`}></div>
 
@@ -133,7 +173,7 @@ const FeaturedProjects = ({ onViewIdea }) => {
     );
 };
 
-// 4. Quick Resume Button
+// 5. Quick Resume Button
 const QuickResume = ({ onResume }) => {
     const [lastIdea, setLastIdea] = useState(null);
 
@@ -172,6 +212,7 @@ const QuickResume = ({ onResume }) => {
 window.LandingComponents = {
     TypingHero,
     SocialProofTicker,
+    HowItWorks,
     FeaturedProjects,
     QuickResume
 };

@@ -1884,21 +1884,26 @@ const CollapsibleSection = ({ title, content, isExpanded, onToggle, icon, isSpec
 };
 
 // Sidebar Navigation Component
+// Sidebar Navigation Component
 const SidebarNavigation = ({ sections, selectedSection, onSectionSelect, isModifying }) => {
     return (
-        <div className="w-64 bg-black border-r border-gray-800/60 h-full flex flex-col">
-            <div className="p-4 border-b border-gray-800/60 shrink-0">
-                <h3 className="text-lg font-semibold text-white mb-1">Project Sections</h3>
-                <p className="text-xs text-gray-500">Select a section to view or modify</p>
+        <div className="w-full md:w-64 bg-black border-r border-gray-800/60 md:h-full flex flex-col">
+            <div className="p-4 border-b border-gray-800/60 shrink-0 flex justify-between items-center md:block">
+                <div>
+                    <h3 className="text-lg font-semibold text-white mb-1">Project Sections</h3>
+                    <p className="text-xs text-gray-500 hidden md:block">Select a section to view or modify</p>
+                </div>
+                {/* Mobile: Show selected count or simple hint */}
+                <p className="text-xs text-blue-400 md:hidden">Scroll →</p>
             </div>
 
-            {/* Scrollable sections container */}
-            <div className="overflow-y-auto flex-1 p-3 space-y-1.5 custom-scrollbar">
+            {/* Scrollable sections container - Vertical on Desktop, Horizontal on Mobile */}
+            <div className="flex-1 p-3 space-x-2 md:space-x-0 md:space-y-1.5 custom-scrollbar flex md:block overflow-x-auto md:overflow-x-hidden md:overflow-y-auto">
                 {sections.filter(section => section.content.trim()).map((section) => (
                     <button
                         key={section.id}
                         onClick={() => onSectionSelect(section.id)}
-                        className={`w-full text-left p-3 rounded-lg transition-all duration-200 ${selectedSection === section.id
+                        className={`text-left p-3 rounded-lg transition-all duration-200 flex-shrink-0 w-64 md:w-full ${selectedSection === section.id
                             ? 'bg-gray-900 border border-gray-700 text-white shadow-lg'
                             : 'bg-black/80 border border-gray-800/60 text-gray-300 hover:bg-gray-900/60 hover:text-white'
                             }`}
@@ -1920,7 +1925,7 @@ const SidebarNavigation = ({ sections, selectedSection, onSectionSelect, isModif
             </div>
 
             {/* Footer with subtle branding */}
-            <div className="p-3 border-t border-gray-800/60 text-center">
+            <div className="p-3 border-t border-gray-800/60 text-center hidden md:block">
                 <p className="text-xs text-gray-600">
                     Project Idea Generator
                 </p>
@@ -2170,10 +2175,10 @@ const SectionEditor = ({ section, onUpdate, onModify, isLoading }) => {
 
                             return (
                                 <div>
-                                    <h1 className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 mb-6 leading-tight">
+                                    <h1 className="text-2xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 mb-4 md:mb-6 leading-tight break-words">
                                         {cleanTitle}
                                     </h1>
-                                    <div className="text-lg md:text-xl text-gray-300 leading-relaxed font-light">
+                                    <div className="text-base md:text-xl text-gray-300 leading-relaxed font-light">
                                         <div dangerouslySetInnerHTML={{
                                             __html: window.marked
                                                 ? window.marked.parse(description)
@@ -3157,9 +3162,9 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false, custom
 
             {/* Tab Content: Plan (Existing Sidebar + Editor Layout) */}
             {activeTab === 'plan' && (
-                <div className="relative z-10 flex-1 flex overflow-hidden">
-                    {/* Sidebar - Fixed width with dark theme */}
-                    <div className="w-64 bg-black border-r border-gray-800/60 flex-shrink-0">
+                <div className="relative z-10 flex-1 flex flex-col md:flex-row overflow-hidden">
+                    {/* Sidebar - Fixed width on Desktop, Collapsible/Top on Mobile */}
+                    <div className="w-full md:w-64 bg-black border-r border-gray-800/60 flex-shrink-0 md:h-full h-auto border-b md:border-b-0 z-20">
                         <SidebarNavigation
                             sections={sections}
                             selectedSection={selectedSection}
@@ -3169,7 +3174,7 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false, custom
                     </div>
 
                     {/* Main Content Area with Chat */}
-                    <div className="flex-1 flex flex-col bg-black relative" id="project-idea-content">
+                    <div className="flex-1 flex flex-col bg-black relative min-w-0" id="project-idea-content">
                         {/* Content Display Area - scrollbar-gutter prevents layout shift */}
                         <div className="flex-1 overflow-y-auto [scrollbar-gutter:stable] pb-40">
                             {selectedSectionData ? (
@@ -3353,35 +3358,130 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false, custom
 
 
 // User Profile Icon Component
-const UserProfileIcon = ({ onClick }) => {
+// User Profile Icon Component
+const UserProfileIcon = ({ onClick, userProfile }) => {
     return (
         <button
             onClick={onClick}
-            className="w-10 h-10 rounded-full bg-black flex items-center justify-center cursor-pointer hover:bg-gray-900 transition-all duration-200"
+            className="w-10 h-10 rounded-full bg-black border border-zinc-700 flex items-center justify-center cursor-pointer hover:bg-zinc-800 transition-all duration-200 overflow-hidden"
             aria-label="Open user profile"
         >
-            <div className="w-8 h-8 relative">
-                <svg viewBox="0 0 100 100" className="w-full h-full">
-                    <path
-                        d="M50,15 C60,15 70,25 70,40 C70,47 65,55 60,58 C57,60 55,62 55,65 L55,70 C55,72 53,75 50,75 C47,75 45,72 45,70 L45,65 C45,62 43,60 40,58 C35,55 30,47 30,40 C30,25 40,15 50,15 Z"
-                        fill="none"
-                        stroke="#4ade80"
-                        strokeWidth="4"
-                        strokeLinecap="round"
-                    />
-                    <circle cx="40" cy="40" r="5" fill="#4ade80" />
-                    <circle cx="60" cy="40" r="5" fill="#4ade80" />
-                    <path
-                        d="M35,80 C35,80 40,85 50,85 C60,85 65,80 65,80"
-                        fill="none"
-                        stroke="#4ade80"
-                        strokeWidth="4"
-                        strokeLinecap="round"
-                    />
-                </svg>
+            <div className="w-8 h-8 relative flex items-center justify-center">
+                {AVATARS[userProfile?.avatarId]?.icon || (
+                    <svg viewBox="0 0 100 100" className="w-full h-full">
+                        <path
+                            d="M50,15 C60,15 70,25 70,40 C70,47 65,55 60,58 C57,60 55,62 55,65 L55,70 C55,72 53,75 50,75 C47,75 45,72 45,70 L45,65 C45,62 43,60 40,58 C35,55 30,47 30,40 C30,25 40,15 50,15 Z"
+                            fill="none"
+                            stroke="#4ade80"
+                            strokeWidth="4"
+                            strokeLinecap="round"
+                        />
+                        <circle cx="40" cy="40" r="5" fill="#4ade80" />
+                        <circle cx="60" cy="40" r="5" fill="#4ade80" />
+                        <path
+                            d="M35,80 C35,80 40,85 50,85 C60,85 65,80 65,80"
+                            fill="none"
+                            stroke="#4ade80"
+                            strokeWidth="4"
+                            strokeLinecap="round"
+                        />
+                    </svg>
+                )}
             </div>
         </button>
     );
+};
+
+// Avatar Definitions - 8 Tech Themed Icons
+const AVATARS = {
+    'code': {
+        icon: (
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full text-[#1DED83]">
+                <polyline points="16 18 22 12 16 6"></polyline>
+                <polyline points="8 6 2 12 8 18"></polyline>
+            </svg>
+        )
+    },
+    'terminal': {
+        icon: (
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full text-[#1DED83]">
+                <polyline points="4 17 10 11 4 5"></polyline>
+                <line x1="12" y1="19" x2="20" y2="19"></line>
+            </svg>
+        )
+    },
+    'chip': {
+        icon: (
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full text-[#1DED83]">
+                <rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect>
+                <rect x="9" y="9" width="6" height="6"></rect>
+                <line x1="9" y1="1" x2="9" y2="4"></line>
+                <line x1="15" y1="1" x2="15" y2="4"></line>
+                <line x1="9" y1="20" x2="9" y2="23"></line>
+                <line x1="15" y1="20" x2="15" y2="23"></line>
+                <line x1="20" y1="9" x2="23" y2="9"></line>
+                <line x1="20" y1="14" x2="23" y2="14"></line>
+                <line x1="1" y1="9" x2="4" y2="9"></line>
+                <line x1="1" y1="14" x2="4" y2="14"></line>
+            </svg>
+        )
+    },
+    'bug': {
+        icon: (
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full text-[#1DED83]">
+                <rect x="8" y="9" width="8" height="12" rx="4" ry="4"></rect>
+                <line x1="11" y1="9" x2="11" y2="21"></line>
+                <line x1="13" y1="9" x2="13" y2="21"></line>
+                <path d="M12 9V6a2 2 0 0 1 2-2h1"></path>
+                <path d="M12 9V6a2 2 0 0 0-2-2H9"></path>
+                <line x1="5" y1="12" x2="8" y2="12"></line>
+                <line x1="16" y1="12" x2="19" y2="12"></line>
+                <line x1="4" y1="17" x2="8" y2="16"></line>
+                <line x1="16" y1="16" x2="20" y2="17"></line>
+            </svg>
+        )
+    },
+    'binary': {
+        icon: (
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full text-[#1DED83]">
+                <rect x="2" y="2" width="20" height="20" rx="10" ry="10"></rect>
+                <path d="M9.5 8h-1v8h1"></path>
+                <path d="M14.5 8h1v8h-1"></path>
+                <path d="M9.5 12h-1"></path>
+                <path d="M14.5 12h1"></path>
+            </svg>
+        )
+    },
+    'network': {
+        icon: (
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full text-[#1DED83]">
+                <circle cx="12" cy="5" r="3"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="12" x2="5" y2="16"></line>
+                <line x1="12" y1="12" x2="19" y2="16"></line>
+                <circle cx="5" cy="19" r="3"></circle>
+                <circle cx="19" cy="19" r="3"></circle>
+            </svg>
+        )
+    },
+    'security': {
+        icon: (
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full text-[#1DED83]">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                <rect x="10" y="8" width="4" height="6" rx="1"></rect>
+            </svg>
+        )
+    },
+    'server': {
+        icon: (
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full text-[#1DED83]">
+                <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+                <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+                <line x1="6" y1="6" x2="6.01" y2="6"></line>
+                <line x1="6" y1="18" x2="6.01" y2="18"></line>
+            </svg>
+        )
+    }
 };
 
 // Profile Editor Modal Component
@@ -3389,6 +3489,7 @@ const ProfileEditor = ({ user, currentProfile, onClose, onSave, isLoading, addTo
     const [name, setName] = useState(user.displayName || '');
     const [bio, setBio] = useState(currentProfile?.bio || '');
     const [location, setLocation] = useState(currentProfile?.location || '');
+    const [selectedAvatar, setSelectedAvatar] = useState(currentProfile?.avatarId || 'alien');
     const [isSaving, setIsSaving] = useState(false);
 
     const handleSave = async (e) => {
@@ -3398,7 +3499,8 @@ const ProfileEditor = ({ user, currentProfile, onClose, onSave, isLoading, addTo
             await onSave({
                 displayName: name,
                 bio,
-                location
+                location,
+                avatarId: selectedAvatar
             });
             onClose();
         } catch (error) {
@@ -3422,6 +3524,37 @@ const ProfileEditor = ({ user, currentProfile, onClose, onSave, isLoading, addTo
                 <h2 className="text-xl font-bold text-white mb-6">Edit Profile</h2>
 
                 <form onSubmit={handleSave} className="space-y-4">
+                    {/* Avatar Selector */}
+                    <div>
+                        <label className="block text-zinc-400 text-sm mb-2">Choose Avatar</label>
+                        <div className="grid grid-cols-4 gap-3 bg-black/30 p-3 rounded-lg border border-zinc-800">
+                            {/* Alien (Default) */}
+                            <button
+                                type="button"
+                                onClick={() => setSelectedAvatar('alien')}
+                                className={`p-2 rounded-lg border flex items-center justify-center aspect-square transition-all ${selectedAvatar === 'alien' || !selectedAvatar ? 'bg-blue-500/20 border-blue-500' : 'bg-transparent border-transparent hover:bg-white/5'}`}
+                            >
+                                <svg viewBox="0 0 100 100" className="w-8 h-8">
+                                    <path d="M50,15 C60,15 70,25 70,40 C70,47 65,55 60,58 C57,60 55,62 55,65 L55,70 C55,72 53,75 50,75 C47,75 45,72 45,70 L45,65 C45,62 43,60 40,58 C35,55 30,47 30,40 C30,25 40,15 50,15 Z" fill="none" stroke="#1DED83" strokeWidth="6" strokeLinecap="round" />
+                                    <circle cx="40" cy="40" r="5" fill="#1DED83" />
+                                    <circle cx="60" cy="40" r="5" fill="#1DED83" />
+                                </svg>
+                            </button>
+
+                            {/* Tech Avatars */}
+                            {Object.entries(AVATARS).map(([key, data]) => (
+                                <button
+                                    key={key}
+                                    type="button"
+                                    onClick={() => setSelectedAvatar(key)}
+                                    className={`p-2 rounded-lg border flex items-center justify-center aspect-square transition-all ${selectedAvatar === key ? 'bg-blue-500/20 border-blue-500' : 'bg-transparent border-transparent hover:bg-white/5'}`}
+                                >
+                                    <div className="w-8 h-8">{data.icon}</div>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
                     <div>
                         <label className="block text-zinc-400 text-sm mb-1">Display Name</label>
                         <input
@@ -3625,7 +3758,7 @@ const UserProfileDropdown = ({ user, userProfile, userRole, onClose, onLogout, o
     return (
         <div
             ref={dropdownRef}
-            className="absolute right-0 top-full mt-2 w-80 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl z-[9999] overflow-hidden"
+            className="absolute right-0 top-full mt-2 w-80 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl z-[9999] max-h-[85vh] overflow-y-auto overflow-x-hidden custom-scrollbar"
             style={{
                 transformOrigin: 'top right',
                 animation: 'fadeIn 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
@@ -3662,24 +3795,26 @@ const UserProfileDropdown = ({ user, userProfile, userRole, onClose, onLogout, o
                     <div className="flex justify-center mb-4">
                         <div className="w-24 h-24 rounded-full bg-black border-2 border-zinc-800 flex items-center justify-center relative">
                             <div className="w-16 h-16">
-                                <svg viewBox="0 0 100 100" className="w-full h-full">
-                                    <path
-                                        d="M50,15 C60,15 70,25 70,40 C70,47 65,55 60,58 C57,60 55,62 55,65 L55,70 C55,72 53,75 50,75 C47,75 45,72 45,70 L45,65 C45,62 43,60 40,58 C35,55 30,47 30,40 C30,25 40,15 50,15 Z"
-                                        fill="none"
-                                        stroke="#1DED83"
-                                        strokeWidth="4"
-                                        strokeLinecap="round"
-                                    />
-                                    <circle cx="40" cy="40" r="5" fill="#1DED83" />
-                                    <circle cx="60" cy="40" r="5" fill="#1DED83" />
-                                    <path
-                                        d="M35,80 C35,80 40,85 50,85 C60,85 65,80 65,80"
-                                        fill="none"
-                                        stroke="#1DED83"
-                                        strokeWidth="4"
-                                        strokeLinecap="round"
-                                    />
-                                </svg>
+                                {AVATARS[userProfile?.avatarId]?.icon || (
+                                    <svg viewBox="0 0 100 100" className="w-full h-full">
+                                        <path
+                                            d="M50,15 C60,15 70,25 70,40 C70,47 65,55 60,58 C57,60 55,62 55,65 L55,70 C55,72 53,75 50,75 C47,75 45,72 45,70 L45,65 C45,62 43,60 40,58 C35,55 30,47 30,40 C30,25 40,15 50,15 Z"
+                                            fill="none"
+                                            stroke="#1DED83"
+                                            strokeWidth="4"
+                                            strokeLinecap="round"
+                                        />
+                                        <circle cx="40" cy="40" r="5" fill="#1DED83" />
+                                        <circle cx="60" cy="40" r="5" fill="#1DED83" />
+                                        <path
+                                            d="M35,80 C35,80 40,85 50,85 C60,85 65,80 65,80"
+                                            fill="none"
+                                            stroke="#1DED83"
+                                            strokeWidth="4"
+                                            strokeLinecap="round"
+                                        />
+                                    </svg>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -3722,6 +3857,13 @@ const UserProfileDropdown = ({ user, userProfile, userRole, onClose, onLogout, o
                                 <div className="text-xs text-zinc-500 font-mono mb-1">XP</div>
                                 <div className="text-xl font-bold text-blue-400 font-mono">{userProfile.xp || 0}</div>
                             </div>
+                        </div>
+                    )}
+
+                    {/* Skill Tree Visualization */}
+                    {SkillTree && (
+                        <div className="mb-6">
+                            <SkillTree user={user} userProfile={userProfile} theme="dark" />
                         </div>
                     )}
 
@@ -3839,7 +3981,8 @@ const AppScreen = ({ user, onLogout, onDiscoveryMode, addToast, theme, toggleThe
     };
 
     // Destructure new Landing Components
-    const { TypingHero, SocialProofTicker, FeaturedProjects, QuickResume } = window.LandingComponents || {};
+    const { TypingHero, SocialProofTicker, HowItWorks, FeaturedProjects, QuickResume } = window.LandingComponents || {};
+    const { DailyQuestWidget, StreakCounter, SkillTree } = window; // Social components are global
 
     // User profile states
     const [showWelcome, setShowWelcome] = useState(true);
@@ -3877,6 +4020,15 @@ const AppScreen = ({ user, onLogout, onDiscoveryMode, addToast, theme, toggleThe
             const doc = await firestore.collection('users').doc(user.uid).get();
             if (doc.exists) {
                 const data = doc.data();
+
+                // Assign random avatar if not present
+                if (!data.avatarId) {
+                    const avatarKeys = Object.keys(AVATARS);
+                    const randomAvatar = avatarKeys[Math.floor(Math.random() * avatarKeys.length)];
+                    await firestore.collection('users').doc(user.uid).set({ avatarId: randomAvatar }, { merge: true });
+                    data.avatarId = randomAvatar;
+                }
+
                 setFullUserProfile(data);
                 // Also update student profile if exists
                 if (data.lastProfile) setStudentProfile(data.lastProfile);
@@ -4207,7 +4359,7 @@ const AppScreen = ({ user, onLogout, onDiscoveryMode, addToast, theme, toggleThe
                                 {/* User profile icon (shows after welcome fades) */}
                                 {!showWelcome && (
                                     <div className="animate-fade-in">
-                                        <UserProfileIcon onClick={() => setShowProfileDropdown(!showProfileDropdown)} />
+                                        <UserProfileIcon onClick={() => setShowProfileDropdown(!showProfileDropdown)} userProfile={fullUserProfile} />
                                     </div>
                                 )}
 
@@ -4273,6 +4425,8 @@ const AppScreen = ({ user, onLogout, onDiscoveryMode, addToast, theme, toggleThe
 
                             {SocialProofTicker && <SocialProofTicker />}
 
+                            {HowItWorks && <HowItWorks />}
+
                             <p className="text-gray-400 text-lg mb-8 max-w-2xl mx-auto">
                                 Get personalized project ideas through our gamified context-gathering system.
                                 We analyze your interests to suggest the perfect portfolio project.
@@ -4289,13 +4443,24 @@ const AppScreen = ({ user, onLogout, onDiscoveryMode, addToast, theme, toggleThe
                                 />
                             </div>
 
-                            <button
-                                onClick={startGameFlow}
-                                disabled={!query.trim()}
-                                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed text-white py-4 rounded-lg font-medium transition-all duration-200 transform hover:scale-105"
-                            >
-                                🎮 Start Gamified Project Generation
-                            </button>
+                            <div className="flex flex-col items-center gap-4">
+                                <button
+                                    onClick={startGameFlow}
+                                    disabled={!query.trim()}
+                                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed text-white py-4 rounded-lg font-bold text-lg transition-all duration-200 transform hover:scale-[1.02] shadow-lg shadow-purple-900/30"
+                                >
+                                    {query.trim() ? "🚀 Generate Project Idea" : "✨ Get Started Free"}
+                                </button>
+
+                                {!user && (
+                                    <button
+                                        onClick={handleLogin}
+                                        className="text-gray-500 hover:text-gray-300 text-sm font-medium transition-colors"
+                                    >
+                                        Already have an account? <span className="text-blue-400 hover:underline">Login to continue</span>
+                                    </button>
+                                )}
+                            </div>
 
                             <div className="text-center text-gray-400 text-sm flex flex-col gap-4">
                                 <p>Answer 7 fun questions to get a perfectly tailored project idea!</p>
@@ -4320,7 +4485,7 @@ const AppScreen = ({ user, onLogout, onDiscoveryMode, addToast, theme, toggleThe
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <DailyQuestWidget user={fullUserProfile} onUpdate={loadUserProfile} theme={theme} />
                                 <BadgeCase userProfile={fullUserProfile} theme={theme} />
-                                <SkillTree user={fullUserProfile} theme={theme} />
+
                                 <LeaderboardWidget theme={theme} />
                             </div>
                         </div>
@@ -4783,9 +4948,25 @@ const App = () => {
                     badges.push('night_owl');
                     newBadges.push('Night Owl');
                 }
+                if (!badges.includes('early_bird') && hour >= 5 && hour < 9 && actionType === 'GENERATE_IDEA') {
+                    badges.push('early_bird');
+                    newBadges.push('Early Bird');
+                }
+
+                // Check "Prompt Master" (Closure access to query state)
+                if (!badges.includes('prompt_master') && actionType === 'GENERATE_IDEA' && (query?.length || 0) > 100) {
+                    badges.push('prompt_master');
+                    newBadges.push('Prompt Master');
+                }
 
                 // Calculate new level
                 const level = Math.floor(Math.sqrt(xp / 100)) + 1;
+
+                // Check "Visionary" (Level 5+)
+                if (!badges.includes('visionary') && level >= 5) {
+                    badges.push('visionary');
+                    newBadges.push('Visionary');
+                }
 
                 transaction.update(userRef, {
                     xp,

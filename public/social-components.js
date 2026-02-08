@@ -7,7 +7,10 @@ const BADGES = {
     'polyglot': { icon: '🗣️', title: 'Polyglot', description: 'Used 3+ different tech stacks' },
     'high_scorer': { icon: '🎯', title: 'High Scorer', description: 'Scored 800+ in Discovery Game' },
     'night_owl': { icon: '🦉', title: 'Night Owl', description: 'Generated an idea between 12 AM and 4 AM' },
-    'social_butterfly': { icon: '🦋', title: 'Social Butterfly', description: 'Shared a project idea' }
+    'social_butterfly': { icon: '🦋', title: 'Social Butterfly', description: 'Shared a project idea' },
+    'visionary': { icon: '🔮', title: 'Visionary', description: 'Reached Level 5' },
+    'early_bird': { icon: '🌅', title: 'Early Bird', description: 'Generated an idea between 5 AM and 9 AM' },
+    'prompt_master': { icon: '✍️', title: 'Prompt Master', description: 'Provided a detailed description (>100 chars)' }
 };
 
 const BadgeCase = ({ userProfile, theme }) => {
@@ -264,39 +267,117 @@ const StreakCounter = ({ streak, theme }) => {
 };
 
 // Skill Tree Component
-const SkillTree = ({ user, theme }) => {
-    // Simple mock skill tree for now
-    const skills = [
-        { id: 'web', label: 'Web Dev', icon: '🌐', level: 1, unlocked: true },
-        { id: 'backend', label: 'Backend', icon: '⚙️', level: 1, unlocked: true },
-        { id: 'ai', label: 'AI/ML', icon: '🤖', level: 0, unlocked: false },
-        { id: 'cloud', label: 'Cloud', icon: '☁️', level: 0, unlocked: false },
+const SkillTree = ({ user, userProfile, theme }) => {
+    // 1. Calculate Global Level
+    const globalLevel = Math.floor(Math.sqrt((userProfile?.xp || 0) / 100)) + 1;
+
+    // 2. Define Skills
+    const skillDefinitions = [
+        {
+            id: 'web',
+            label: 'Web',
+            icon: (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="2" y1="12" x2="22" y2="12"></line>
+                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                </svg>
+            ),
+            keywords: ['web', 'react', 'js', 'html', 'css']
+        },
+        {
+            id: 'backend',
+            label: 'API',
+            icon: (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
+                    <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+                    <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+                    <line x1="6" y1="6" x2="6.01" y2="6"></line>
+                    <line x1="6" y1="18" x2="6.01" y2="18"></line>
+                </svg>
+            ),
+            keywords: ['backend', 'api', 'sql', 'db']
+        },
+        {
+            id: 'ai',
+            label: 'AI',
+            icon: (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
+                    <path d="M12 2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2 2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"></path>
+                    <path d="M12 16a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2z"></path>
+                    <line x1="12" y1="8" x2="12" y2="16"></line>
+                    <line x1="12" y1="12" x2="20" y2="12"></line>
+                    <line x1="12" y1="12" x2="4" y2="12"></line>
+                    <circle cx="20" cy="12" r="2"></circle>
+                    <circle cx="4" cy="12" r="2"></circle>
+                </svg>
+            ),
+            keywords: ['ai', 'ml', 'gpt', 'bot']
+        },
+        {
+            id: 'mobile',
+            label: 'App',
+            icon: (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
+                    <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                    <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                </svg>
+            ),
+            keywords: ['mobile', 'app', 'ios', 'android']
+        },
     ];
 
-    return (
-        <div className={`p-6 rounded-xl border ${theme === 'light' ? 'bg-white border-gray-200' : 'bg-gray-800/40 border-gray-700/50'}`}>
-            <h3 className={`text-lg font-bold mb-4 flex items-center gap-2 ${theme === 'light' ? 'text-gray-800' : 'text-white'}`}>
-                <span>🌳</span> Skill Tree
-            </h3>
-            <div className="flex justify-around relative">
-                {/* Connecting Lines (Mock) */}
-                <div className="absolute top-1/2 left-10 right-10 h-1 bg-gray-700 -z-10"></div>
+    // 3. Determine Unlock State
+    const userContext = ((userProfile?.bio || '') + ' ' + (userProfile?.interests || '')).toLowerCase();
+    const skills = skillDefinitions.map(def => ({
+        ...def,
+        unlocked: globalLevel >= 5 || def.keywords.some(k => userContext.includes(k)),
+        level: globalLevel // Simplified line level
+    }));
 
-                {skills.map(skill => (
-                    <div key={skill.id} className="flex flex-col items-center gap-2 bg-gray-900 p-2 rounded-lg z-10">
-                        <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl border-2 transition-all ${skill.unlocked
-                            ? 'bg-blue-600 border-blue-400 text-white shadow-lg shadow-blue-500/50'
-                            : 'bg-gray-800 border-gray-600 text-gray-500 grayscale'
-                            }`}>
+    return (
+        <div className="bg-zinc-800/30 rounded-xl p-4 border border-zinc-700/30">
+            <div className="flex items-center justify-between mb-4">
+                <h3 className="text-white font-bold text-sm flex items-center gap-2">
+                    <span className="text-green-400">⚡</span> Skill Network
+                </h3>
+                <span className="text-xs text-zinc-500 font-mono">Lvl {globalLevel}</span>
+            </div>
+
+            <div className="relative flex justify-between items-center px-2">
+                {/* Connecting Line */}
+                <div className="absolute top-1/2 left-4 right-4 h-0.5 bg-zinc-700 -z-0"></div>
+                <div
+                    className="absolute top-1/2 left-4 h-0.5 bg-gradient-to-r from-blue-500 to-green-500 -z-0 transition-all duration-1000"
+                    style={{ width: `${(skills.filter(s => s.unlocked).length / skills.length) * 100}%` }}
+                ></div>
+
+                {skills.map((skill, index) => (
+                    <div key={skill.id} className="relative z-10 group">
+                        <div
+                            className={`w-9 h-9 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${skill.unlocked
+                                    ? 'bg-zinc-900 border-green-500 text-green-400 shadow-[0_0_10px_rgba(74,222,128,0.3)] scale-110'
+                                    : 'bg-zinc-900 border-zinc-700 text-zinc-600'
+                                }`}
+                        >
                             {skill.icon}
                         </div>
-                        <span className={`text-xs font-bold ${skill.unlocked ? 'text-blue-300' : 'text-gray-600'}`}>
+
+                        {/* Label */}
+                        <span className={`absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] font-bold tracking-wide transition-colors ${skill.unlocked ? 'text-white' : 'text-zinc-600'
+                            }`}>
                             {skill.label}
                         </span>
+
+                        {/* Tooltip */}
+                        <div className="absolute opacity-0 group-hover:opacity-100 bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-black border border-zinc-800 text-white text-[10px] rounded whitespace-nowrap pointer-events-none transition-opacity">
+                            {skill.unlocked ? `${skill.label} Unlocked` : `Add "${skill.keywords[0]}" to bio`}
+                        </div>
                     </div>
                 ))}
             </div>
-            <p className="text-center text-xs text-gray-500 mt-4">Generate diverse ideas to unlock branches!</p>
+
+            <div className="h-4"></div> {/* Spacer for labels */}
         </div>
     );
 };

@@ -348,13 +348,31 @@ const AnnouncementManager = ({ user, theme }) => {
     const [message, setMessage] = useState('');
     const [type, setType] = useState('info');
     const [isSending, setIsSending] = useState(false);
+    const [alerts, setAlerts] = useState([]);
+
+    useEffect(() => {
+        const unsubscribe = firebase.firestore().collection('system_alerts')
+            .orderBy('createdAt', 'desc')
+            .onSnapshot(snapshot => {
+                const alertsData = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                setAlerts(alertsData);
+            });
+        return () => unsubscribe();
+    }, []);
 
     const handleSend = async () => {
         if (!message.trim()) return;
         setIsSending(true);
         try {
             await firebase.firestore().collection('system_alerts').add({
-                message, type, createdBy: user.uid, createdAt: new Date().toISOString(), active: true
+                message,
+                type,
+                createdBy: user.uid,
+                createdAt: new Date().toISOString(),
+                active: true
             });
             setMessage('');
             alert('Announcement Sent!');
@@ -362,25 +380,121 @@ const AnnouncementManager = ({ user, theme }) => {
         finally { setIsSending(false); }
     };
 
+    const toggleStatus = async (id, currentStatus) => {
+        try {
+            await firebase.firestore().collection('system_alerts').doc(id).update({
+                active: !currentStatus
+            });
+        } catch (err) {
+            console.error("Error updating status:", err);
+            alert("Failed to update status");
+        }
+    };
+
+    const deleteAlert = async (id) => {
+        if (!window.confirm("Are you sure you want to delete this alert?")) return;
+        try {
+            await firebase.firestore().collection('system_alerts').doc(id).delete();
+        } catch (err) {
+            console.error("Error deleting alert:", err);
+            alert("Failed to delete alert");
+        }
+    };
+
     return (
-        <div className={`p-6 rounded-xl border ${theme === 'light' ? 'bg-white' : 'bg-gray-900 border-yellow-500/30'}`}>
-            <h3 className="text-xl font-bold text-yellow-500 mb-4">📢 Global Announcement</h3>
-            <div className="space-y-4">
-                <textarea
-                    value={message}
-                    onChange={e => setMessage(e.target.value)}
-                    placeholder="Type message to all users..."
-                    className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white"
-                />
-                <div className="flex justify-between">
-                    <select value={type} onChange={e => setType(e.target.value)} className="bg-gray-800 text-white p-2 rounded">
-                        <option value="info">Info (Blue)</option>
-                        <option value="warning">Warning (Yellow)</option>
-                        <option value="alert">Alert (Red)</option>
-                    </select>
-                    <button onClick={handleSend} disabled={isSending} className="px-6 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700 font-bold">
-                        {isSending ? 'Sending...' : 'Broadcast'}
-                    </button>
+        <div className="space-y-8">
+            {/* Broadcast Form */}
+            <div className={`p-6 rounded-xl border ${theme === 'light' ? 'bg-white' : 'bg-gray-900 border-yellow-500/30'}`}>
+                <h3 className="text-xl font-bold text-yellow-500 mb-4">📢 Global Announcement</h3>
+                <div className="space-y-4">
+                    <textarea
+                        value={message}
+                        onChange={e => setMessage(e.target.value)}
+                        placeholder="Type message to all users..."
+                        className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white"
+                    />
+                    <div className="flex justify-between">
+                        <select value={type} onChange={e => setType(e.target.value)} className="bg-gray-800 text-white p-2 rounded">
+                            <option value="info">Info (Blue)</option>
+                            <option value="warning">Warning (Yellow)</option>
+                            <option value="alert">Alert (Red)</option>
+                        </select>
+                        <button onClick={handleSend} disabled={isSending} className="px-6 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700 font-bold">
+                            {isSending ? 'Sending...' : 'Broadcast'}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Alert History Table */}
+            <div className={`p-6 rounded-xl border ${theme === 'light' ? 'bg-white' : 'bg-gray-900 border-purple-500/20'}`}>
+                <h3 className={`text-xl font-bold mb-4 ${theme === 'light' ? 'text-gray-800' : 'text-white'}`}>📜 Alert History</h3>
+                <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-left">
+                        <thead className={`text-xs uppercase ${theme === 'light' ? 'bg-gray-100 text-gray-700' : 'bg-gray-800 text-gray-400'}`}>
+                            <tr>
+                                <th className="px-4 py-3">Message</th>
+                                <th className="px-4 py-3">Type</th>
+                                <th className="px-4 py-3">Status</th>
+                                <th className="px-4 py-3">Sent At</th>
+                                <th className="px-4 py-3">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {alerts.length === 0 ? (
+                                <tr>
+                                    <td colSpan="5" className="px-4 py-4 text-center text-gray-500">No alerts found.</td>
+                                </tr>
+                            ) : (
+                                alerts.map(alert => (
+                                    <tr key={alert.id} className={`border-b ${theme === 'light' ? 'border-gray-200 hover:bg-gray-50' : 'border-gray-700 hover:bg-gray-800/50'}`}>
+                                        <td className={`px-4 py-3 font-medium ${theme === 'light' ? 'text-gray-900' : 'text-white'}`}>{alert.message}</td>
+                                        <td className="px-4 py-3">
+                                            <span className={`px-2 py-1 rounded text-xs font-bold
+                                                ${alert.type === 'info' ? 'bg-blue-900/50 text-blue-400' :
+                                                    alert.type === 'warning' ? 'bg-yellow-900/50 text-yellow-400' :
+                                                        'bg-red-900/50 text-red-400'}`}>
+                                                {alert.type.toUpperCase()}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <span className={`flex items-center gap-1 ${alert.active ? 'text-green-400' : 'text-gray-500'}`}>
+                                                <span className={`w-2 h-2 rounded-full ${alert.active ? 'bg-green-400' : 'bg-gray-500'}`}></span>
+                                                {alert.active ? 'Active' : 'Inactive'}
+                                            </span>
+                                        </td>
+                                        <td className={`px-4 py-3 ${theme === 'light' ? 'text-gray-600' : 'text-gray-400'}`}>
+                                            {new Date(alert.createdAt).toLocaleString()}
+                                        </td>
+                                        <td className="px-4 py-3 flex gap-2">
+                                            {alert.active && (
+                                                <button
+                                                    onClick={() => toggleStatus(alert.id, alert.active)}
+                                                    className="px-3 py-1 bg-red-900/30 text-red-400 border border-red-800 rounded hover:bg-red-900/50 transition-colors text-xs"
+                                                >
+                                                    Stop
+                                                </button>
+                                            )}
+                                            {!alert.active && (
+                                                <button
+                                                    onClick={() => toggleStatus(alert.id, alert.active)}
+                                                    className="px-3 py-1 bg-green-900/30 text-green-400 border border-green-800 rounded hover:bg-green-900/50 transition-colors text-xs"
+                                                >
+                                                    Activate
+                                                </button>
+                                            )}
+                                            <button
+                                                onClick={() => deleteAlert(alert.id)}
+                                                className="px-3 py-1 bg-gray-800 text-gray-400 border border-gray-700 rounded hover:bg-gray-700 transition-colors text-xs"
+                                            >
+                                                Delete
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>

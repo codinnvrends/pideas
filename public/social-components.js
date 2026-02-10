@@ -15,9 +15,11 @@ const BADGES = {
 
 const BadgeCase = ({ userProfile, theme }) => {
     const userBadges = userProfile?.badges || [];
+    // Use global GlassCard if available, else fallback div
+    const Card = window.GlassCard || (({ children, className }) => <div className={`border rounded-xl ${className}`}>{children}</div>);
 
     return (
-        <div className={`p-6 rounded-xl border ${theme === 'light' ? 'bg-white border-gray-200' : 'bg-gray-800/40 border-gray-700/50'}`}>
+        <Card className={`p-6 ${theme === 'light' ? 'bg-white border-gray-200' : 'bg-opacity-30'}`} hoverEffect={true}>
             <h3 className={`text-lg font-bold mb-4 flex items-center gap-2 ${theme === 'light' ? 'text-gray-800' : 'text-white'}`}>
                 <span>🏆</span> Achievements
             </h3>
@@ -26,8 +28,8 @@ const BadgeCase = ({ userProfile, theme }) => {
                     const isUnlocked = userBadges.includes(id);
                     return (
                         <div key={id} className="relative group items-center flex flex-col gap-2 p-2 rounded-lg hover:bg-white/5 transition-colors">
-                            <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl border ${isUnlocked
-                                ? 'bg-yellow-500/20 border-yellow-500/50 grayscale-0'
+                            <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl border transition-all duration-300 ${isUnlocked
+                                ? 'bg-yellow-500/20 border-yellow-500/50 grayscale-0 shadow-[0_0_15px_rgba(234,179,8,0.3)]'
                                 : 'bg-gray-800 border-gray-700 grayscale opacity-40'
                                 }`}>
                                 {badge.icon}
@@ -37,7 +39,7 @@ const BadgeCase = ({ userProfile, theme }) => {
                             </span>
 
                             {/* Tooltip */}
-                            <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-black/90 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                            <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-black/90 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10 backdrop-blur-md border border-white/10">
                                 {badge.description}
                                 {!isUnlocked && <span className="block text-gray-500 italic mt-0.5">Locked</span>}
                             </div>
@@ -45,13 +47,15 @@ const BadgeCase = ({ userProfile, theme }) => {
                     );
                 })}
             </div>
-        </div>
+        </Card>
     );
 };
 
 const LeaderboardWidget = ({ theme }) => {
     const [leaders, setLeaders] = React.useState([]);
     const [isLoading, setIsLoading] = React.useState(true);
+    const Card = window.GlassCard || (({ children, className }) => <div className={`border rounded-xl ${className}`}>{children}</div>);
+    const Loader = window.SkeletonLoader || (({ className }) => <div className={`animate-pulse bg-gray-700 ${className}`}></div>);
 
     React.useEffect(() => {
         const fetchLeaders = async () => {
@@ -77,19 +81,19 @@ const LeaderboardWidget = ({ theme }) => {
         fetchLeaders();
     }, []);
 
-    if (isLoading) return <div className="animate-pulse h-48 bg-gray-800/40 rounded-xl"></div>;
+    if (isLoading) return <Loader className="h-48 rounded-xl w-full" />;
 
     return (
-        <div className={`p-6 rounded-xl border ${theme === 'light' ? 'bg-white border-gray-200' : 'bg-gray-800/40 border-gray-700/50'}`}>
+        <Card className={`p-6 ${theme === 'light' ? 'bg-white border-gray-200' : 'bg-opacity-30'}`} hoverEffect={true}>
             <h3 className={`text-lg font-bold mb-4 flex items-center gap-2 ${theme === 'light' ? 'text-gray-800' : 'text-white'}`}>
                 <span>👑</span> Top Innovators
             </h3>
             <div className="space-y-3">
                 {leaders.map((user, index) => (
-                    <div key={user.id} className="flex items-center gap-3">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${index === 0 ? 'bg-yellow-500 text-black' :
-                            index === 1 ? 'bg-gray-400 text-black' :
-                                index === 2 ? 'bg-orange-600 text-white' :
+                    <div key={user.id} className="flex items-center gap-3 group">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm transition-transform group-hover:scale-110 ${index === 0 ? 'bg-yellow-500 text-black shadow-lg shadow-yellow-500/40' :
+                            index === 1 ? 'bg-gray-400 text-black shadow-lg shadow-gray-400/40' :
+                                index === 2 ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/40' :
                                     'bg-gray-700 text-gray-400'
                             }`}>
                             {index + 1}
@@ -107,7 +111,7 @@ const LeaderboardWidget = ({ theme }) => {
                     </div>
                 ))}
             </div>
-        </div>
+        </Card>
     );
 };
 
@@ -200,6 +204,7 @@ window.SocialShareModal = SocialShareModal;
 const DailyQuestWidget = ({ user, onUpdate, theme }) => {
     const quests = user?.dailyQuests || [];
     const [updating, setUpdating] = React.useState(null);
+    const Card = window.GlassCard || (({ children, className }) => <div className={`border rounded-xl ${className}`}>{children}</div>);
 
     const handleQuestClick = async (questId) => {
         if (updating) return;
@@ -218,7 +223,7 @@ const DailyQuestWidget = ({ user, onUpdate, theme }) => {
     };
 
     return (
-        <div className={`p-6 rounded-xl border ${theme === 'light' ? 'bg-white border-gray-200' : 'bg-gray-800/40 border-gray-700/50'}`}>
+        <Card className={`p-6 ${theme === 'light' ? 'bg-white border-gray-200' : 'bg-opacity-30'}`} hoverEffect={true}>
             <h3 className={`text-lg font-bold mb-4 flex items-center gap-2 ${theme === 'light' ? 'text-gray-800' : 'text-white'}`}>
                 <span>⚔️</span> Daily Quests
             </h3>
@@ -231,7 +236,7 @@ const DailyQuestWidget = ({ user, onUpdate, theme }) => {
                             key={quest.id}
                             className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${quest.completed
                                 ? 'bg-green-900/20 border-green-500/30 opacity-70'
-                                : `${theme === 'light' ? 'bg-gray-50 border-gray-200' : 'bg-gray-700/30 border-gray-600'}`
+                                : `${theme === 'light' ? 'bg-gray-50 border-gray-200' : 'bg-white/5 border-white/5 hover:bg-white/10'}`
                                 }`}
                         >
                             <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${quest.completed ? 'bg-green-500 border-green-500' : 'border-gray-400'
@@ -249,16 +254,16 @@ const DailyQuestWidget = ({ user, onUpdate, theme }) => {
                     ))
                 )}
             </div>
-        </div>
+        </Card>
     );
 };
 
 // Streak Counter Component
 const StreakCounter = ({ streak, theme }) => {
     return (
-        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border ${theme === 'light' ? 'bg-orange-50 border-orange-200' : 'bg-orange-900/20 border-orange-500/30'
+        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border shadow-lg shadow-orange-500/10 ${theme === 'light' ? 'bg-orange-50 border-orange-200' : 'bg-orange-900/20 border-orange-500/30'
             }`}>
-            <span className="text-lg">🔥</span>
+            <span className="text-lg animate-pulse">🔥</span>
             <span className={`font-bold ${theme === 'light' ? 'text-orange-600' : 'text-orange-400'}`}>
                 {streak || 0}
             </span>
@@ -336,7 +341,7 @@ const SkillTree = ({ user, userProfile, theme }) => {
     }));
 
     return (
-        <div className="bg-zinc-800/30 rounded-xl p-4 border border-zinc-700/30">
+        <div className="bg-zinc-800/30 rounded-xl p-4 border border-zinc-700/30 backdrop-blur-sm">
             <div className="flex items-center justify-between mb-4">
                 <h3 className="text-white font-bold text-sm flex items-center gap-2">
                     <span className="text-green-400">⚡</span> Skill Network
@@ -348,7 +353,7 @@ const SkillTree = ({ user, userProfile, theme }) => {
                 {/* Connecting Line */}
                 <div className="absolute top-1/2 left-4 right-4 h-0.5 bg-zinc-700 -z-0"></div>
                 <div
-                    className="absolute top-1/2 left-4 h-0.5 bg-gradient-to-r from-blue-500 to-green-500 -z-0 transition-all duration-1000"
+                    className="absolute top-1/2 left-4 h-0.5 bg-gradient-to-r from-blue-500 to-green-500 -z-0 transition-all duration-1000 shadow-[0_0_10px_rgba(74,222,128,0.5)]"
                     style={{ width: `${(skills.filter(s => s.unlocked).length / skills.length) * 100}%` }}
                 ></div>
 
@@ -356,8 +361,8 @@ const SkillTree = ({ user, userProfile, theme }) => {
                     <div key={skill.id} className="relative z-10 group">
                         <div
                             className={`w-9 h-9 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${skill.unlocked
-                                    ? 'bg-zinc-900 border-green-500 text-green-400 shadow-[0_0_10px_rgba(74,222,128,0.3)] scale-110'
-                                    : 'bg-zinc-900 border-zinc-700 text-zinc-600'
+                                ? 'bg-zinc-900 border-green-500 text-green-400 shadow-[0_0_15px_rgba(74,222,128,0.4)] scale-110'
+                                : 'bg-zinc-900 border-zinc-700 text-zinc-600'
                                 }`}
                         >
                             {skill.icon}
@@ -370,7 +375,7 @@ const SkillTree = ({ user, userProfile, theme }) => {
                         </span>
 
                         {/* Tooltip */}
-                        <div className="absolute opacity-0 group-hover:opacity-100 bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-black border border-zinc-800 text-white text-[10px] rounded whitespace-nowrap pointer-events-none transition-opacity">
+                        <div className="absolute opacity-0 group-hover:opacity-100 bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-black border border-zinc-800 text-white text-[10px] rounded whitespace-nowrap pointer-events-none transition-opacity z-20">
                             {skill.unlocked ? `${skill.label} Unlocked` : `Add "${skill.keywords[0]}" to bio`}
                         </div>
                     </div>

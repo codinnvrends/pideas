@@ -155,25 +155,65 @@ const ShareIcon = ({ size = 20, className = "" }) => (
     </svg>
 );
 
-// IconButton Component - Reusable button with icon and tooltip
+// --- REUSABLE UI COMPONENTS ---
+
+const GlassCard = ({ children, className = "", hoverEffect = false }) => (
+    <div className={`
+        bg-[color:var(--glass-bg)] 
+        backdrop-blur-[var(--glass-blur)] 
+        border border-[color:var(--glass-border)] 
+        rounded-2xl 
+        shadow-[var(--glass-shadow)]
+        ${hoverEffect ? 'transition-all duration-300 hover:-translate-y-1 hover:border-blue-500/30 hover:shadow-blue-500/10' : ''} 
+        ${className}
+    `}>
+        {children}
+    </div>
+);
+
+const NeonButton = ({ children, onClick, variant = 'primary', className = "", disabled = false, icon = null }) => {
+    const variants = {
+        primary: 'bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_15px_rgba(59,130,246,0.4)] hover:shadow-[0_0_25px_rgba(59,130,246,0.6)] border border-blue-400/20',
+        secondary: 'bg-purple-600 hover:bg-purple-500 text-white shadow-[0_0_15px_rgba(139,92,246,0.4)] hover:shadow-[0_0_25px_rgba(139,92,246,0.6)] border border-purple-400/20',
+        glass: 'bg-white/5 hover:bg-white/10 text-white border border-white/10 hover:border-white/20',
+        danger: 'bg-red-600/10 hover:bg-red-600/20 text-red-500 border border-red-500/20 hover:border-red-500/40',
+        ghost: 'bg-transparent hover:bg-white/5 text-gray-400 hover:text-white'
+    };
+
+    return (
+        <button
+            onClick={onClick}
+            disabled={disabled}
+            className={`
+                relative group overflow-hidden px-6 py-3 rounded-xl font-bold transition-all duration-300
+                flex items-center justify-center gap-2
+                ${variants[variant]}
+                ${disabled ? 'opacity-50 cursor-not-allowed grayscale' : 'cursor-pointer active:scale-95'}
+                ${className}
+            `}
+        >
+            {icon && <span className="group-hover:scale-110 transition-transform">{icon}</span>}
+            {children}
+        </button>
+    );
+};
+
+const SkeletonLoader = ({ className = "", width = "100%", height = "1rem" }) => (
+    <div
+        className={`animate-pulse bg-white/10 rounded ${className}`}
+        style={{ width, height }}
+    />
+);
+
+// IconButton Component - Updated to use NeonButton aesthetics
 const IconButton = ({
     iconType,
     tooltip,
     onClick,
     className = "",
     disabled = false,
-    variant = "default" // "default", "primary", "admin"
+    variant = "glass" // default to glass for icons
 }) => {
-    const baseClasses = "relative inline-flex items-center justify-center p-2 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 tooltip";
-
-    const variantClasses = {
-        default: "text-gray-400 hover:text-white hover:bg-gray-800/50",
-        primary: "bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white",
-        admin: "bg-purple-600 hover:bg-purple-700 text-white"
-    };
-
-    const disabledClasses = disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer";
-
     const getIcon = () => {
         switch (iconType) {
             case 'history': return <HistoryIcon size={20} />;
@@ -193,7 +233,14 @@ const IconButton = ({
     return (
         <button
             onClick={disabled ? undefined : onClick}
-            className={`${baseClasses} ${variantClasses[variant]} ${disabledClasses} ${className} glass-tooltip-btn`}
+            className={`
+                relative p-2 rounded-xl transition-all duration-200 glass-tooltip-btn
+                flex items-center justify-center
+                ${variant === 'glass' ? 'bg-white/10 hover:bg-white/20 text-gray-300 hover:text-white border border-white/10 hover:border-white/20' : ''}
+                ${variant === 'primary' ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/20' : ''}
+                ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:scale-105 active:scale-95"}
+                ${className}
+            `}
             disabled={disabled}
             data-tooltip={tooltip}
         >
@@ -483,7 +530,8 @@ const LoginScreen = ({ onLogin, onDiscoveryPath, isLoading, theme, toggleTheme }
                         {/* Existing Users Card */}
                         <div className="group relative">
                             <div className={`absolute -inset-0.5 rounded-2xl opacity-20 group-hover:opacity-40 blur transition duration-500 ${theme === 'light' ? 'bg-gradient-to-r from-blue-300 to-cyan-300' : 'bg-gradient-to-r from-blue-600 to-cyan-600'}`}></div>
-                            <div className={`relative h-full rounded-2xl p-8 transition-all duration-300 flex flex-col ${theme === 'light' ? 'bg-white border-gray-200 border shadow-xl' : 'bg-black/40 backdrop-blur-xl border border-white/10 hover:border-white/20'}`}>
+
+                            <GlassCard className="relative h-full p-8 flex flex-col bg-opacity-80 dark:bg-opacity-40" hoverEffect={true}>
                                 <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-6 border ${theme === 'light' ? 'bg-blue-50 text-blue-600 border-blue-200' : 'bg-gradient-to-br from-blue-500/20 to-cyan-500/20 text-blue-400 border-blue-500/30'}`}>
                                     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                         <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
@@ -495,21 +543,24 @@ const LoginScreen = ({ onLogin, onDiscoveryPath, isLoading, theme, toggleTheme }
                                 <p className={`text-sm mb-8 leading-relaxed flex-grow font-light ${theme === 'light' ? 'text-gray-600' : 'text-gray-400'}`}>
                                     Skip the discovery phase. Directly input your domain (e.g., "AI Health App") and generate a comprehensive project plan instantly.
                                 </p>
-                                <button
+
+                                <NeonButton
                                     onClick={onLogin}
                                     disabled={isLoading}
-                                    className={`w-full px-6 py-4 rounded-xl font-bold text-base transition-all duration-200 flex items-center justify-center gap-3 transform group-hover:translate-y-[-2px] shadow-lg ${theme === 'light' ? 'bg-black text-white hover:bg-gray-800' : 'bg-white text-black hover:bg-gray-100 shadow-white/5'}`}
+                                    variant={theme === 'light' ? 'primary' : 'glass'}
+                                    className="w-full"
+                                    icon={<GoogleIcon size={20} />}
                                 >
-                                    <GoogleIcon size={20} />
                                     {isLoading ? 'Connecting...' : 'Continue with Google'}
-                                </button>
-                            </div>
+                                </NeonButton>
+                            </GlassCard>
                         </div>
 
                         {/* Discovery Path Card */}
                         <div className="group relative">
                             <div className={`absolute -inset-0.5 rounded-2xl opacity-20 group-hover:opacity-40 blur transition duration-500 ${theme === 'light' ? 'bg-gradient-to-r from-purple-300 to-pink-300' : 'bg-gradient-to-r from-purple-600 to-pink-600'}`}></div>
-                            <div className={`relative h-full rounded-2xl p-8 transition-all duration-300 flex flex-col ${theme === 'light' ? 'bg-white border-gray-200 border shadow-xl' : 'bg-black/40 backdrop-blur-xl border border-white/10 hover:border-white/20'}`}>
+
+                            <GlassCard className="relative h-full p-8 flex flex-col bg-opacity-80 dark:bg-opacity-40" hoverEffect={true}>
                                 <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-6 border ${theme === 'light' ? 'bg-purple-50 text-purple-600 border-purple-200' : 'bg-gradient-to-br from-purple-500/20 to-pink-500/20 text-purple-400 border-purple-500/30'}`}>
                                     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                         <circle cx="12" cy="12" r="10" />
@@ -522,30 +573,33 @@ const LoginScreen = ({ onLogin, onDiscoveryPath, isLoading, theme, toggleTheme }
                                 <p className={`text-sm mb-8 leading-relaxed flex-grow font-light ${theme === 'light' ? 'text-gray-600' : 'text-gray-400'}`}>
                                     Not sure where to start? Take our 30-second interactive quiz to uncover project ideas that match your unique skills and interests.
                                 </p>
-                                <button
+
+                                <NeonButton
                                     onClick={() => {
                                         sessionStorage.setItem('startDiscoveryAfterLogin', 'true');
                                         onLogin();
                                     }}
                                     disabled={isLoading}
-                                    className={`w-full px-6 py-4 rounded-xl font-bold text-base transition-all duration-200 flex items-center justify-center gap-3 backdrop-blur-md transform group-hover:translate-y-[-2px] ${theme === 'light' ? 'bg-gray-100 hover:bg-gray-200 text-gray-900 border border-gray-300' : 'bg-white/5 hover:bg-white/10 text-white border border-white/10'}`}
+                                    variant="secondary"
+                                    className="w-full shadow-lg shadow-purple-500/20"
+                                    icon={<span className="text-xl">✨</span>}
                                 >
-                                    <span className="text-xl">✨</span>
                                     {isLoading ? 'Starting...' : 'Start Discovery'}
-                                </button>
-                            </div>
+                                </NeonButton>
+                            </GlassCard>
                         </div>
 
                     </div>
 
                     <div className="text-center mt-12">
-                        <button
+                        <NeonButton
                             onClick={() => setShowHowItWorks(true)}
-                            className="group flex items-center justify-center gap-2 mx-auto text-gray-500 hover:text-white transition-colors duration-300 px-4 py-2 rounded-full hover:bg-white/5"
+                            variant="ghost"
+                            className="mx-auto rounded-full"
+                            icon={<span className="w-5 h-5 flex items-center justify-center rounded-full border border-gray-600 font-serif font-bold text-xs">?</span>}
                         >
-                            <span className="w-5 h-5 flex items-center justify-center rounded-full border border-gray-600 group-hover:border-white text-xs">?</span>
-                            <span className="text-sm font-medium tracking-wide">How it works</span>
-                        </button>
+                            How it works
+                        </NeonButton>
                     </div>
 
 
@@ -3363,29 +3417,31 @@ const UserProfileIcon = ({ onClick, userProfile }) => {
     return (
         <button
             onClick={onClick}
-            className="w-10 h-10 rounded-full bg-black border border-zinc-700 flex items-center justify-center cursor-pointer hover:bg-zinc-800 transition-all duration-200 overflow-hidden"
+            className="w-10 h-10 rounded-full p-[2px] bg-gradient-to-tr from-blue-500 to-purple-500 cursor-pointer hover:shadow-[0_0_15px_rgba(139,92,246,0.5)] transition-all active:scale-95 group"
             aria-label="Open user profile"
         >
-            <div className="w-8 h-8 relative flex items-center justify-center">
+            <div className="w-full h-full rounded-full bg-black flex items-center justify-center relative overflow-hidden group-hover:bg-zinc-900 transition-colors">
                 {AVATARS[userProfile?.avatarId]?.icon || (
-                    <svg viewBox="0 0 100 100" className="w-full h-full">
-                        <path
-                            d="M50,15 C60,15 70,25 70,40 C70,47 65,55 60,58 C57,60 55,62 55,65 L55,70 C55,72 53,75 50,75 C47,75 45,72 45,70 L45,65 C45,62 43,60 40,58 C35,55 30,47 30,40 C30,25 40,15 50,15 Z"
-                            fill="none"
-                            stroke="#4ade80"
-                            strokeWidth="4"
-                            strokeLinecap="round"
-                        />
-                        <circle cx="40" cy="40" r="5" fill="#4ade80" />
-                        <circle cx="60" cy="40" r="5" fill="#4ade80" />
-                        <path
-                            d="M35,80 C35,80 40,85 50,85 C60,85 65,80 65,80"
-                            fill="none"
-                            stroke="#4ade80"
-                            strokeWidth="4"
-                            strokeLinecap="round"
-                        />
-                    </svg>
+                    <div className="p-1">
+                        <svg viewBox="0 0 100 100" className="w-full h-full">
+                            <path
+                                d="M50,15 C60,15 70,25 70,40 C70,47 65,55 60,58 C57,60 55,62 55,65 L55,70 C55,72 53,75 50,75 C47,75 45,72 45,70 L45,65 C45,62 43,60 40,58 C35,55 30,47 30,40 C30,25 40,15 50,15 Z"
+                                fill="none"
+                                stroke="#4ade80"
+                                strokeWidth="4"
+                                strokeLinecap="round"
+                            />
+                            <circle cx="40" cy="40" r="5" fill="#4ade80" />
+                            <circle cx="60" cy="40" r="5" fill="#4ade80" />
+                            <path
+                                d="M35,80 C35,80 40,85 50,85 C60,85 65,80 65,80"
+                                fill="none"
+                                stroke="#4ade80"
+                                strokeWidth="4"
+                                strokeLinecap="round"
+                            />
+                        </svg>
+                    </div>
                 )}
             </div>
         </button>
@@ -3512,11 +3568,11 @@ const ProfileEditor = ({ user, currentProfile, onClose, onSave, isLoading, addTo
     };
 
     return (
-        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/80 backdrop-blur-sm">
-            <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 w-full max-w-md shadow-2xl relative">
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-fade-in">
+            <GlassCard className="p-6 w-full max-w-md relative bg-opacity-100 dark:bg-zinc-900 border-zinc-800">
                 <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 text-gray-500 hover:text-white"
+                    className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors"
                 >
                     <CloseIcon size={20} />
                 </button>
@@ -3561,7 +3617,7 @@ const ProfileEditor = ({ user, currentProfile, onClose, onSave, isLoading, addTo
                             type="text"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
-                            className="w-full bg-black/50 border border-zinc-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
+                            className="w-full bg-black/50 border border-zinc-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
                             placeholder="Your Name"
                         />
                     </div>
@@ -3572,7 +3628,7 @@ const ProfileEditor = ({ user, currentProfile, onClose, onSave, isLoading, addTo
                             type="text"
                             value={location}
                             onChange={(e) => setLocation(e.target.value)}
-                            className="w-full bg-black/50 border border-zinc-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
+                            className="w-full bg-black/50 border border-zinc-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
                             placeholder="e.g. Coding Galaxy"
                         />
                     </div>
@@ -3582,20 +3638,21 @@ const ProfileEditor = ({ user, currentProfile, onClose, onSave, isLoading, addTo
                         <textarea
                             value={bio}
                             onChange={(e) => setBio(e.target.value)}
-                            className="w-full bg-black/50 border border-zinc-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500 resize-none h-24"
+                            className="w-full bg-black/50 border border-zinc-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none h-24 transition-all"
                             placeholder="Tell us about yourself..."
                         />
                     </div>
 
-                    <button
+                    <NeonButton
                         type="submit"
                         disabled={isSaving || isLoading}
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-lg transition-colors flex items-center justify-center gap-2 mt-2"
+                        variant="primary"
+                        className="w-full mt-2"
                     >
                         {isSaving ? 'Saving...' : 'Save Changes'}
-                    </button>
+                    </NeonButton>
                 </form>
-            </div>
+            </GlassCard>
         </div>
     );
 };
@@ -3878,23 +3935,22 @@ const UserProfileDropdown = ({ user, userProfile, userRole, onClose, onLogout, o
 
                     {/* Action buttons */}
                     <div className="flex gap-3">
-                        <button
+                        <NeonButton
                             onClick={onEditProfile}
-                            className="flex-1 bg-zinc-800 border border-zinc-700 hover:bg-zinc-700 hover:border-zinc-600 text-zinc-300 py-2 px-4 rounded-lg transition-all duration-200 font-mono text-sm flex items-center justify-center gap-2">
-                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
-                            </svg>
-                            Settings
-                        </button>
-                        <button
-                            onClick={handleLogout}
-                            className="flex-1 bg-zinc-800 border border-zinc-700 hover:bg-zinc-700 hover:border-zinc-600 text-zinc-300 py-2 px-4 rounded-lg transition-all duration-200 font-mono text-sm flex items-center justify-center gap-2"
+                            variant="glass"
+                            className="flex-1 text-xs"
+                            icon={<EditIcon size={16} />}
                         >
-                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clipRule="evenodd" />
-                            </svg>
+                            Settings
+                        </NeonButton>
+                        <NeonButton
+                            onClick={handleLogout}
+                            variant="glass"
+                            className="flex-1 text-xs hover:bg-red-500/20 hover:text-red-400 hover:border-red-500/30"
+                            icon={<LogoutIcon size={16} />}
+                        >
                             Logout
-                        </button>
+                        </NeonButton>
                     </div>
                 </div>
             </div>
@@ -3905,16 +3961,30 @@ const UserProfileDropdown = ({ user, userProfile, userRole, onClose, onLogout, o
 // System Alert Banner Component
 const SystemAlertBanner = ({ theme }) => {
     const [alert, setAlert] = useState(null);
+    const [isVisible, setIsVisible] = useState(false);
 
     useEffect(() => {
         if (typeof firebase === 'undefined') return;
+
+        // Check local storage for dismissed alerts
+        const dismissedAlerts = JSON.parse(localStorage.getItem('pideas_dismissed_alerts') || '[]');
+
         const unsubscribe = firebase.firestore().collection('system_alerts')
             .where('active', '==', true)
             .orderBy('createdAt', 'desc')
             .limit(1)
             .onSnapshot(snapshot => {
                 if (!snapshot.empty) {
-                    setAlert({ id: snapshot.docs[0].id, ...snapshot.docs[0].data() });
+                    const alertData = { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
+
+                    // Only show if not dismissed
+                    if (!dismissedAlerts.includes(alertData.id)) {
+                        setAlert(alertData);
+                        // Small delay for animation
+                        setTimeout(() => setIsVisible(true), 100);
+                    } else {
+                        setAlert(null);
+                    }
                 } else {
                     setAlert(null);
                 }
@@ -3922,32 +3992,124 @@ const SystemAlertBanner = ({ theme }) => {
         return () => unsubscribe();
     }, []);
 
+    const handleDismiss = () => {
+        if (!alert) return;
+
+        setIsVisible(false);
+
+        // Save to local storage
+        const dismissedAlerts = JSON.parse(localStorage.getItem('pideas_dismissed_alerts') || '[]');
+        if (!dismissedAlerts.includes(alert.id)) {
+            dismissedAlerts.push(alert.id);
+            localStorage.setItem('pideas_dismissed_alerts', JSON.stringify(dismissedAlerts));
+        }
+
+        // Remove from DOM after animation
+        setTimeout(() => setAlert(null), 300);
+    };
+
     if (!alert) return null;
 
     const colors = {
-        info: 'bg-blue-600 text-white',
-        warning: 'bg-yellow-600 text-white',
-        alert: 'bg-red-600 text-white'
+        info: 'bg-blue-600/90 border-blue-500/50 text-white',
+        warning: 'bg-yellow-600/90 border-yellow-500/50 text-white',
+        alert: 'bg-red-600/90 border-red-500/50 text-white'
     };
 
     return (
-        <div className={`${colors[alert.type] || colors.info} px-4 py-3 text-center font-medium shadow-md flex justify-between items-center relative z-50 animate-fade-in`}>
-            <span className="flex-1 text-sm font-bold tracking-wide flex items-center justify-center gap-2">
-                📢 {alert.message}
-            </span>
-            <button
-                onClick={() => setAlert(null)}
-                className="ml-4 text-white/80 hover:text-white hover:bg-white/20 rounded-full p-1 transition-colors"
-            >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
+        <div className={`
+            fixed top-0 left-0 right-0 z-[100] transform transition-all duration-300 ease-out flex justify-center px-4 pt-4
+            ${isVisible ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}
+            pointer-events-none
+        `}>
+            <div className={`
+                ${colors[alert.type] || colors.info} 
+                backdrop-blur-md border shadow-lg rounded-xl px-4 py-3 
+                flex flex-col sm:flex-row items-center gap-3 sm:gap-6 
+                max-w-4xl w-full pointer-events-auto
+            `}>
+                <div className="flex items-center gap-3 flex-1 text-center sm:text-left">
+                    <span className="text-xl shrink-0">
+                        {alert.type === 'info' && '📢'}
+                        {alert.type === 'warning' && '⚠️'}
+                        {alert.type === 'alert' && '🚨'}
+                    </span>
+                    <span className="text-sm font-medium leading-tight">
+                        {alert.message}
+                    </span>
+                </div>
+
+                <div className="flex items-center gap-3 shrink-0">
+                    {alert.linkUrl && (
+                        <a
+                            href={alert.linkUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="bg-white/20 hover:bg-white/30 text-white px-4 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1"
+                        >
+                            {alert.actionLabel || 'Learn More'}
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                        </a>
+                    )}
+
+                    <button
+                        onClick={handleDismiss}
+                        className="text-white/70 hover:text-white bg-black/20 hover:bg-black/40 rounded-full p-1.5 transition-colors"
+                        title="Dismiss"
+                    >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
         </div>
     );
 };
 
 // Main App Screen Component
+// Mobile Bottom Navigation Component
+const BottomNav = ({ currentView, onChangeView, userRole }) => {
+    return (
+        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-xl border-t border-white/10 p-4 z-50 rounded-t-2xl shadow-[0_-5px_20px_rgba(0,0,0,0.5)] safe-area-bottom">
+            <div className="flex justify-around items-center">
+                <button
+                    onClick={() => onChangeView('welcome')}
+                    className={`flex flex-col items-center gap-1 ${currentView === 'welcome' ? 'text-blue-400' : 'text-gray-500'}`}
+                >
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
+                    <span className="text-[10px] font-medium">Home</span>
+                </button>
+
+                <button
+                    onClick={() => onChangeView('history')}
+                    className={`flex flex-col items-center gap-1 ${currentView === 'history' ? 'text-blue-400' : 'text-gray-500'}`}
+                >
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span className="text-[10px] font-medium">History</span>
+                </button>
+
+                {userRole?.isAdmin && (
+                    <button
+                        onClick={() => onChangeView('admin')}
+                        className={`flex flex-col items-center gap-1 ${currentView === 'admin' ? 'text-blue-400' : 'text-gray-500'}`}
+                    >
+                        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        <span className="text-[10px] font-medium">Admin</span>
+                    </button>
+                )}
+            </div>
+        </div>
+    );
+};
+
 const AppScreen = ({ user, onLogout, onDiscoveryMode, addToast, theme, toggleTheme, updateUserStats }) => {
     const [currentView, setCurrentView] = useState('welcome');
     const [query, setQuery] = useState('');
@@ -4114,7 +4276,7 @@ const AppScreen = ({ user, onLogout, onDiscoveryMode, addToast, theme, toggleThe
                     streak: result.data.data.streak,
                     dailyQuests: result.data.data.dailyQuests
                 }));
-                if (result.data.data.message) addToast('info', result.data.data.message);
+                if (result.data.data.message) addToast(result.data.data.message, 'info');
             }
         } catch (e) {
             console.error("Gamification check failed", e);
@@ -4305,17 +4467,37 @@ const AppScreen = ({ user, onLogout, onDiscoveryMode, addToast, theme, toggleThe
 
             {/* Header */}
             {currentView !== 'result' && (
-                <header className="bg-black/50 backdrop-blur-sm border-b border-gray-800 p-4 relative z-10">
-                    <div className="w-full px-6 flex justify-between items-center">
+                <header className="bg-black/50 backdrop-blur-sm border-b border-gray-800 p-4 relative z-10 sticky top-0">
+                    <div className="w-full px-4 md:px-6 flex justify-between items-center">
                         <div className="flex items-center gap-4">
-                            <h1 className="text-2xl font-bold text-white">Pideas</h1>
-                            <span className="text-gray-400 hidden md:inline">|</span>
-                            <span className="text-gray-300 hidden md:inline">Gamified Project Idea Generator</span>
+                            <h1 className="text-xl md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">Pideas</h1>
+                            <span className="text-gray-400 hidden lg:inline">|</span>
+                            <span className="text-gray-300 hidden lg:inline">Gamified Project Idea Generator</span>
                         </div>
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2 md:gap-4">
+                            {/* Hidden components on mobile, shown in bottom nav or not needed inline */}
+                            <div className="hidden md:flex items-center gap-4">
+                                <StreakCounter streak={fullUserProfile?.streak} theme={theme} />
+                                <IconButton
+                                    iconType="history"
+                                    tooltip="History"
+                                    onClick={() => setCurrentView('history')}
+                                    variant="glass"
+                                />
+                                {userRole?.isAdmin && (
+                                    <IconButton
+                                        iconType="admin"
+                                        tooltip="Admin Console"
+                                        onClick={() => setCurrentView('admin')}
+                                        variant="glass"
+                                    />
+                                )}
+                            </div>
+
+                            {/* Always visible components */}
                             <button
                                 onClick={toggleTheme}
-                                className="p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-white/10"
+                                className="hidden md:block p-2 text-gray-300 hover:text-white transition-colors rounded-lg hover:bg-white/10 bg-white/5 border border-white/5"
                                 title={theme === 'dark' ? "Switch to Light Mode" : "Switch to Dark Mode"}
                             >
                                 {theme === 'dark' ? (
@@ -4328,28 +4510,13 @@ const AppScreen = ({ user, onLogout, onDiscoveryMode, addToast, theme, toggleThe
                                     </svg>
                                 )}
                             </button>
-                            <StreakCounter streak={fullUserProfile?.streak} theme={theme} />
-                            <IconButton
-                                iconType="history"
-                                tooltip="History"
-                                onClick={() => setCurrentView('history')}
-                                variant="default"
-                            />
-                            {userRole?.isAdmin && (
-                                <IconButton
-                                    iconType="admin"
-                                    tooltip="Admin Console"
-                                    onClick={() => setCurrentView('admin')}
-                                    variant="admin"
-                                />
-                            )}
 
                             {/* User profile section with animation */}
                             <div className="relative flex items-center">
-                                {/* Animated welcome message */}
+                                {/* Animated welcome message - Hidden on mobile */}
                                 {showWelcome && (
                                     <span
-                                        className={`text-gray-300 ${!showWelcome ? 'animate-fade-out' : 'animate-fade-in'}`}
+                                        className={`text-gray-300 hidden md:block ${!showWelcome ? 'animate-fade-out' : 'animate-fade-in'}`}
                                         style={{ minWidth: '150px' }}
                                     >
                                         Welcome, {user.displayName}
@@ -4357,7 +4524,7 @@ const AppScreen = ({ user, onLogout, onDiscoveryMode, addToast, theme, toggleThe
                                 )}
 
                                 {/* User profile icon (shows after welcome fades) */}
-                                {!showWelcome && (
+                                {(!showWelcome || true) && ( // Always show profile icon on mobile
                                     <div className="animate-fade-in">
                                         <UserProfileIcon onClick={() => setShowProfileDropdown(!showProfileDropdown)} userProfile={fullUserProfile} />
                                     </div>
@@ -4396,11 +4563,13 @@ const AppScreen = ({ user, onLogout, onDiscoveryMode, addToast, theme, toggleThe
                                 )}
                             </div>
 
+                            {/* Logout Button */}
                             <IconButton
                                 iconType="logout"
                                 tooltip="Logout"
                                 onClick={onLogout}
-                                variant="default"
+                                variant="glass"
+                                className="hidden md:flex"
                             />
                         </div>
                     </div>
@@ -4518,19 +4687,27 @@ const AppScreen = ({ user, onLogout, onDiscoveryMode, addToast, theme, toggleThe
                             </div>
 
                             {isLoadingHistory ? (
-                                <div className="bg-gray-800/30 border border-gray-700 rounded-lg p-8 text-center">
-                                    <div className="text-gray-400">Loading your project history...</div>
-                                </div>
+                                <GlassCard className="p-8 text-center bg-opacity-30">
+                                    <div className="space-y-4">
+                                        <SkeletonLoader height="2rem" width="60%" className="mx-auto" />
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                                            <SkeletonLoader height="8rem" />
+                                            <SkeletonLoader height="8rem" />
+                                            <SkeletonLoader height="8rem" />
+                                        </div>
+                                    </div>
+                                </GlassCard>
                             ) : userHistory.length === 0 ? (
-                                <div className="bg-gray-800/30 border border-gray-700 rounded-lg p-8 text-center">
+                                <GlassCard className="p-8 text-center bg-opacity-30">
                                     <p className="text-gray-400">No project ideas generated yet. Start your first gamified session above!</p>
-                                </div>
+                                </GlassCard>
                             ) : (
                                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                                     {userHistory.slice(0, 6).map((item) => (
-                                        <div
+                                        <GlassCard
                                             key={item.id}
-                                            className="bg-gray-800/30 border border-gray-700 rounded-lg p-4 hover:bg-gray-800/50 transition-colors cursor-pointer"
+                                            className="p-4 cursor-pointer bg-opacity-30 hover:bg-opacity-50"
+                                            hoverEffect={true}
                                             onClick={() => {
                                                 setGeneratedIdea(item.idea);
                                                 setCurrentView('result');
@@ -4549,7 +4726,7 @@ const AppScreen = ({ user, onLogout, onDiscoveryMode, addToast, theme, toggleThe
                                             <div className="text-xs text-blue-400">
                                                 Click to view full idea →
                                             </div>
-                                        </div>
+                                        </GlassCard>
                                     ))}
                                 </div>
                             )}
@@ -4591,16 +4768,27 @@ const AppScreen = ({ user, onLogout, onDiscoveryMode, addToast, theme, toggleThe
 
                 {
                     currentView === 'generating' && (
-                        <div className="text-center">
-                            <div className="mb-8">
-                                <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                                <h3 className="text-2xl font-semibold text-white mb-2">Generating Your Perfect Project Idea</h3>
-                                <p className="text-gray-400">Using your responses to create a personalized project...</p>
-                                <div className="mt-4 bg-gray-800/50 border border-gray-700 rounded-lg p-4 max-w-md mx-auto">
-                                    <p className="text-green-400 font-medium">Final Score: {currentScore} points</p>
-                                    <p className="text-gray-300 text-sm mt-1">{studentProfile.stream} • {studentProfile.skillLevel}</p>
+                        <div className="text-center flex items-center justify-center min-h-[50vh]">
+                            <GlassCard className="p-8 max-w-lg w-full bg-opacity-50 backdrop-blur-xl animate-fade-in">
+                                <div className="mb-8">
+                                    <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto mb-6"></div>
+                                    <h3 className="text-2xl font-bold text-white mb-2 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">
+                                        Generating Your Idea...
+                                    </h3>
+                                    <p className="text-gray-400 mb-6">Using your responses to create a personalized project plan.</p>
+
+                                    <div className="bg-black/30 rounded-lg p-4 border border-white/5 space-y-3">
+                                        <div className="flex justify-between items-center text-sm">
+                                            <span className="text-gray-400">Gamification Score</span>
+                                            <span className="text-green-400 font-bold">{currentScore} XP</span>
+                                        </div>
+                                        <div className="w-full bg-gray-700 h-1.5 rounded-full overflow-hidden">
+                                            <div className="bg-gradient-to-r from-blue-500 to-purple-500 h-full w-full animate-[progress_2s_ease-in-out_infinite]"></div>
+                                        </div>
+                                        <p className="text-xs text-gray-500 mt-2">{studentProfile.stream} • {studentProfile.skillLevel} Level</p>
+                                    </div>
                                 </div>
-                            </div>
+                            </GlassCard>
                         </div>
                     )
                 }
@@ -4654,7 +4842,7 @@ const AppScreen = ({ user, onLogout, onDiscoveryMode, addToast, theme, toggleThe
             {/* Footer */}
             {
                 currentView !== 'result' && currentView !== 'admin' && (
-                    <footer className="text-center py-6 text-gray-500 text-sm">
+                    <footer className="text-center py-6 text-gray-500 text-sm mb-16 md:mb-0">
                         <p>Powered by <span className="text-white font-medium">AI & Gamification</span></p>
                         <div className="mt-2 space-x-4">
                             <a href="#" className="hover:text-gray-300 transition-colors">Privacy Policy</a>
@@ -4665,6 +4853,15 @@ const AppScreen = ({ user, onLogout, onDiscoveryMode, addToast, theme, toggleThe
                     </footer>
                 )
             }
+
+            {/* Mobile Bottom Navigation - Visible only on mobile */}
+            {currentView !== 'result' && (
+                <BottomNav
+                    currentView={currentView}
+                    onChangeView={setCurrentView}
+                    userRole={userRole}
+                />
+            )}
         </div >
     );
 };

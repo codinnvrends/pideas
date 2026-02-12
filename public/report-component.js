@@ -270,6 +270,29 @@ const ProjectReportView = ({ idea, theme, userProfile, historyId, user, initialR
                         <span>⬇️ Download Markdown</span>
                     </button>
                     <button
+                        onClick={() => {
+                            const element = document.querySelector('.report-content');
+                            if (!element) return;
+
+                            const opt = {
+                                margin: 10,
+                                filename: 'Project_Thesis.pdf',
+                                image: { type: 'jpeg', quality: 0.98 },
+                                html2canvas: { scale: 2 },
+                                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                            };
+
+                            if (window.html2pdf) {
+                                window.html2pdf().set(opt).from(element).save();
+                            } else {
+                                alert("PDF library not loaded. Please try printing.");
+                            }
+                        }}
+                        className="px-4 py-2 bg-purple-600 text-white hover:bg-purple-700 rounded-lg text-sm font-medium shadow-lg hover:shadow-xl transition-all flex items-center gap-2"
+                    >
+                        <span>📄 Download PDF</span>
+                    </button>
+                    <button
                         onClick={() => window.print()}
                         className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg text-sm font-medium shadow-lg hover:shadow-xl transition-all flex items-center gap-2"
                     >

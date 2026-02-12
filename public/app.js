@@ -1994,7 +1994,10 @@ const ChatModificationInterface = ({ onModifyIdea, isLoading, user }) => {
     const [chatHistory, setChatHistory] = useState([]);
     const [isExpanded, setIsExpanded] = useState(false);
     const [isMinimized, setIsMinimized] = useState(false);
+    const [mode, setMode] = useState('modify'); // 'modify' | 'mentor'
     const chatInputRef = useRef(null);
+
+    const functions = typeof firebase !== 'undefined' ? firebase.functions() : null;
 
     const handleSendMessage = async () => {
         if (!chatInput.trim() || isLoading || !user) return;
@@ -2011,19 +2014,63 @@ const ChatModificationInterface = ({ onModifyIdea, isLoading, user }) => {
         setChatInput('');
 
         try {
-            const result = await onModifyIdea(prompt);
-            const aiMessage = {
-                id: Date.now() + 1,
-                type: 'ai',
-                content: 'Idea successfully modified based on your request.',
-                timestamp: new Date().toISOString()
-            };
-            setChatHistory(prev => [...prev, aiMessage]);
+            if (mode === 'mentor') {
+                if (!functions) throw new Error("Firebase functions not available");
+
+                // Add temporary loading message
+                const loadingId = Date.now() + 1;
+                setChatHistory(prev => [...prev, {
+                    id: loadingId,
+                    type: 'ai',
+                    content: 'Thinking...',
+                    isLoading: true,
+                    timestamp: new Date().toISOString()
+                }]);
+
+                const chatWithMentor = functions.httpsCallable('chatWithMentor');
+
+                // Construct context from current view/project if possible
+                // For now passing empty context or simple one
+                const context = {
+                    projectContext: "Current project idea discussion"
+                };
+
+                // Convert history to format expected by backend (if needed)
+                // Assuming backend takes { message, history, context }
+                const result = await chatWithMentor({
+                    message: prompt,
+                    history: chatHistory.map(m => ({
+                        role: m.type === 'user' ? 'user' : 'model',
+                        content: m.content
+                    })),
+                    context
+                });
+
+                // Remove loading message and add response
+                setChatHistory(prev => prev.filter(m => m.id !== loadingId).concat({
+                    id: Date.now() + 2,
+                    type: 'ai',
+                    content: result.data.reply || "I'm not sure how to answer that.",
+                    timestamp: new Date().toISOString()
+                }));
+
+            } else {
+                // Modify Mode
+                await onModifyIdea(prompt);
+                const aiMessage = {
+                    id: Date.now() + 1,
+                    type: 'ai',
+                    content: 'Idea successfully modified based on your request.',
+                    timestamp: new Date().toISOString()
+                };
+                setChatHistory(prev => [...prev, aiMessage]);
+            }
         } catch (error) {
+            console.error(error);
             const errorMessage = {
                 id: Date.now() + 1,
                 type: 'error',
-                content: 'Failed to modify idea. Please try again.',
+                content: mode === 'mentor' ? 'Failed to get mentor response.' : 'Failed to modify idea.',
                 timestamp: new Date().toISOString()
             };
             setChatHistory(prev => [...prev, errorMessage]);
@@ -2040,7 +2087,6 @@ const ChatModificationInterface = ({ onModifyIdea, isLoading, user }) => {
     const toggleMinimize = () => {
         setIsMinimized(!isMinimized);
         if (isMinimized) {
-            // Focus the input when maximizing
             setTimeout(() => {
                 if (chatInputRef.current) {
                     chatInputRef.current.focus();
@@ -2054,8 +2100,29 @@ const ChatModificationInterface = ({ onModifyIdea, isLoading, user }) => {
             {/* Header bar - always visible */}
             <div className="flex items-center justify-between bg-black border-b border-gray-800/60 px-3 py-2">
                 <div className="flex items-center gap-2">
-                    <span className="text-gray-500 text-lg">💬</span>
-                    <h3 className="font-medium text-gray-300 text-sm">Modify Entire Idea</h3>
+                    <span className="text-gray-500 text-lg">
+                        {mode === 'modify' ? '🛠️' : '🧠'}
+                    </span>
+                    <h3 className="font-medium text-gray-300 text-sm">
+                        {mode === 'modify' ? 'Modify Idea' : 'AI Mentor'}
+                    </h3>
+                    {/* Mode Toggle */}
+                    <div className="flex bg-gray-900 rounded-lg p-0.5 ml-2 border border-gray-800">
+                        <button
+                            onClick={() => setMode('modify')}
+                            className={`px-2 py-0.5 rounded text-[10px] transition-colors ${mode === 'modify' ? 'bg-blue-600 text-white' : 'text-gray-500 hover:text-gray-300'
+                                }`}
+                        >
+                            Modify
+                        </button>
+                        <button
+                            onClick={() => setMode('mentor')}
+                            className={`px-2 py-0.5 rounded text-[10px] transition-colors ${mode === 'mentor' ? 'bg-purple-600 text-white' : 'text-gray-500 hover:text-gray-300'
+                                }`}
+                        >
+                            Mentor
+                        </button>
+                    </div>
                 </div>
                 <div className="flex items-center gap-1">
                     {chatHistory.length > 0 && (
@@ -2082,13 +2149,14 @@ const ChatModificationInterface = ({ onModifyIdea, isLoading, user }) => {
                     {isExpanded && chatHistory.length > 0 && (
                         <div className="bg-black rounded-lg p-2 max-h-40 overflow-y-auto space-y-2 border border-gray-800/60">
                             {chatHistory.map((message) => (
-                                <div key={message.id} className={`flex gap-2 ${message.type === 'user' ? 'justify-end' : 'justify-start'
-                                    }`}>
+                                <div key={message.id} className={`flex gap-2 ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}>
                                     <div className={`max-w-xs lg:max-w-md px-3 py-2 rounded-lg text-xs ${message.type === 'user'
                                         ? 'bg-gray-900 border border-gray-800 text-gray-300'
                                         : message.type === 'error'
                                             ? 'bg-black border border-red-900/50 text-red-400'
-                                            : 'bg-black border border-gray-800 text-gray-400'
+                                            : mode === 'mentor'
+                                                ? 'bg-purple-900/20 border border-purple-800/50 text-purple-100' // Mentor style
+                                                : 'bg-black border border-gray-800 text-gray-400'
                                         }`}>
                                         <p>{message.content}</p>
                                         <p className="text-xs opacity-60 mt-1 text-gray-600">
@@ -2108,19 +2176,19 @@ const ChatModificationInterface = ({ onModifyIdea, isLoading, user }) => {
                                 value={chatInput}
                                 onChange={(e) => setChatInput(e.target.value)}
                                 onKeyPress={handleKeyPress}
-                                placeholder="How would you like to modify the idea? (Press Enter to send)"
+                                placeholder={mode === 'modify' ? "Describe changes to the idea..." : "Ask the AI Mentor a question..."}
                                 className="w-full bg-black border border-gray-800/60 rounded-lg px-3 py-2 text-gray-300 placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-gray-700 focus:border-gray-700 resize-none text-xs"
                                 rows={1}
                                 disabled={isLoading || !user}
                             />
                             {!user && (
-                                <p className="text-xs text-gray-600 mt-1">Please log in to modify ideas</p>
+                                <p className="text-xs text-gray-600 mt-1">Please log in to use chat</p>
                             )}
                         </div>
                         <button
                             onClick={handleSendMessage}
                             disabled={!chatInput.trim() || isLoading || !user}
-                            className="px-3 py-1 bg-black hover:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed text-gray-400 hover:text-gray-300 rounded-lg transition-colors flex items-center gap-1 self-end h-8 border border-gray-800/60"
+                            className={`px-3 py-1 bg-black hover:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed text-gray-400 hover:text-gray-300 rounded-lg transition-colors flex items-center gap-1 self-end h-8 border border-gray-800/60`}
                         >
                             {isLoading ? (
                                 <>
@@ -2627,6 +2695,9 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false, custom
     const [codePreviewData, setCodePreviewData] = useState(null);
     const [showShareModal, setShowShareModal] = useState(false);
     const [activeTab, setActiveTab] = useState('plan'); // 'plan', 'roadmap', 'resources'
+    const [showRemixMenu, setShowRemixMenu] = useState(false);
+    const [isRemixing, setIsRemixing] = useState(false);
+    const [customRemixPrompt, setCustomRemixPrompt] = useState('');
 
     // Sync state with props when they update (e.g. after auto-save adds historyId)
     useEffect(() => {
@@ -2998,6 +3069,46 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false, custom
         }
     };
 
+    // Remix presets
+    const remixPresets = [
+        { label: '📱 Make it a Mobile App', instruction: 'Rewrite this project as a mobile application using React Native or Flutter. Adjust the tech stack, implementation, and deliverables accordingly.' },
+        { label: '🧩 Simplify It', instruction: 'Simplify this project significantly. Reduce the scope, use fewer technologies, make it achievable for a beginner in 2 weeks.' },
+        { label: '🚀 Make it Advanced', instruction: 'Make this project more advanced and ambitious. Add AI/ML components, real-time features, and enterprise-level architecture.' },
+        { label: '🐍 Use Python Stack', instruction: 'Rewrite this project to use a Python-based tech stack (Django/Flask, PostgreSQL, etc.). Adjust all technical requirements and implementation steps.' },
+        { label: '☁️ Make it Cloud-Native', instruction: 'Redesign this project as a cloud-native application using microservices, containers, and serverless functions. Use AWS/GCP/Azure services.' },
+        { label: '🎮 Gamify It', instruction: 'Add gamification elements to this project: points, badges, leaderboards, achievements, and progress tracking.' },
+    ];
+
+    // Remix handler
+    const handleRemix = async (instruction) => {
+        if (!user) {
+            addToast('Please log in to remix ideas.', 'error');
+            return;
+        }
+        setIsRemixing(true);
+        setShowRemixMenu(false);
+        try {
+            const generateIdea = firebase.functions().httpsCallable('generateIdea');
+            const result = await generateIdea({
+                query: getProjectTitle() || 'Project Idea',
+                refinementInstruction: instruction,
+                originalIdea: currentIdea,
+                studentProfile: userProfile || {}
+            });
+            if (result.data.success) {
+                setCurrentIdea(result.data.idea);
+                addToast('🔄 Idea remixed successfully!', 'success');
+            } else {
+                throw new Error(result.data.error || 'Remix failed');
+            }
+        } catch (err) {
+            console.error('Remix error:', err);
+            addToast('Failed to remix: ' + (err.message || 'Unknown error'), 'error');
+        } finally {
+            setIsRemixing(false);
+        }
+    };
+
     return (
         <div className="h-full bg-black relative overflow-hidden flex flex-col">
             {/* Background particles effect */}
@@ -3015,7 +3126,7 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false, custom
 
             {/* Header - Matching AppScreen style - Only shown when not in DiscoveryResult */}
             {!hideHeader && (
-                <header className="bg-black/50 backdrop-blur-sm border-b border-gray-800 p-4 relative z-10">
+                <header className="bg-black/50 backdrop-blur-sm border-b border-gray-800 p-4 relative z-40">
                     <div className="w-full px-6 flex justify-between items-center">
                         <button
                             onClick={() => onStartNew ? onStartNew() : (onNavigate && onNavigate('welcome'))}
@@ -3070,6 +3181,68 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false, custom
                                         <span>🚀</span>
                                         <span className="hidden md:inline">Discovery Mode</span>
                                     </button>
+                                    {/* Remix/Pivot Button */}
+                                    <div className="relative">
+                                        <button
+                                            onClick={() => setShowRemixMenu(!showRemixMenu)}
+                                            disabled={isRemixing}
+                                            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2 border ${isRemixing
+                                                ? 'bg-yellow-900/40 text-yellow-300 border-yellow-700/50 animate-pulse cursor-wait'
+                                                : 'bg-gradient-to-r from-orange-900/30 to-pink-900/30 hover:from-orange-900/50 hover:to-pink-900/50 text-orange-200 border-orange-800/50'
+                                                }`}
+                                        >
+                                            <span>{isRemixing ? '⏳' : '🔄'}</span>
+                                            <span className="hidden md:inline">{isRemixing ? 'Remixing...' : 'Remix / Pivot'}</span>
+                                        </button>
+                                        {showRemixMenu && (
+                                            <div className="absolute right-0 top-full mt-2 w-80 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl z-50 overflow-hidden animate-fadeIn">
+                                                <div className="p-3 border-b border-gray-800">
+                                                    <h4 className="text-white font-bold text-sm">🔄 Remix This Idea</h4>
+                                                    <p className="text-gray-400 text-xs">Transform your project with one click</p>
+                                                </div>
+                                                <div className="max-h-64 overflow-y-auto">
+                                                    {remixPresets.map((preset, i) => (
+                                                        <button
+                                                            key={i}
+                                                            onClick={() => handleRemix(preset.instruction)}
+                                                            className="w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-gray-800 hover:text-white transition-colors border-b border-gray-800/50 last:border-0"
+                                                        >
+                                                            {preset.label}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                                <div className="p-3 border-t border-gray-800">
+                                                    <div className="flex gap-2">
+                                                        <input
+                                                            type="text"
+                                                            value={customRemixPrompt}
+                                                            onChange={(e) => setCustomRemixPrompt(e.target.value)}
+                                                            placeholder="Custom remix instruction..."
+                                                            className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-orange-500"
+                                                            onKeyDown={(e) => {
+                                                                if (e.key === 'Enter' && customRemixPrompt.trim()) {
+                                                                    handleRemix(customRemixPrompt);
+                                                                    setCustomRemixPrompt('');
+                                                                }
+                                                            }}
+                                                        />
+                                                        <button
+                                                            onClick={() => {
+                                                                if (customRemixPrompt.trim()) {
+                                                                    handleRemix(customRemixPrompt);
+                                                                    setCustomRemixPrompt('');
+                                                                }
+                                                            }}
+                                                            disabled={!customRemixPrompt.trim()}
+                                                            className="px-3 py-2 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-700 disabled:text-gray-500 text-white rounded-lg text-sm font-medium transition-colors"
+                                                        >
+                                                            Go
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
                                 </>
                             )}
 
@@ -4110,7 +4283,69 @@ const BottomNav = ({ currentView, onChangeView, userRole }) => {
     );
 };
 
+// Tech Stack Selector Component
+const TechStackSelector = ({ selectedStack, onSelectionChange, theme }) => {
+    const techOptions = [
+        { id: 'react', label: 'React', icon: '⚛️' },
+        { id: 'vue', label: 'Vue.js', icon: '🟢' },
+        { id: 'angular', label: 'Angular', icon: '🅰️' },
+        { id: 'nextjs', label: 'Next.js', icon: '▲' },
+        { id: 'node', label: 'Node.js', icon: '🟩' },
+        { id: 'python', label: 'Python', icon: '🐍' },
+        { id: 'firebase', label: 'Firebase', icon: '🔥' },
+        { id: 'supabase', label: 'Supabase', icon: '⚡' },
+        { id: 'flutter', label: 'Flutter', icon: '💙' },
+        { id: 'swift', label: 'Swift', icon: '🐦' },
+        { id: 'kotlin', label: 'Kotlin', icon: '🤖' },
+        { id: 'rust', label: 'Rust', icon: '🦀' },
+        { id: 'go', label: 'Go', icon: '🐹' },
+        { id: 'aws', label: 'AWS', icon: '☁️' },
+    ];
+
+    const toggleTech = (techId) => {
+        if (selectedStack.includes(techId)) {
+            onSelectionChange(selectedStack.filter(id => id !== techId));
+        } else {
+            if (selectedStack.length >= 5) return; // Limit to 5
+            onSelectionChange([...selectedStack, techId]);
+        }
+    };
+
+    return (
+        <div className={`mb-6 p-4 rounded-xl border ${theme === 'dark' ? 'bg-zinc-900/50 border-zinc-800' : 'bg-white border-gray-200'}`}>
+            <div className="flex justify-between items-center mb-3">
+                <h3 className={`text-sm font-bold ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Preferred Tech Stack <span className="text-xs font-normal opacity-70">(Optional, max 5)</span>
+                </h3>
+                <span className={`text-xs ${selectedStack.length === 5 ? 'text-red-400' : 'text-gray-500'}`}>
+                    {selectedStack.length}/5 selected
+                </span>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+                {techOptions.map(tech => (
+                    <button
+                        key={tech.id}
+                        onClick={() => toggleTech(tech.id)}
+                        className={`
+                            flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all
+                            ${selectedStack.includes(tech.id)
+                                ? (theme === 'dark' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/40' : 'bg-blue-600 text-white')
+                                : (theme === 'dark' ? 'bg-zinc-800 text-gray-400 hover:bg-zinc-700 hover:text-gray-200' : 'bg-gray-100 text-gray-600 hover:bg-gray-200')
+                            }
+                        `}
+                    >
+                        <span>{tech.icon}</span>
+                        <span>{tech.label}</span>
+                    </button>
+                ))}
+            </div>
+        </div>
+    );
+};
+
 const AppScreen = ({ user, onLogout, onDiscoveryMode, addToast, theme, toggleTheme, updateUserStats }) => {
+    const [preferredStack, setPreferredStack] = useState([]);
     const [currentView, setCurrentView] = useState('welcome');
     const [query, setQuery] = useState('');
     const [gameSteps, setGameSteps] = useState([]);
@@ -4354,7 +4589,8 @@ const AppScreen = ({ user, onLogout, onDiscoveryMode, addToast, theme, toggleThe
             const result = await generateIdea({
                 query: query,
                 studentProfile: profile,
-                gameResponses: responses
+                gameResponses: responses,
+                preferredStack: preferredStack // Include preferred technologies
             });
 
             if (result.data.success) {
@@ -4506,7 +4742,7 @@ const AppScreen = ({ user, onLogout, onDiscoveryMode, addToast, theme, toggleThe
                                     </svg>
                                 ) : (
                                     <svg className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+                                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8 0 1010.586 10.586z" />
                                     </svg>
                                 )}
                             </button>
@@ -4603,6 +4839,11 @@ const AppScreen = ({ user, onLogout, onDiscoveryMode, addToast, theme, toggleThe
                         </div>
 
                         <div className="space-y-6">
+                            <TechStackSelector
+                                selectedStack={preferredStack}
+                                onSelectionChange={setPreferredStack}
+                                theme={theme}
+                            />
                             <div className="relative">
                                 <textarea
                                     value={query}

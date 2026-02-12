@@ -21,7 +21,8 @@ $functionsToDelete = @(
     "getDetailedAnalytics",
     "checkDailyProgress",
     "updateQuestProgress",
-    "generate_codebase"
+    "generate_codebase",
+    "chatWithMentor"
 )
 
 Write-Host "Preparing to delete the following functions:"

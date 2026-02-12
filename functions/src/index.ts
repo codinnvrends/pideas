@@ -110,6 +110,9 @@ interface IdeaGenerationRequest {
   studentProfile?: StudentProfile;
   gameResponses?: any[];
   discoveryMode?: boolean;
+  preferredStack?: string[];
+  refinementInstruction?: string;
+  originalIdea?: ProjectIdea;
 }
 
 interface HistorySaveRequest {
@@ -360,7 +363,8 @@ function interpolatePrompt(template: string, inputQuery: string, profile: Studen
   result = result.replace(/{{skillLevel}}/g, profile.skillLevel || 'Intermediate');
   result = result.replace(/{{interests}}/g, profile.interests?.join(', ') || 'General');
   result = result.replace(/{{projectDuration}}/g, profile.projectDuration || '1-2 months');
-  result = result.replace(/{{preferredTechnologies}}/g, profile.preferredTechnologies?.join(', ') || 'Flexible');
+  result = result.replace(/{{projectDuration}}/g, profile.projectDuration || '1-2 months');
+  result = result.replace(/{{preferredTechnologies}}/g, (profile.preferredTechnologies && profile.preferredTechnologies.length > 0) ? profile.preferredTechnologies.join(', ') : 'Flexible');
   result = result.replace(/{{teamSize}}/g, profile.teamSize || 'Individual');
   result = result.replace(/{{year}}/g, profile.year || 'Not specified');
   return result;
@@ -446,11 +450,57 @@ export const gameStepsGet = onCall({ maxInstances: 5, invoker: 'public' }, async
 });
 
 /**
+ * Chat with AI Mentor for project guidance
+ */
+export const chatWithMentor = onCall({ maxInstances: 5, invoker: 'public' }, async (request: any) => {
+  try {
+    const { message, context, history } = request.data;
+
+    if (!message) {
+      throw new Error("Message is required");
+    }
+
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      throw new Error("Missing API key configuration");
+    }
+
+    const ai = genkit({
+      plugins: [googleAI({ apiKey })],
+      model: googleAI.model('gemini-3-flash-preview'),
+    });
+
+    const systemPrompt = `
+You are an expert senior software architect and mentor.
+You are helping a student with their project: "${context?.projectTitle}".
+Project Description: "${context?.projectDescription}".
+
+Your goal is to provide specific, actionable, and encouraging technical advice.
+- If they ask about tech stack, explain why certain choices fit their project.
+- If they ask how to implement something, give high-level steps or short code snippets.
+- Be concise but helpful.
+
+History:
+${history?.map((m: any) => `${m.role}: ${m.content}`).join('\n') || ''}
+
+User: ${message}
+    `;
+
+    const response = await ai.generate(systemPrompt);
+    return { reply: response.text };
+
+  } catch (error) {
+    logger.error("Error in chatWithMentor:", error);
+    throw new Error("Failed to get mentor response");
+  }
+});
+
+/**
  * Generate comprehensive project idea based on gamified context
  */
 export const generateIdea = onCall({ maxInstances: 5, timeoutSeconds: 300, invoker: 'public' }, async (request: any) => {
   try {
-    const { query, prompt, studentProfile, gameResponses, discoveryMode }: IdeaGenerationRequest = request.data;
+    const { query, prompt, studentProfile, gameResponses, discoveryMode, preferredStack, refinementInstruction, originalIdea }: IdeaGenerationRequest = request.data;
 
     // Accept either query or prompt parameter for compatibility
     const inputQuery = query || prompt;
@@ -467,10 +517,15 @@ export const generateIdea = onCall({ maxInstances: 5, timeoutSeconds: 300, invok
       year: 'Not specified',
       interests: [],
       skillLevel: 'Intermediate',
-      preferredTechnologies: [],
+      preferredTechnologies: preferredStack || [],
       teamSize: 'Individual',
       projectDuration: '1-2 months'
     };
+
+    // Override preferred technologies if explicitly provided in request
+    if (preferredStack && preferredStack.length > 0) {
+      profile.preferredTechnologies = preferredStack;
+    }
 
     logger.info("Generating idea for:", { inputQuery, studentProfile: profile, discoveryMode });
 
@@ -494,7 +549,25 @@ export const generateIdea = onCall({ maxInstances: 5, timeoutSeconds: 300, invok
       } else {
         // Fallback to hardcoded prompts
         logger.info("Using DEFAULT hardcoded prompt");
-        if (isDiscoveryRequest) {
+
+        if (refinementInstruction && originalIdea) {
+          contextPrompt = `
+            You are an expert project advisor.
+            
+            ORIGINAL PROJECT IDEA:
+            ${JSON.stringify(originalIdea, null, 2)}
+            
+            INSTRUCTION:
+            ${refinementInstruction}
+            
+            Please REWRITE the project idea to strictly follow this instruction.
+            Keep the same structure (GameStep/ProjectIdea format) as the original.
+            If the instruction says to change the tech stack, ensure the 'technicalRequirements' section is updated.
+            If the instruction says to simplify, reduce the scope and difficulty.
+            
+            Return ONLY the valid JSON or structured text for the new idea.
+          `;
+        } else if (isDiscoveryRequest) {
           contextPrompt = createDiscoveryPrompt(inputQuery, profile);
         } else {
           contextPrompt = createComprehensivePrompt(inputQuery, profile);

@@ -3,6 +3,9 @@
 import React, { useState, useEffect } from "react"
 import LoginWithParticles from "./LoginWithParticles"
 import { UserProfileIcon, default as UserProfileCard } from "./UserProfileCard"
+import TechStackSelector from "./TechStackSelector"
+import AIMentorChat from "./AIMentorChat"
+import { exportToPDF, generateMarkdown, downloadMarkdown } from "../utils/exportUtils"
 
 // Firebase imports
 declare global {
@@ -28,6 +31,7 @@ export default function ProjectIdeaApp() {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState("")
+  const [selectedTechs, setSelectedTechs] = useState<string[]>([])
   const [projectIdea, setProjectIdea] = useState<ProjectIdea | null>(null)
   const [generating, setGenerating] = useState(false)
   const [lastQuery, setLastQuery] = useState("")
@@ -40,11 +44,11 @@ export default function ProjectIdeaApp() {
       const timer = setTimeout(() => {
         setShowWelcome(false);
       }, 4000); // 4 seconds before fading out
-      
+
       return () => clearTimeout(timer);
     }
   }, [user]);
-  
+
   // Toggle profile card
   const toggleProfileCard = () => {
     setShowProfileCard(prev => !prev);
@@ -105,7 +109,7 @@ export default function ProjectIdeaApp() {
       setProjectIdea(null)
       setQuery("")
       setLastQuery("")
-      
+
       // Add a small delay before actual logout to ensure UI updates complete
       setTimeout(async () => {
         try {
@@ -121,34 +125,46 @@ export default function ProjectIdeaApp() {
     }
   }
 
-  const generateProjectIdea = async () => {
-    if (!query.trim() || !user) return
+  const generateProjectIdea = async (isRefinement = false, refinementInstruction = "") => {
+    if ((!query.trim() && !isRefinement) || !user) return
 
     setGenerating(true)
     try {
-      // Save query to user profile
-      const firestore = window.firebase.firestore()
-      await firestore.collection('users').doc(user.uid).set({
-        lastQuery: query,
-        name: user.displayName,
-        email: user.email,
-        lastUpdated: new Date().toISOString()
-      }, { merge: true })
+      // Save query to user profile if it's a new generation
+      if (!isRefinement) {
+        const firestore = window.firebase.firestore()
+        await firestore.collection('users').doc(user.uid).set({
+          lastQuery: query,
+          name: user.displayName,
+          email: user.email,
+          lastUpdated: new Date().toISOString()
+        }, { merge: true })
+      }
 
       // Call Firebase function to generate idea
       const functions = window.firebase.functions()
-      const generateIdea = functions.httpsCallable('generateProjectIdea')
-      
-      const result = await generateIdea({ query })
+      const generateIdea = functions.httpsCallable('generateIdea')
+
+      const payload: any = {
+        query: isRefinement ? (projectIdea?.description || query) : query, // Use existing description as context for refinement
+        preferredStack: selectedTechs
+      }
+
+      if (isRefinement && refinementInstruction) {
+        payload.refinementInstruction = refinementInstruction;
+        payload.originalIdea = projectIdea;
+      }
+
+      const result = await generateIdea(payload)
       setProjectIdea(result.data)
-      setLastQuery(query)
+      if (!isRefinement) setLastQuery(query)
     } catch (error) {
       console.error('Error generating project idea:', error)
       // Fallback mock data for development
       setProjectIdea({
         title: `${query} Project`,
         description: `A comprehensive project based on your query: "${query}". This project would involve modern technologies and best practices.`,
-        technologies: ["React", "Node.js", "Firebase", "TypeScript"],
+        technologies: selectedTechs.length > 0 ? selectedTechs : ["React", "Node.js", "Firebase", "TypeScript"],
         difficulty: "Intermediate"
       })
     } finally {
@@ -160,6 +176,19 @@ export default function ProjectIdeaApp() {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       generateProjectIdea()
+    }
+  }
+
+  const handleExportPDF = () => {
+    if (projectIdea) {
+      exportToPDF('project-idea-display', `project-idea-${Date.now()}.pdf`);
+    }
+  }
+
+  const handleExportMarkdown = () => {
+    if (projectIdea) {
+      const content = generateMarkdown(projectIdea);
+      downloadMarkdown(content, `project-idea-${Date.now()}.md`);
     }
   }
 
@@ -178,40 +207,38 @@ export default function ProjectIdeaApp() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800">
       {/* Header */}
-      <header className="bg-black/50 backdrop-blur-sm border-b border-gray-800">
+      <header className="bg-black/50 backdrop-blur-sm border-b border-gray-800 sticky top-0 z-30">
         <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-white">Project Idea Generator</h1>
           <div className="flex items-center gap-4 relative">
             {/* Welcome message with fade out animation */}
-            <div 
-              className={`transition-all duration-1000 ease-in-out ${
-                showWelcome 
-                  ? 'opacity-100 translate-x-0' 
+            <div
+              className={`transition-all duration-1000 ease-in-out ${showWelcome
+                  ? 'opacity-100 translate-x-0'
                   : 'opacity-0 translate-x-5 absolute'
-              }`}
+                }`}
             >
               <span className="text-gray-300">Welcome, {user.displayName}!</span>
             </div>
-            
+
             {/* User profile icon that appears after welcome message fades */}
-            <div 
-              className={`transition-all duration-500 ease-in-out ${
-                !showWelcome 
-                  ? 'opacity-100 translate-x-0' 
+            <div
+              className={`transition-all duration-500 ease-in-out ${!showWelcome
+                  ? 'opacity-100 translate-x-0'
                   : 'opacity-0 -translate-x-5 absolute'
-              }`}
+                }`}
             >
-              <UserProfileIcon 
-                onClick={toggleProfileCard} 
-                isActive={showProfileCard} 
+              <UserProfileIcon
+                onClick={toggleProfileCard}
+                isActive={showProfileCard}
               />
             </div>
-            
+
             {/* User profile card */}
             {user && (
-              <UserProfileCard 
-                user={user} 
-                onLogout={handleLogout} 
+              <UserProfileCard
+                user={user}
+                onLogout={handleLogout}
                 isVisible={showProfileCard}
                 onClose={() => setShowProfileCard(false)}
               />
@@ -221,7 +248,7 @@ export default function ProjectIdeaApp() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 py-8">
+      <main className="max-w-4xl mx-auto px-4 py-8 pb-32">
         {lastQuery && (
           <div className="mb-6 p-4 bg-gray-800/50 rounded-lg border border-gray-700">
             <p className="text-gray-300">
@@ -235,6 +262,12 @@ export default function ProjectIdeaApp() {
           <label htmlFor="query" className="block text-white text-lg font-medium mb-4">
             What kind of project would you like to build?
           </label>
+
+          <TechStackSelector
+            selectedTechs={selectedTechs}
+            onChange={setSelectedTechs}
+          />
+
           <div className="flex gap-4">
             <textarea
               id="query"
@@ -246,9 +279,9 @@ export default function ProjectIdeaApp() {
               rows={3}
             />
             <button
-              onClick={generateProjectIdea}
+              onClick={() => generateProjectIdea()}
               disabled={generating || !query.trim()}
-              className="bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-600 text-white px-8 py-4 rounded-lg font-medium transition-colors disabled:cursor-not-allowed flex items-center gap-2"
+              className="bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-600 text-white px-8 py-4 rounded-lg font-medium transition-colors disabled:cursor-not-allowed flex items-center gap-2 h-auto"
             >
               {generating ? (
                 <>
@@ -264,11 +297,30 @@ export default function ProjectIdeaApp() {
 
         {/* Project Idea Display */}
         {projectIdea && (
-          <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6">
-            <h2 className="text-2xl font-bold text-white mb-4">{projectIdea.title}</h2>
-            <p className="text-gray-300 mb-6 leading-relaxed">{projectIdea.description}</p>
-            
-            <div className="grid md:grid-cols-2 gap-6">
+          <div id="project-idea-display" className="bg-gray-800/50 border border-gray-700 rounded-lg p-6 relative">
+            <div className="flex justify-between items-start mb-4">
+              <h2 className="text-2xl font-bold text-white mb-2">{projectIdea.title}</h2>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleExportPDF}
+                  className="text-xs bg-gray-700 hover:bg-gray-600 text-white px-3 py-1.5 rounded flex items-center gap-1 transition-colors"
+                  title="Export as PDF"
+                >
+                  📄 PDF
+                </button>
+                <button
+                  onClick={handleExportMarkdown}
+                  className="text-xs bg-gray-700 hover:bg-gray-600 text-white px-3 py-1.5 rounded flex items-center gap-1 transition-colors"
+                  title="Export as Markdown"
+                >
+                  📝 MD
+                </button>
+              </div>
+            </div>
+
+            <p className="text-gray-300 mb-6 leading-relaxed whitespace-pre-wrap">{projectIdea.description}</p>
+
+            <div className="grid md:grid-cols-2 gap-6 mb-8">
               <div>
                 <h3 className="text-lg font-semibold text-cyan-400 mb-3">Technologies</h3>
                 <div className="flex flex-wrap gap-2">
@@ -282,21 +334,64 @@ export default function ProjectIdeaApp() {
                   ))}
                 </div>
               </div>
-              
+
               <div>
                 <h3 className="text-lg font-semibold text-cyan-400 mb-3">Difficulty</h3>
-                <span className={`inline-block px-4 py-2 rounded-full text-sm font-medium ${
-                  projectIdea.difficulty === 'Beginner' ? 'bg-green-600/20 text-green-300 border border-green-600/30' :
-                  projectIdea.difficulty === 'Intermediate' ? 'bg-yellow-600/20 text-yellow-300 border border-yellow-600/30' :
-                  'bg-red-600/20 text-red-300 border border-red-600/30'
-                }`}>
+                <span className={`inline-block px-4 py-2 rounded-full text-sm font-medium ${projectIdea.difficulty === 'Beginner' ? 'bg-green-600/20 text-green-300 border border-green-600/30' :
+                    projectIdea.difficulty === 'Intermediate' ? 'bg-yellow-600/20 text-yellow-300 border border-yellow-600/30' :
+                      'bg-red-600/20 text-red-300 border border-red-600/30'
+                  }`}>
                   {projectIdea.difficulty}
                 </span>
+              </div>
+            </div>
+
+            {/* Remix/Pivot Actions */}
+            <div className="border-t border-gray-700 pt-6">
+              <h3 className="text-sm uppercase tracking-wide text-gray-400 font-semibold mb-3">Remix this idea</h3>
+              <div className="flex flex-wrap gap-3">
+                <button
+                  onClick={() => generateProjectIdea(true, "Make it simpler and more beginner friendly")}
+                  disabled={generating}
+                  className="px-4 py-2 bg-purple-900/40 hover:bg-purple-900/60 border border-purple-700/50 text-purple-200 text-sm rounded-md transition-colors"
+                >
+                  Simplify
+                </button>
+                <button
+                  onClick={() => generateProjectIdea(true, "Make it more advanced and scalable")}
+                  disabled={generating}
+                  className="px-4 py-2 bg-orange-900/40 hover:bg-orange-900/60 border border-orange-700/50 text-orange-200 text-sm rounded-md transition-colors"
+                >
+                  Scale Up
+                </button>
+                <button
+                  onClick={() => generateProjectIdea(true, "Add a Twist related to AI integration")}
+                  disabled={generating}
+                  className="px-4 py-2 bg-blue-900/40 hover:bg-blue-900/60 border border-blue-700/50 text-blue-200 text-sm rounded-md transition-colors"
+                >
+                  + AI Twist
+                </button>
+                <button
+                  onClick={() => generateProjectIdea(true, "Pivot this to a mobile app")}
+                  disabled={generating}
+                  className="px-4 py-2 bg-pink-900/40 hover:bg-pink-900/60 border border-pink-700/50 text-pink-200 text-sm rounded-md transition-colors"
+                >
+                  To Mobile App
+                </button>
               </div>
             </div>
           </div>
         )}
       </main>
+
+      {/* AI Mentor Chat */}
+      {projectIdea && (
+        <AIMentorChat
+          user={user}
+          projectTitle={projectIdea.title}
+          projectDescription={projectIdea.description}
+        />
+      )}
     </div>
   )
 }

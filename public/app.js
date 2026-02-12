@@ -2751,29 +2751,55 @@ const ProjectIdeaDisplay = ({ idea, onStartNew, user, hideHeader = false, custom
     const handleExportPDF = async () => {
         if (!window.html2pdf || !currentIdea) return;
         setExportLoading(true);
-        // Target the hidden full-content container
-        const element = document.getElementById('project-idea-pdf-export');
-
-        // Temporarily make it visible for capture (off-screen)
-        // Note: html2pdf clones the element, so as long as it's rendered, it should work.
-        // If it's display:none, it might be empty. Ideally we position it absolute off-screen.
-
-        const opt = {
-            margin: 0.5,
-            filename: `pideas-${(typeof currentIdea === 'string' ? currentIdea : '').substring(0, 20).trim()}.pdf`,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: {
-                scale: 2,
-                useCORS: true,
-                logging: false
-            },
-            jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
-            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-        };
 
         try {
-            await window.html2pdf().set(opt).from(element).save();
+            // Render markdown to HTML
+            const htmlContent = window.marked ? window.marked.parse(currentIdea) : currentIdea.replace(/\n/g, '<br>');
+
+            // Build a self-contained HTML string with inline styles
+            const fullHtml = [
+                '<div style="background:#fff;color:#111;padding:20px;font-family:Georgia,Times New Roman,serif;font-size:13px;line-height:1.7;">',
+                '<style>',
+                'h1,h2,h3,h4,h5,h6{color:#111;margin-top:18px;margin-bottom:6px;}',
+                'h1{font-size:22px;}',
+                'h2{font-size:18px;border-bottom:1px solid #ccc;padding-bottom:4px;}',
+                'h3{font-size:15px;}',
+                'p{margin:6px 0;color:#222;}',
+                'ul,ol{margin:6px 0;padding-left:22px;color:#222;}',
+                'li{margin:3px 0;}',
+                'code{background:#eee;padding:1px 4px;border-radius:3px;font-size:12px;}',
+                'pre{background:#eee;padding:10px;border-radius:4px;overflow-wrap:break-word;white-space:pre-wrap;font-size:12px;}',
+                'strong{font-weight:bold;color:#000;}',
+                'a{color:#1a0dab;}',
+                '</style>',
+                '<div style="text-align:center;margin-bottom:20px;padding-bottom:12px;border-bottom:2px solid #222;">',
+                '<h1 style="margin:0;font-size:24px;">Pideas - Project Idea</h1>',
+                '<p style="color:#888;font-size:11px;margin:4px 0 0;">Generated on ' + new Date().toLocaleDateString() + '</p>',
+                '</div>',
+                htmlContent,
+                '</div>'
+            ].join('');
+
+            const opt = {
+                margin: [0.5, 0.6, 0.5, 0.6],
+                filename: 'pideas-' + getProjectTitle().substring(0, 30).trim().replace(/[^a-zA-Z0-9 ]/g, '_') + '.pdf',
+                image: { type: 'jpeg', quality: 0.95 },
+                html2canvas: {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: '#ffffff'
+                },
+                jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
+                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+            };
+
+            // Use 'string' mode - html2pdf creates its own container internally
+            await window.html2pdf().set(opt).from(fullHtml, 'string').save();
             if (updateUserStats) updateUserStats('EXPORT_CODE');
+            addToast('PDF exported successfully!', 'success');
+        } catch (err) {
+            console.error('PDF export error:', err);
+            addToast('Failed to export PDF', 'error');
         } finally {
             setExportLoading(false);
         }
